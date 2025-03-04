@@ -1,0 +1,69 @@
+"use client";
+
+import Empty from "@/components/empty";
+import Text from "@/components/text";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useNavBar } from "@/hooks/use-nav-bar";
+import { PATHS } from "@/types";
+import { CreditCard } from "lucide-react";
+import Link from "next/link";
+import React from "react";
+
+const Page = () => {
+  useNavBar("Wallet");
+
+  return (
+    <div className="space-y-5">
+      <h2 className="text-2xl font-semibold text-primary/80 md:block hidden">
+        WALLET
+      </h2>
+      <Card className="rounded-sm bg-primary/80">
+        <CardContent>
+          <h2 className="font-semibold text-white">BALANCE</h2>
+          <div className="flex items-baseline">
+            <span className="text-6xl font-bold text-white">0.00</span>
+            <span className="ml-2 text-gray-200">NGN</span>
+          </div>
+          <div className="mt-6 flex items-center space-x-2">
+            <Button
+              asChild
+              variant="ringHover"
+              className="rounded-sm bg-white/20 hover:bg-white/30"
+            >
+              <Link href={PATHS.TOP_UP_ACCOUNT}>ADD MONEY</Link>
+            </Button>
+            <Button className="rounded-sm bg-slate-900 hover:bg-slate-900/60">
+              FUND MANUALLY
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold text-primary/80">
+          PAYMENT METHODS
+        </h2>
+        <div className="border" />
+        <div className="flex items-center gap-2">
+          <CreditCard size={80} className="text-primary" />
+          <div>
+            <h2 className="font-semibold">Available Funding Options</h2>
+            <Text className="text-xs">
+              You can fund your account using your dedicated account number or
+              you can fund manually with us.
+            </Text>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold text-primary/80">TRANSACTIONS</h2>
+        <div className="border" />
+        <Empty header="You do not have any transactions" />
+      </div>
+    </div>
+  );
+};
+
+export default Page;
