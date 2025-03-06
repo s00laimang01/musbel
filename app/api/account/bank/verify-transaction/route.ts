@@ -47,11 +47,11 @@ export async function POST(request: Request) {
     }
 
     // Parse and validate payload
-    const payload = (await request.json()) as flutterwaveWebhook;
+    const payload = await request.json();
 
     console.log("Payload:", payload);
 
-    if (!payload?.data?.tx_ref) {
+    if (!payload?.tx_ref) {
       return NextResponse.json(
         httpStatusResponse(400, "Bad request: Missing transaction reference"),
         { status: 400 }
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
 
     // Find the transaction
     const transaction = await Transaction.findOne({
-      tx_ref: payload.data.tx_ref,
+      tx_ref: payload.tx_ref,
     });
 
     if (!transaction) {
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     }
 
     // Handle failed payment
-    if (payload.data.status === "failed") {
+    if (payload.status === "failed") {
       transaction.status = "failed";
       await transaction.save({ validateBeforeSave: true });
       return NextResponse.json(httpStatusResponse(200, "Payment failed"), {
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const trx = await verifyTransaction(payload.data.id);
+    const trx = await verifyTransaction(payload.id);
 
     if (!trx) {
       return NextResponse.json(httpStatusResponse(400, "Invalid transaction"), {
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     }
 
     // Validate currency
-    if (payload.data.currency !== "NGN") {
+    if (payload.currency !== "NGN") {
       return NextResponse.json(
         httpStatusResponse(200, "Currency not supported"),
         { status: 200 }
@@ -112,14 +112,14 @@ export async function POST(request: Request) {
     }
 
     // Process the transaction based on type
-    if (transaction.type === "funding" && payload.data.amount > 0) {
+    if (transaction.type === "funding" && payload.amount > 0) {
       // Update user balance
-      user.balance += payload.data.amount;
+      user.balance += payload.amount;
       await user.save({ validateBeforeSave: true });
     }
 
     // Update transaction details
-    transaction.amount = payload.data.amount;
+    transaction.amount = payload.amount;
     transaction.status = "success";
     await transaction.save({ validateBeforeSave: true });
 
