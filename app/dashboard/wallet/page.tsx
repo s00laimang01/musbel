@@ -4,6 +4,7 @@ import Empty from "@/components/empty";
 import Text from "@/components/text";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAuthentication } from "@/hooks/use-authentication";
 import { useNavBar } from "@/hooks/use-nav-bar";
 import { PATHS } from "@/types";
 import { CreditCard } from "lucide-react";
@@ -12,6 +13,7 @@ import React from "react";
 
 const Page = () => {
   useNavBar("Wallet");
+  const { user } = useAuthentication("me", 5000);
 
   return (
     <div className="space-y-5">
@@ -22,7 +24,9 @@ const Page = () => {
         <CardContent>
           <h2 className="font-semibold text-white">BALANCE</h2>
           <div className="flex items-baseline">
-            <span className="text-6xl font-bold text-white">0.00</span>
+            <span className="text-6xl font-bold text-white">
+              {(user?.balance || 0).toFixed(2)}
+            </span>
             <span className="ml-2 text-gray-200">NGN</span>
           </div>
           <div className="mt-6 flex items-center space-x-2">
