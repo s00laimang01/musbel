@@ -46,12 +46,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Parse and validate payload
+    // Parse and validate trx
     const payload = await request.json();
 
-    console.log("Payload:", payload);
+    const trx = await verifyTransaction(payload.id);
 
-    if (!payload?.tx_ref) {
+    if (!trx) {
+      return NextResponse.json(httpStatusResponse(400, "Invalid transaction"), {
+        status: 400,
+      });
+    }
+
+    if (!trx.tx_ref) {
       return NextResponse.json(
         httpStatusResponse(400, "Bad request: Missing transaction reference"),
         { status: 400 }
@@ -60,7 +66,7 @@ export async function POST(request: Request) {
 
     // Find the transaction
     const transaction = await Transaction.findOne({
-      tx_ref: payload.tx_ref,
+      tx_ref: trx.tx_ref,
     });
 
     if (!transaction) {
@@ -71,19 +77,11 @@ export async function POST(request: Request) {
     }
 
     // Handle failed payment
-    if (payload.status === "failed") {
+    if (trx.status === "failed") {
       transaction.status = "failed";
       await transaction.save({ validateBeforeSave: true });
       return NextResponse.json(httpStatusResponse(200, "Payment failed"), {
         status: 200,
-      });
-    }
-
-    const trx = await verifyTransaction(payload.id);
-
-    if (!trx) {
-      return NextResponse.json(httpStatusResponse(400, "Invalid transaction"), {
-        status: 400,
       });
     }
 
@@ -96,7 +94,7 @@ export async function POST(request: Request) {
     }
 
     // Validate currency
-    if (payload.currency !== "NGN") {
+    if (trx.currency !== "NGN") {
       return NextResponse.json(
         httpStatusResponse(200, "Currency not supported"),
         { status: 200 }
@@ -112,14 +110,14 @@ export async function POST(request: Request) {
     }
 
     // Process the transaction based on type
-    if (transaction.type === "funding" && payload.amount > 0) {
+    if (transaction.type === "funding" && trx.amount > 0) {
       // Update user balance
-      user.balance += payload.amount;
+      user.balance += trx.amount;
       await user.save({ validateBeforeSave: true });
     }
 
     // Update transaction details
-    transaction.amount = payload.amount;
+    transaction.amount = trx.amount;
     transaction.status = "success";
     await transaction.save({ validateBeforeSave: true });
 
