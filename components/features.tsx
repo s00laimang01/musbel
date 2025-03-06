@@ -13,7 +13,7 @@ export function FeatureCard({
   return (
     <div
       className={cn(
-        "bg-gray-50 hover:bg-gray-100 cursor-pointer overflow-hidden transition-colors rounded-lg p-6 relative group",
+        "bg-gray-50 hover:bg-gray-100 cursor-pointer overflow-hidden transition-colors rounded-lg p-6 relative group h-full",
         props.className
       )}
     >
@@ -45,36 +45,34 @@ export function FeatureCard({
 export default function FeatureCards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Link href={PATHS.ELECTRICITY_PAYMENTS}>
+      <Link href={PATHS.ELECTRICITY_PAYMENTS} className="h-[12rem]">
         <FeatureCard
           icon={Zap}
           title="Electricity Bills"
           description="AEDC, IKEJA, KADUNA and More companies"
-          className="h-[12rem]"
         />
       </Link>
-      <Link href={PATHS.HOME}>
+      <Link href={PATHS.HOME} className="h-[12rem]">
         <FeatureCard
           icon={Tag}
           title="Check Rates"
           description="See pricing for data and airtime"
-          className="h-[12rem]"
         />
       </Link>
-      <Link href={PATHS.SETTINGS}>
+      <Link href={PATHS.SETTINGS} className="h-[12rem]">
         <FeatureCard
           icon={PiggyBank}
           title="My Accounts"
           description="View your available and active accounts"
-          className="h-[12rem]"
         />
       </Link>
-      <FeatureCard
-        icon={Download}
-        title="Download Data"
-        description="If you have want to download your data, it's right here!"
-        className="h-[12rem]"
-      />
+      <div className="h-[12rem]">
+        <FeatureCard
+          icon={Download}
+          title="Download Data"
+          description="If you have want to download your data, it's right here!"
+        />
+      </div>
     </div>
   );
 }
