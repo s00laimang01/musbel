@@ -12,9 +12,11 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
-import { cn, isPathMathching } from "@/lib/utils";
+import { cn, getInitials, isPathMathching } from "@/lib/utils";
 import Link from "next/link";
 import { PATHS } from "@/types";
+import { useAuthentication } from "@/hooks/use-authentication";
+import { useUserStore } from "@/stores/user.store";
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -55,6 +57,10 @@ export function Sidebar({
   className?: string;
   onClick?: () => void;
 }) {
+  const { user } = useUserStore();
+
+  console.log(user?.auth);
+
   return (
     <aside className={cn("h-full w-lg p-6", className)}>
       <Link
@@ -64,12 +70,14 @@ export function Sidebar({
       >
         <div className="flex items-center flex-col gap-4">
           <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-            <span className="text-gray-800 font-semibold">SA</span>
+            <span className="text-gray-800 font-semibold">
+              {getInitials(user?.fullName!)}
+            </span>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">Suleiman Abubakar</h3>
+            <h3 className="font-semibold text-gray-900">{user?.fullName}</h3>
             <p className="text-xs text-center text-gray-500">
-              au611640@gmail.com
+              {user?.auth.email}
             </p>
           </div>
         </div>

@@ -1,14 +1,20 @@
+"use client";
+
 import { PATHS } from "@/types";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import Link from "next/link";
+import { useAuthentication } from "@/hooks/use-authentication";
 
 const BalanceCard = () => {
+  const { user } = useAuthentication("me", 5000);
   return (
     <Card className="rounded-sm bg-primary/80 w-full">
       <CardContent className="flex items-center justify-between flex-wrap">
         <div className="flex items-baseline">
-          <span className="text-6xl font-bold text-white">0.00</span>
+          <span className="text-6xl font-bold text-white">
+            {user?.balance.toFixed(2) || "0.00"}
+          </span>
           <span className="ml-2 text-gray-200">NGN</span>
         </div>
         <div className="mt-6 space-x-3">

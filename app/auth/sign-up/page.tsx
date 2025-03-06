@@ -12,23 +12,62 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import axios from "axios";
 import { AuthHeader } from "@/components/auth-header";
 import Text from "@/components/text";
 import { PATHS } from "@/types";
 import { PrivacyFooter } from "@/components/privacy-footer";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { errorMessage } from "@/lib/utils";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
+  const r = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [firstNameError, setFirstNameError] = useState("");
+  const [isPending, startTransition] = useState(false);
+  const [form, setForm] = useState({
+    fullName: "",
+    phoneNumber: "",
+    email: "",
+    password: "",
+    country: "",
+  });
 
-  const validateFirstName = (value: string) => {
-    if (!value) {
-      setFirstNameError("First name is required");
-    } else {
-      setFirstNameError("");
+  // Handle input change
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  const signUp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      startTransition(true);
+      await axios.post("/api/auth/sign-up/", {
+        ...form,
+        country: "nigeria",
+      });
+
+      toast.success("Account created successfully!");
+
+      const resp = await signIn("credentials", {
+        email: form.email,
+        password: form.password,
+        redirect: false,
+      });
+
+      toast.loading("Authenticating user...");
+
+      if (resp?.ok) {
+        toast.dismiss();
+        r.push(PATHS.HOME);
+      }
+    } catch (error) {
+      toast.error(errorMessage(error).message);
+    } finally {
+      startTransition(false);
     }
   };
 
@@ -53,18 +92,14 @@ export default function SignUpPage() {
           showWaveEmoji
         />
 
-        <form className="space-y-6">
+        <form onSubmit={signUp} className="space-y-6">
           <div className="space-y-1">
             <Input
               className="rounded-none h-[3rem]"
-              id="firstName"
+              name="fullName"
               placeholder="Full Name"
-              value={firstName}
-              onChange={(e) => {
-                setFirstName(e.target.value);
-                validateFirstName(e.target.value);
-              }}
-              onBlur={(e) => validateFirstName(e.target.value)}
+              value={form.fullName}
+              onChange={handleChange}
             />
           </div>
 
@@ -86,29 +121,38 @@ export default function SignUpPage() {
 
           <div className="space-y-1">
             <Input
+              name="phoneNumber"
+              onChange={handleChange}
               className="rounded-none h-[3rem]"
               id="phone"
               type="tel"
+              value={form.phoneNumber}
               placeholder="Phone Number"
             />
           </div>
 
           <div className="space-y-1">
             <Input
+              name="email"
+              onChange={handleChange}
               className="rounded-none h-[3rem]"
               id="email"
               type="email"
               placeholder="Email Address"
+              value={form.email}
             />
           </div>
 
           <div className="space-y-1">
             <div className="relative">
               <Input
+                name="password"
+                onChange={handleChange}
                 className="rounded-none h-[3rem]"
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Password (min. 6 characters)"
+                value={form.password}
               />
               <button
                 type="button"
@@ -125,6 +169,7 @@ export default function SignUpPage() {
           </div>
 
           <Button
+            disabled={isPending}
             type="submit"
             variant="ringHover"
             className="w-full bg-primary hover:bg-primary/90 h-[3rem] rounded-none"

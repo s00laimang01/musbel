@@ -1,9 +1,19 @@
+"use client";
+
 import ClientProvider from "@/components/client-provider";
-import { Sidebar } from "@/components/sidebar";
-import React, { ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SessionProvider } from "next-auth/react";
+import type { ReactNode } from "react";
 
 const Layout = ({ children }: { children: ReactNode }) => {
-  return <ClientProvider>{children}</ClientProvider>;
+  const queryClient = new QueryClient();
+  return (
+    <SessionProvider>
+      <QueryClientProvider client={queryClient}>
+        <ClientProvider>{children}</ClientProvider>
+      </QueryClientProvider>
+    </SessionProvider>
+  );
 };
 
 export default Layout;

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,31 +11,71 @@ import { PrivacyFooter } from "@/components/privacy-footer";
 import { AuthHeader } from "@/components/auth-header";
 import Text from "@/components/text";
 import { PATHS } from "@/types";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { signIn } from "next-auth/react";
+import Cookies from "js-cookie";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Page() {
   const n = useRouter();
+  const q = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
+  const [isPending, startTransition] = useState(false);
   const [auth, setAuth] = useState({
-    email: "demo@example.com",
-    password: "123456789",
+    email: "",
+    password: "",
+    rememberLogins: false,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAuth({ ...auth, [e.target.name]: e?.target.value });
   };
 
-  const signIn = async (e: React.FormEvent<HTMLFormElement>) => {
+  const _signIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!(auth.email && auth.password)) {
-      toast.error("MISSING_REQUIRED_PARAMETER: Please provide all fields");
-      return;
+    try {
+      startTransition(true);
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: auth.email,
+        password: auth.password,
+      });
+
+      if (result?.error) {
+        toast.error(result.error);
+      } else {
+        const now = new Date();
+        now.setDate(now.getDate() + 30);
+
+        if (auth.rememberLogins) {
+          Cookies.set("email", auth.email, { expires: now });
+          Cookies.set("password", auth.password, { expires: now });
+        }
+
+        n.push(PATHS.HOME);
+        n.refresh();
+      }
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      startTransition(false);
     }
 
     n.push(PATHS.HOME);
   };
+
+  console.log(q.get("email"));
+
+  useEffect(() => {
+    const email = q.get("email") || Cookies.get("email") || "";
+    const password = Cookies.get("password") || "";
+
+    if (email || password) {
+      setAuth({ ...auth, email, password, rememberLogins: true });
+    }
+  }, []);
 
   return (
     <main>
@@ -57,7 +97,15 @@ export default function Page() {
           showWaveEmoji
         />
 
-        <form onSubmit={signIn} className="space-y-6">
+        {q.get("message") && (
+          <Alert variant="destructive">
+            <TriangleAlert />
+            <AlertTitle className="text-lg font-bold">INFO</AlertTitle>
+            <AlertDescription>{q.get("message")}</AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={_signIn} className="space-y-6">
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <Label htmlFor="email" className="text-xs">
@@ -110,7 +158,13 @@ export default function Page() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <Checkbox id="remember" />
+            <Checkbox
+              checked={auth.rememberLogins}
+              onCheckedChange={(e: boolean) =>
+                setAuth({ ...auth, rememberLogins: e })
+              }
+              id="remember"
+            />
             <Label htmlFor="remember" className="text-sm font-normal">
               Remember me
             </Label>
@@ -120,6 +174,7 @@ export default function Page() {
             type="submit"
             variant="ringHover"
             size="lg"
+            disabled={isPending}
             className="w-full bg-primary hover:bg-primary/90 rounded-none"
           >
             Sign In

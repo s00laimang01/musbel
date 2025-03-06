@@ -23,21 +23,21 @@ export default function ActionButtons() {
     <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
       <ActionButton
         icon={<Plus className="h-6 w-6 text-gray-500" />}
-        label="Fund Account"
+        label="ADD MONEY"
         onClick={() => {
           n.push(PATHS.TOP_UP_ACCOUNT);
         }}
       />
       <ActionButton
         icon={<ArrowDown className="h-6 w-6 text-gray-500" />}
-        label="Buy Data"
+        label="BUY DATA"
         onClick={() => {
           n.push(PATHS.BUY_DATA);
         }}
       />
       <ActionButton
         icon={<Search className="h-6 w-6 text-gray-500" />}
-        label="Buy Airtime"
+        label="BUY AIRTIME"
         onClick={() => {
           n.push(PATHS.BUY_AIRTIME);
         }}

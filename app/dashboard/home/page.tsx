@@ -4,11 +4,14 @@ import ActionButtons from "@/components/action-buttons";
 import Header from "@/components/dashboard-header";
 import FeatureCards from "@/components/features";
 import RecentActivity from "@/components/recent-activities";
+import { useAuthentication } from "@/hooks/use-authentication";
 import { useNavBar } from "@/hooks/use-nav-bar";
+import { useUserStore } from "@/stores/user.store";
 import React from "react";
 
 const Page = () => {
-  useNavBar("Hi Suleiman");
+  useNavBar("");
+  const { user } = useAuthentication("me", 5000);
   return (
     <main className="flex-1 md:p-8">
       {/* Desktop Header - hidden on mobile */}
@@ -17,14 +20,16 @@ const Page = () => {
           name="Suleiman"
           fullName="Suleiman Abubakar"
           email="au611640@gmail.com"
-          balance={"0.00"}
+          balance={user?.balance.toFixed(2) || "0.00"}
         />
       </div>
 
       {/* Mobile Balance Display */}
       <div className="md:hidden mt-8">
         <div className="flex items-baseline">
-          <span className="text-6xl font-bold text-primary">0.00</span>
+          <span className="text-6xl font-bold text-primary">
+            {user?.balance.toFixed(2)}
+          </span>
           <span className="ml-2 text-gray-400">NGN</span>
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, ReactNode, useState } from "react";
+import { type FC, type ReactNode, useEffect, useState } from "react";
 import { Sidebar } from "./sidebar";
 import {
   Sheet,
@@ -10,16 +10,49 @@ import {
   SheetTrigger,
 } from "./ui/sheet";
 import { Button } from "./ui/button";
-import { MenuIcon } from "lucide-react";
+import { Loader2, MenuIcon } from "lucide-react";
 import { useDashboard } from "@/stores/dashboard.store";
 import { Toaster } from "./ui/sonner";
+import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
+import { useUserStore } from "@/stores/user.store";
+import { getUser } from "@/lib/utils";
 
 const ClientProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const { title } = useDashboard();
   const [isOpen, setIsOpen] = useState(false);
+
+  const { status } = useSession();
+  const { setUser } = useUserStore();
+
+  // Use React Query to fetch user data
+  const { isLoading, data } = useQuery({
+    queryKey: ["user", status],
+    queryFn: () => getUser(),
+    enabled: status === "authenticated",
+  });
+
+  const { title = data?.fullName?.split(" ")?.[0] || "Dashboard" } =
+    useDashboard();
+
+  // Set user data when available
+  useEffect(() => {
+    if (data && status === "authenticated") {
+      setUser(data);
+    }
+  }, [data, status]);
+
+  // Show loading state while checking authentication or fetching data
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 size={50} className="animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen bg-white w-screen ">
-      <Toaster position="top-center" />
+    <div className="flex min-h-screen bg-white w-screen">
+      <Toaster position="top-center" richColors />
       {/* Desktop Sidebar - hidden on mobile */}
       <div className="hidden lg:fixed lg:flex lg:flex-col xl:w-80 pb-0 overflow-y-auto h-full border-slate-100">
         <div className="flex flex-col justify-between h-full overflow-y-auto">

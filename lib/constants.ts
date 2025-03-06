@@ -5,11 +5,19 @@ import {
   recentPurchaseNumbers,
 } from "@/types";
 import z from "zod";
-import { generateDate } from "./utils";
 import { CreditCard, GraduationCap, Zap } from "lucide-react";
 
 export const configs = {
   appName: "KINTA SME",
+  "X-RAPIDAPI-HOST": process.env["X-RAPIDAPI-HOST"],
+  "X-RAPIDAPI-KEY": process.env["X-RAPIDAPI-KEY"],
+  FLW_ENCRYPTION_KEY: process.env["FLW_ENCRYPTION_KEY"],
+  FLW_PUBK: process.env["FLW_PUBK"],
+  FLW_SECK: process.env["FLW_SECK"],
+  HOST_EMAIL: process.env["HOST_EMAIL"],
+  HOST_EMAIL_PASSWORD: process.env["HOST_EMAIL_PASSWORD"],
+  FLW_SECRET_HASH: process.env["FLW_SECRET_HASH"],
+  RESEND_API_KEY: process.env["RESEND_API_KEY"],
 };
 
 // FORM SCHEMAS
@@ -108,28 +116,28 @@ export const DEMO_PHONE_NUMBERS: recentPurchaseNumbers[] = [
   {
     amount: 1000,
     dataPlan: "",
-    date: generateDate(),
+    date: new Date().toISOString(),
     network: "mtn",
     number: "07061508325",
   },
   {
     amount: 2000,
     dataPlan: "",
-    date: generateDate(),
+    date: new Date().toISOString(),
     network: "airtel",
     number: "08123164428",
   },
   {
     amount: 3000,
     dataPlan: "",
-    date: generateDate(),
+    date: new Date().toISOString(),
     network: "mtn",
     number: "09130404752",
   },
   {
     amount: 4000,
     dataPlan: "",
-    date: generateDate(),
+    date: new Date().toISOString(),
     network: "glo",
     number: "08032108745",
   },
