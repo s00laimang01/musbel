@@ -11,8 +11,6 @@ export async function GET() {
 
     const account = await Account.findOne({ user: session?.user.email });
 
-    console.log({ account });
-
     return NextResponse.json(
       httpStatusResponse(
         200,

@@ -66,8 +66,6 @@ export default function Page() {
     n.push(PATHS.HOME);
   };
 
-  console.log(q.get("email"));
-
   useEffect(() => {
     const email = q.get("email") || Cookies.get("email") || "";
     const password = Cookies.get("password") || "";
