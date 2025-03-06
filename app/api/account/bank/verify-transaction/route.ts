@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     }
 
     // Parse and validate trx
-    const payload = await request.json();
+    const { data: payload } = (await request.json()) as flutterwaveWebhook;
 
     const trx = await verifyTransaction(payload.id);
 
