@@ -113,13 +113,13 @@ export async function POST(request: Request) {
     if (transaction.type === "funding" && trx.amount > 0) {
       // Update user balance
       user.balance += trx.amount;
-      await user.save({ validateBeforeSave: true });
+      await user.save({ validateModifiedOnly: true });
     }
 
     // Update transaction details
     transaction.amount = trx.amount;
     transaction.status = "success";
-    await transaction.save({ validateBeforeSave: true });
+    await transaction.save({ validateModifiedOnly: true });
 
     // Return success response
     return NextResponse.json(

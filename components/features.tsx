@@ -50,6 +50,7 @@ export default function FeatureCards() {
           icon={Zap}
           title="Electricity Bills"
           description="AEDC, IKEJA, KADUNA and More companies"
+          className="h-[12rem]"
         />
       </Link>
       <Link href={PATHS.HOME}>
@@ -57,6 +58,7 @@ export default function FeatureCards() {
           icon={Tag}
           title="Check Rates"
           description="See pricing for data and airtime"
+          className="h-[12rem]"
         />
       </Link>
       <Link href={PATHS.SETTINGS}>
@@ -64,12 +66,14 @@ export default function FeatureCards() {
           icon={PiggyBank}
           title="My Accounts"
           description="View your available and active accounts"
+          className="h-[12rem]"
         />
       </Link>
       <FeatureCard
         icon={Download}
         title="Download Data"
         description="If you have want to download your data, it's right here!"
+        className="h-[12rem]"
       />
     </div>
   );
