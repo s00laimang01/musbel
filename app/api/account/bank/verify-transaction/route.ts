@@ -120,44 +120,46 @@ export async function POST(request: Request) {
       );
     }
 
-    if (trx.customer.email) {
-      // If the customer has an email, check to see if the email exist on this platform and if yes fund the user account after success checks.
+    // TODO: Refactor this code!
+    // if (trx.customer.email) {
+    //   const tx_ref = new mongoose.Types.ObjectId().toString();
+    //   // If the customer has an email, check to see if the email exist on this platform and if yes fund the user account after success checks.
 
-      const [user, account] = await Promise.all([
-        User.findOne({ "auth.email": trx.customer.email }).session(session),
-        Account.findOne({ user: trx.customer.email }).session(session),
-      ]);
+    //   const [user, account] = await Promise.all([
+    //     User.findOne({ "auth.email": trx.customer.email }).session(session),
+    //     Account.findOne({ user: trx.customer.email }).session(session),
+    //   ]);
 
-      if (account && user) {
-        // We found the user account
-        const p: transaction = {
-          accountId: trx.id,
-          amount: trx.amount,
-          note: trx.narration || "Account funding via dedicated account",
-          paymentMethod: "dedicatedAccount",
-          status: "success",
-          tx_ref: trx.tx_ref,
-          type: "funding",
-          user: account.user,
-        };
+    //   if (account && user) {
+    //     // We found the user account
+    //     const p: transaction = {
+    //       accountId: trx.id,
+    //       amount: trx.amount,
+    //       note: trx.narration || "Account funding via dedicated account",
+    //       paymentMethod: "dedicatedAccount",
+    //       status: "success",
+    //       tx_ref,
+    //       type: "funding",
+    //       user: account.user,
+    //     };
 
-        const transaction = new Transaction(p);
-        user.balance += trx.amount;
+    //     const transaction = new Transaction(p);
+    //     user.balance += trx.amount;
 
-        await Promise.all([
-          await transaction.save({ session }),
-          await user.save({ session }),
-        ]);
+    //     await Promise.all([
+    //       await transaction.save({ session }),
+    //       await user.save({ session }),
+    //     ]);
 
-        await session.commitTransaction();
-        session.endSession();
+    //     await session.commitTransaction();
+    //     session.endSession();
 
-        return NextResponse.json(
-          httpStatusResponse(200, "Payment successfully processed"),
-          { status: 200 }
-        );
-      }
-    }
+    //     return NextResponse.json(
+    //       httpStatusResponse(200, "Payment successfully processed"),
+    //       { status: 200 }
+    //     );
+    //   }
+    // }
 
     // Find the user
     const user = await User.findById(transaction.user);
