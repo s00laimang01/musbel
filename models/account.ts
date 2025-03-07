@@ -83,7 +83,7 @@ AccountSchema.post("save", async (doc, next) => {
 
       const account = await createVirtualAccount(
         user?.auth.email!,
-        tx_ref,
+        undefined,
         true,
         undefined,
         doc.bvn, // Note: BVN is already hashed at this point

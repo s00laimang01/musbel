@@ -210,7 +210,7 @@ export const getInitials = (name = "") => {
 
 export const createVirtualAccount = async <T = any>(
   email: string,
-  tx_ref: string,
+  tx_ref?: string,
   isPermanent = false,
   amount?: number,
   bvn?: String,
