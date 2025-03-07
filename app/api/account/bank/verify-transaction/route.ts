@@ -5,7 +5,6 @@ import { User } from "@/models/users";
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { flutterwaveWebhook, transaction } from "@/types";
-import { Account } from "@/models/account";
 import mongoose from "mongoose";
 
 /**
@@ -120,47 +119,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // TODO: Refactor this code!
-    // if (trx.customer.email) {
-    //   const tx_ref = new mongoose.Types.ObjectId().toString();
-    //   // If the customer has an email, check to see if the email exist on this platform and if yes fund the user account after success checks.
-
-    //   const [user, account] = await Promise.all([
-    //     User.findOne({ "auth.email": trx.customer.email }).session(session),
-    //     Account.findOne({ user: trx.customer.email }).session(session),
-    //   ]);
-
-    //   if (account && user) {
-    //     // We found the user account
-    //     const p: transaction = {
-    //       accountId: trx.id,
-    //       amount: trx.amount,
-    //       note: trx.narration || "Account funding via dedicated account",
-    //       paymentMethod: "dedicatedAccount",
-    //       status: "success",
-    //       tx_ref,
-    //       type: "funding",
-    //       user: account.user,
-    //     };
-
-    //     const transaction = new Transaction(p);
-    //     user.balance += trx.amount;
-
-    //     await Promise.all([
-    //       await transaction.save({ session }),
-    //       await user.save({ session }),
-    //     ]);
-
-    //     await session.commitTransaction();
-    //     session.endSession();
-
-    //     return NextResponse.json(
-    //       httpStatusResponse(200, "Payment successfully processed"),
-    //       { status: 200 }
-    //     );
-    //   }
-    // }
-
     // Find the user
     const user = await User.findById(transaction.user);
     if (!user) {
@@ -182,6 +140,9 @@ export async function POST(request: Request) {
     transaction.amount = trx.amount;
     transaction.status = "success";
     await transaction.save({ validateModifiedOnly: true });
+
+    await session.commitTransaction();
+    session.endSession();
 
     // Return success response
     return NextResponse.json(
