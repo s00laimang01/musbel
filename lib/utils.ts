@@ -11,6 +11,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { configs } from "./constants";
 import { Session } from "next-auth";
+import { NextResponse } from "next/server";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -148,11 +149,10 @@ export const httpStatusResponse = (
 
 export const checkIfUserIsAuthenticated = async (session: Session | null) => {
   if (!session) {
-    throw new Error("UNAUTHENTICATED: Please signIn to continue.");
-  }
-
-  if (session.expires) {
-    console.log(session.expires);
+    return NextResponse.json(
+      httpStatusResponse(401, "UNAUTHENTICATED: Please signIn to continue."),
+      { status: 401 }
+    );
   }
 
   return true;
