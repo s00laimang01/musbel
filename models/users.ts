@@ -31,18 +31,6 @@ const UserSchema: mongoose.Schema<IUser> = new mongoose.Schema(
       required: [true, "Please provide a phone number"],
       unique: true,
       trim: true,
-      validate: {
-        async validator(phoneNumber: string) {
-          try {
-            const res = await validatePhoneNumber(phoneNumber);
-
-            return res.is_valid;
-          } catch (error) {
-            return true;
-          }
-        },
-        message: "Please provide a valid phone number",
-      },
     },
     country: {
       type: String,

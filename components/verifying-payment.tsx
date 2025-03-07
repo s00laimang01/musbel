@@ -40,8 +40,6 @@ const VerifyingPayment: React.FC<VerifyingPaymentProps> = ({
     staleTime: 0,
   });
 
-  console.log({ data });
-
   // Handle success callback
   useEffect(() => {
     if (data?.data.data.status === "successful") {
