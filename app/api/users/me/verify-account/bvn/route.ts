@@ -50,6 +50,14 @@ export async function POST(request: Request) {
       account.bvn = bvn;
       await account.save({ validateBeforeSave: true });
     }
+
+    return NextResponse.json(
+      httpStatusResponse(
+        200,
+        "BVN_SUBMITTED: A virtual account number will be assign to you shortly."
+      ),
+      { status: 200 }
+    );
   } catch (error) {
     console.log(error);
     return NextResponse.json(

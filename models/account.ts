@@ -57,8 +57,6 @@ AccountSchema.pre("save", async function (next) {
         return next(error);
       }
 
-      // Hash BVN
-      this.bvn = await bcrypt.hash(this.bvn, 10);
       next();
     } catch (error) {
       next(error as Error);
@@ -71,6 +69,7 @@ AccountSchema.pre("save", async function (next) {
 // Create virtual account after initial save
 AccountSchema.post("save", async (doc, next) => {
   try {
+    console.log(doc);
     // Only proceed if we haven't created a dedicated account yet
     if (!doc.hasDedicatedAccountNumber && doc.bvn) {
       const user = await findUserByEmail(doc.user, {
@@ -83,7 +82,7 @@ AccountSchema.post("save", async (doc, next) => {
 
       const account = await createVirtualAccount(
         user?.auth.email!,
-        undefined,
+        tx_ref,
         true,
         undefined,
         doc.bvn, // Note: BVN is already hashed at this point
@@ -94,6 +93,9 @@ AccountSchema.post("save", async (doc, next) => {
         const error = new Error("Unable to create virtual account");
         return next(error);
       }
+
+      // Hash BVN
+      const bvn = await bcrypt.hash(doc.bvn, 10);
 
       // Update account details without triggering the save hook again
       await mongoose.models.Account.findByIdAndUpdate(
@@ -110,6 +112,7 @@ AccountSchema.post("save", async (doc, next) => {
           hasDedicatedAccountNumber: true,
           order_ref: account.order_ref,
           flw_ref: account.flw_ref,
+          bvn,
         },
         { new: true }
       );

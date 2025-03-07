@@ -6,12 +6,12 @@ import FeatureCards from "@/components/features";
 import RecentActivity from "@/components/recent-activities";
 import { useAuthentication } from "@/hooks/use-authentication";
 import { useNavBar } from "@/hooks/use-nav-bar";
-import { useUserStore } from "@/stores/user.store";
 import React from "react";
 
 const Page = () => {
-  useNavBar("");
   const { user } = useAuthentication("me", 5000);
+
+  useNavBar(`Hi ${user?.fullName.split(" ")[0]} 👋`);
   return (
     <main className="flex-1 md:p-8">
       {/* Desktop Header - hidden on mobile */}
