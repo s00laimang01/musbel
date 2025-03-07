@@ -25,11 +25,6 @@ export async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  // Handle authenticated users trying to access public pages (optional redirect)
-  if (isPublicPath && token) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
   // Handle unauthenticated users trying to access protected pages
   if (!isPublicPath && !token) {
     // For API routes, return a proper 401 response
