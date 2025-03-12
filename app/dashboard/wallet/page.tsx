@@ -1,6 +1,7 @@
 "use client";
 
 import Empty from "@/components/empty";
+import RecentActivity from "@/components/recent-activities";
 import Text from "@/components/text";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -64,7 +65,11 @@ const Page = () => {
       <div className="space-y-3">
         <h2 className="text-sm font-semibold text-primary/80">TRANSACTIONS</h2>
         <div className="border" />
-        <Empty header="You do not have any transactions" />
+        <RecentActivity
+          header="Recent Fundings"
+          transactionType="funding"
+          description="An overview of the current status of your most recent funding transactions."
+        />
       </div>
     </div>
   );

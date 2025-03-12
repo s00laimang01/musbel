@@ -1,6 +1,8 @@
 "use client";
 
 import BalanceCard from "@/components/balance-card";
+import EnterPin from "@/components/enter-pin";
+import { ScrollArea } from "@/components/scroll-area";
 import Text from "@/components/text";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,44 +13,174 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Drawer,
   DrawerContent,
+  DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetTrigger } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavBar } from "@/hooks/use-nav-bar";
 import {
   configs,
   FREQUENTLY_PURCHASE_ELECTRICITY_BILLS,
+  METER_TYPE,
 } from "@/lib/constants";
-import { formatCurrency } from "@/lib/utils";
-import { CheckCircle2, ChevronDown } from "lucide-react";
-import React, { FC, ReactNode } from "react";
+import {
+  _verifyMeterNumber,
+  api,
+  cn,
+  errorMessage,
+  formatCurrency,
+} from "@/lib/utils";
+import { electricity, meterType } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { useMediaQuery } from "@uidotdev/usehooks";
+import { CheckCircle2, ChevronDown, Loader2, XCircle } from "lucide-react";
+import React, { FC, ReactNode, useState } from "react";
+import { toast } from "sonner";
 
-const SelectElectricityCompany: FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+const SelectElectricityCompany: FC<{
+  children: ReactNode;
+  onSelect: (e: electricity) => void;
+}> = ({ children, onSelect }) => {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const [isOpen, setIsOpen] = useState(false);
+  const { isLoading, data: electricity = [] } = useQuery({
+    queryKey: ["electricity"],
+    queryFn: async () =>
+      (await api.get<{ data: electricity[] }>(`/create/electricity/`)).data
+        .data,
+    enabled: isOpen,
+  });
+
+  const content = (
+    <div>
+      <Input
+        className="w-full h-[3rem] rounded-none"
+        placeholder="Search Company"
+      />
+      <div className="w-full mt-3">
+        {isLoading ? (
+          <div className="w-full flex flex-col gap-2">
+            <Skeleton className="w-full h-[3rem] rounded-none" />
+            <Skeleton className="w-full h-[3rem] rounded-none" />
+            <Skeleton className="w-full h-[3rem] rounded-none" />
+          </div>
+        ) : (
+          <ScrollArea className="h-[300px] w-full flex flex-col gap-5">
+            {electricity?.map((e) => (
+              <div
+                key={e._id}
+                className="w-full rounded-none text-left mb-3 flex flex-row gap-3 items-center justify-start h-[3rem] cursor-pointer hover:bg-primary/10 p-3"
+                onClick={() => {
+                  onSelect(e);
+                  setIsOpen(false);
+                }}
+              >
+                <img
+                  src={e.logoUrl!}
+                  alt={e.discoName}
+                  width={30}
+                  height={30}
+                />
+                {e.discoName}
+              </div>
+            ))}
+          </ScrollArea>
+        )}
+      </div>
+    </div>
+  );
+
+  if (!isMobile) {
+    return (
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent>
+          <DialogHeader className="px-0 py-2">
+            <DialogTitle className="font-bold text-lg underline text-primary">
+              Select Electricity Comapany
+            </DialogTitle>
+          </DialogHeader>
+          <DialogTitle className="sr-only" />
+          {content}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <Drawer>
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
-      <DrawerContent>
-        <DrawerTitle className=" sr-only" />
-        Compannies
+      <DrawerContent className="p-3">
+        <DrawerHeader className="px-0 py-2">
+          <DrawerTitle className="font-bold text-lg underline text-primary">
+            Select Electricity Comapany
+          </DrawerTitle>
+        </DrawerHeader>
+        {content}
       </DrawerContent>
     </Drawer>
   );
 };
 
-const SelectMeterType: FC<{ children: ReactNode }> = ({ children }) => {
+const SelectMeterType: FC<{
+  children: ReactNode;
+  onSelect: (type: meterType) => void;
+}> = ({ children, onSelect }) => {
+  const isMobile = useMediaQuery("(max-width: 767px) ");
+  const [isOpen, setIsOpen] = useState(false);
+
+  const content = (
+    <div className="w-full flex flex-col mt-3 gap-2">
+      {METER_TYPE?.map((type) => (
+        <div
+          key={type}
+          className="w-full rounded-none text-left flex flex-row gap-3 items-center justify-start h-[3rem] cursor-pointer hover:bg-primary/10 p-3"
+          onClick={() => {
+            onSelect(type);
+            setIsOpen(false);
+          }}
+        >
+          {type.toUpperCase()}
+        </div>
+      ))}
+    </div>
+  );
+
+  if (!isMobile) {
+    return (
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select Electricity Type</DialogTitle>
+          </DialogHeader>
+
+          {content}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <Drawer>
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
-      <DrawerContent>
-        <DrawerTitle className=" sr-only" />
-        Meter Type
+      <DrawerContent className="p-3">
+        <DrawerHeader>
+          <DrawerTitle>Select Electricity Type</DrawerTitle>
+        </DrawerHeader>
+        {content}
       </DrawerContent>
     </Drawer>
   );
@@ -56,17 +188,77 @@ const SelectMeterType: FC<{ children: ReactNode }> = ({ children }) => {
 
 const Page = () => {
   useNavBar("Electricity Payments");
+  const [electricity, setElectricity] = useState<electricity>();
+  const [meterType, setMeterType] = useState<meterType>();
+  const [meterNumber, setMeterNumber] = useState<string>("");
+  const [amount, setAmount] = useState<number>();
+  const [isPending, startTransition] = useState(false);
+
+  const {
+    isLoading,
+    data: meter,
+    error: meterVerificationError,
+  } = useQuery({
+    queryKey: ["verify-meter-number", meterNumber, meterType, electricity],
+    queryFn: async () =>
+      _verifyMeterNumber(
+        meterType!,
+        Number(meterNumber),
+        Number(electricity?.discoId)
+      ),
+    enabled: Boolean(electricity && meterType && meterNumber?.length === 13),
+  });
+
+  const purchaseElectricity = async (pin: string, _amount?: number) => {
+    try {
+      startTransition(true);
+      const payload = {
+        electricity: electricity?.discoId,
+        meterType,
+        meterNumber,
+        amount: amount || _amount,
+        pin,
+        byPassValidator: true,
+      };
+
+      const res = await api.post<{ message: string }>(
+        `/purchase/electricity/`,
+        payload
+      );
+      toast(res.data.message);
+      setMeterNumber("");
+    } catch (error) {
+      toast.error(errorMessage(error).message);
+    } finally {
+      startTransition(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <BalanceCard />
-      <Card className="p-4 rounded-md">
+      <Card className="p-4 rounded-none">
         <CardContent className="p-0 space-y-2">
-          <SelectElectricityCompany>
+          <SelectElectricityCompany onSelect={setElectricity}>
             <Button
               variant="ghost"
-              className="w-full flex items-center justify-between p-2 cursor-pointer"
+              className="w-full flex items-center justify-between p-2 cursor-pointer rounded-none"
             >
-              <h2 className="font-semibold">Select Electricity</h2>
+              <div>
+                {!electricity ? (
+                  <h2 className="font-semibold">Select Electricity</h2>
+                ) : (
+                  <div className="w-full rounded-none text-left flex flex-row gap-3 items-center justify-start h-[3rem] cursor-pointer p-3">
+                    <img
+                      src={electricity.logoUrl!}
+                      alt={electricity.discoName}
+                      width={30}
+                      height={30}
+                    />
+                    {electricity.discoName}
+                  </div>
+                )}
+              </div>
               <ChevronDown className="text-primary " />
             </Button>
           </SelectElectricityCompany>
@@ -77,37 +269,63 @@ const Page = () => {
           </CardDescription>
         </CardContent>
       </Card>
-      <Card className="p-4 rounded-md">
+      <Card className="p-4 rounded-none">
         <CardHeader className="p-0">
           <CardTitle className="tracking-tight text-sm text-primary/80">
             PAYMENT DETAILS
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0 space-y-2">
-          <SelectMeterType>
+          <SelectMeterType onSelect={setMeterType}>
             <Button
               variant="ghost"
-              className="w-full flex items-center justify-between p-2 cursor-pointer"
+              className="w-full flex items-center justify-between p-2 cursor-pointer rounded-none h-[3rem]"
             >
-              <h2 className="font-semibold">Select Meter Type</h2>
+              <h2 className="font-semibold">
+                {meterType?.toUpperCase() || "Select Meter Type"}
+              </h2>
               <ChevronDown className="text-primary " />
             </Button>
           </SelectMeterType>
           <Separator />
           <Input
-            className="w-full h-[3rem] rounded-sm"
+            onChange={(e) => {
+              if (isNaN(Number(e.target.value))) return;
+
+              setMeterNumber(e.target.value);
+            }}
+            value={meterNumber || ""}
+            className="w-full h-[3rem] rounded-none"
             placeholder="METER NUMBER"
           />
           <Separator />
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={19} className="text-primary" />
-            <Text className="font-bold tracking-tight">
-              SULEIMAN GITSU ABUBAKAR
-            </Text>
-          </div>
+          {
+            <div className="flex items-center gap-2">
+              {meter &&
+                (isLoading ? (
+                  <Loader2 size={19} className="animate-spin text-primary" />
+                ) : !meterVerificationError ? (
+                  <CheckCircle2 size={19} className="text-primary" />
+                ) : (
+                  <XCircle size={19} className="text-destructive" />
+                ))}
+              <Text
+                className={cn("font-bold tracking-tight", {
+                  "text-destructive": meterVerificationError,
+                  "text-primary": !meterVerificationError,
+                })}
+              >
+                {isLoading
+                  ? "VERIFYING..."
+                  : !meterVerificationError
+                  ? meter?.name?.toUpperCase()
+                  : "SOMETHING WENT WRONG, PLEASE CONTINUE"}
+              </Text>
+            </div>
+          }
         </CardContent>
       </Card>
-      <Card className="p-4 rounded-md">
+      <Card className="p-4 rounded-none">
         <CardHeader className="p-0">
           <CardTitle className="tracking-tight text-sm text-primary/80">
             AMOUNT
@@ -116,18 +334,33 @@ const Page = () => {
         <CardContent className="p-0 space-y-2">
           <div className="grid grid-cols-3 gap-2">
             {FREQUENTLY_PURCHASE_ELECTRICITY_BILLS.map((amount) => (
-              <Button
-                variant="outline"
-                className="rounded-sm text-primary hover:text-white"
+              <EnterPin
                 key={amount}
+                onVerify={(pin) => {
+                  purchaseElectricity(pin, amount);
+                  setAmount(amount);
+                }}
               >
-                {formatCurrency(amount, 0)}
-              </Button>
+                <Button
+                  variant="outline"
+                  className="rounded-none text-primary hover:text-white"
+                >
+                  {formatCurrency(amount, 0)}
+                </Button>
+              </EnterPin>
             ))}
           </div>
           <Separator />
           <form action="" className="p-1 w-full h-[3.5rem] relative">
-            <Input placeholder="AMOUNT" className="rounded-none h-full" />
+            <Input
+              value={amount || ""}
+              onChange={(e) => {
+                if (isNaN(Number(e.target.value))) return;
+                setAmount(Number(e.target.value));
+              }}
+              placeholder="AMOUNT"
+              className="rounded-none h-full"
+            />
             <Text className="absolute right-3 top-4 text-primary text-sm font-semibold">
               NGN
             </Text>
@@ -139,9 +372,15 @@ const Page = () => {
           </div>
         </CardContent>
       </Card>
-      <Button variant="ringHover" className="w-full h-[3rem] rounded-sm">
-        PAY
-      </Button>
+      <EnterPin onVerify={purchaseElectricity}>
+        <Button
+          disabled={isPending}
+          variant="ringHover"
+          className="w-full h-[3rem] rounded-none"
+        >
+          PAY
+        </Button>
+      </EnterPin>
     </div>
   );
 };

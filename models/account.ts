@@ -1,4 +1,4 @@
-import type { dedicatedAccountNumber } from "@/types";
+import type { dedicatedAccountNumber, paymentMethod } from "@/types";
 import mongoose from "mongoose";
 import { findUserByEmail } from "./users";
 import { createVirtualAccount } from "@/lib/utils";
@@ -26,15 +26,8 @@ const AccountSchema: mongoose.Schema<dedicatedAccountNumber> =
         bankCode: { type: String },
         expirationDate: { type: String },
       },
-      bvn: {
-        type: String,
-        required: true,
-        minlength: 11,
-        unique: true,
-        // We'll handle validation separately to avoid issues with hashing
-      },
-      user: { type: String, ref: "User", index: true, unique: true },
-      hasDedicatedAccountNumber: { type: Boolean, default: false },
+      user: { type: String, ref: "user", index: true, unique: true },
+      hasDedicatedAccountNumber: { type: Boolean, default: false }, // Fixed type definition
       order_ref: { type: String },
       flw_ref: { type: String },
     },
@@ -69,7 +62,6 @@ AccountSchema.pre("save", async function (next) {
 // Create virtual account after initial save
 AccountSchema.post("save", async (doc, next) => {
   try {
-    console.log(doc);
     // Only proceed if we haven't created a dedicated account yet
     if (!doc.hasDedicatedAccountNumber && doc.bvn) {
       const user = await findUserByEmail(doc.user, {
@@ -78,15 +70,22 @@ AccountSchema.post("save", async (doc, next) => {
       });
 
       const tx_ref = new mongoose.Types.ObjectId().toString();
-      const note = `Please use this account to fund your ${configs.appName} Account`;
+      const note = user?.auth.email;
 
-      const account = await createVirtualAccount(
+      const account = await createVirtualAccount<{
+        user: string;
+        type: paymentMethod;
+      }>(
         user?.auth.email!,
         tx_ref,
         true,
         undefined,
         doc.bvn, // Note: BVN is already hashed at this point
-        note
+        note,
+        {
+          user: user?.id,
+          type: "dedicatedAccount",
+        }
       );
 
       if (!account) {
@@ -94,7 +93,6 @@ AccountSchema.post("save", async (doc, next) => {
         return next(error);
       }
 
-      // Hash BVN
       const bvn = await bcrypt.hash(doc.bvn, 10);
 
       // Update account details without triggering the save hook again

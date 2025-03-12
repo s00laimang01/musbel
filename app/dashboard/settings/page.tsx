@@ -2,7 +2,7 @@
 
 import { useNavBar } from "@/hooks/use-nav-bar";
 import React, { FC, ReactNode, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Code, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ import { useAuthentication } from "@/hooks/use-authentication";
 import { signOut } from "next-auth/react";
 import { PATHS } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
+import CreateOrUpdatePin from "@/components/create-or-update";
 
 const ChangeEmailAddress: FC<{ children: ReactNode }> = ({ children }) => {
   const [email, setEmail] = useState("");
@@ -161,6 +162,19 @@ const Page = () => {
     }
   };
 
+  const createTransactionPin = async (pin: string) => {
+    try {
+      const res = await api.post<{ message: string }>(`/auth/create/pin/`, {
+        pin,
+        confirmPin: pin,
+      });
+
+      toast(res.data.message);
+    } catch (error) {
+      toast.error(errorMessage(error).message);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       setUser({ phoneNumber: user.phoneNumber, fullName: user.fullName });
@@ -285,21 +299,28 @@ const Page = () => {
         </Button>
       </section>
 
-      <section className="mb-10 border-t pt-8">
-        <h2 className="mb-6 text-xl font-bold text-primary">
-          SUBMIT COMPLAINT TICKET
-        </h2>
+      <CreateOrUpdatePin
+        onSuccess={createTransactionPin}
+        mode={user?.hasSetPin ? "update" : "create"}
+      >
+        <section className="mb-10 border-t pt-8 cursor-pointer">
+          <h2 className="mb-6 text-xl font-bold text-primary">
+            {user?.hasSetPin ? "MODIFY" : "CREATE"} TRANSACTION PIN
+          </h2>
 
-        <div className="flex items-center gap-3 rounded-md border p-4">
-          <Plus className="h-5 w-5 text-primary" />
-          <div>
-            <p className="font-medium">Create a new complaint</p>
-            <p className="text-sm text-muted-foreground">
-              tap here to continue
-            </p>
+          <div className="flex items-center gap-3 rounded-md border p-4">
+            <Code className="h-5 w-5 text-primary" />
+            <div>
+              <p className="font-medium">
+                {user?.hasSetPin ? "Update" : "Create"} transaction pin
+              </p>
+              <p className="text-sm text-muted-foreground">
+                tap here to continue
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </CreateOrUpdatePin>
 
       <section className="border-t pt-8">
         <h2 className="mb-6 text-xl font-bold text-primary">Delete Account</h2>

@@ -1,97 +1,215 @@
 "use client";
 
+import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Filter } from "lucide-react";
 import DataPlanCard from "@/components/data-plan-card";
 import PhoneNumberBadge from "@/components/phone-number-badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useNavBar } from "@/hooks/use-nav-bar";
-import {
-  AVIALABLE_NETWORKS,
-  dataPlans,
-  DEMO_PHONE_NUMBERS,
-} from "@/lib/constants";
-import { generateDate, getNetworkLogo, sortPlan } from "@/lib/utils";
-import { availableNetworks, recentPurchaseNumbers } from "@/types";
-import Image from "next/image";
-import React, { useState } from "react";
-import { motion } from "motion/react";
 import BalanceCard from "@/components/balance-card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useNavBar } from "@/hooks/use-nav-bar";
+import { AVIALABLE_NETWORKS, PLAN_TYPES } from "@/lib/constants";
+import type { availableNetworks, dataPlan } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { api, getRecentlyUsedContacts } from "@/lib/utils";
+import { useMediaQuery } from "@uidotdev/usehooks";
+import Text from "@/components/text";
 
 const Page = () => {
   useNavBar("Buy Data");
   const [network, setNetwork] = useState<availableNetworks | null>(null);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [planType, setPlanType] = useState("");
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  const { isLoading, data } = useQuery({
+    queryKey: ["data-plans"],
+    queryFn: () => api.get<{ data: dataPlan[] }>(`/create/data-plan/`),
+  });
+
+  const { isLoading: _isLoading, data: recentlyUsed } = useQuery({
+    queryKey: ["recently-used"],
+    queryFn: () => getRecentlyUsedContacts("data"),
+  });
+
+  const { data: _data } = data || {};
+  const { data: dataPlans = [] } = _data || {};
+
+  // Filter data plans based on selected filters
+  const filteredDataPlans = useMemo(() => {
+    if (network === ("all" as availableNetworks) && planType === "all") {
+      return dataPlans;
+    }
+
+    return dataPlans.filter((plan) => {
+      // If no network is selected or the plan matches the selected network
+      const networkMatch =
+        !network || plan.network.toLowerCase() === network.toLowerCase();
+
+      // If no plan type is selected or the plan matches the selected type
+      const typeMatch =
+        !planType || plan.type.toLowerCase() === planType.toLowerCase();
+
+      return networkMatch && typeMatch;
+    });
+  }, [dataPlans, network, planType]);
 
   return (
-    <div className="w-full overflow-hidden">
-      <div className=" overflow-y-auto">
-        <div className="space-y-5 w-full">
-          <BalanceCard />
+    <div className="w-full max-w-6xl mx-auto py-6">
+      <div className="space-y-8">
+        {/* Balance Section */}
+        <div className="mb-8">
+          <BalanceCard flexBtn={isMobile} />
+        </div>
 
-          <div className="w-full p-1">
+        {/* Phone Number Section */}
+        <div className="bg-white rounded-none shadow-sm p-6 border border-gray-100">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">
+            Enter Phone Number
+          </h2>
+
+          <div className="relative">
             <Input
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="Phone Number (+234)"
-              className="h-[3.5rem] rounded-none placeholder:text-lg text-lg"
+              className="h-14 rounded-none pl-4 pr-4 border-gray-200 bg-gray-50 focus:border-primary focus:ring-1 focus:ring-primary text-base"
             />
-
-            <div className="mt-4 space-y-1">
-              <h2 className="font-bold text-primary tracking-tight">
-                RECENTLY USED
-              </h2>
-              <div className="flex items-center overflow-auto gap-3">
-                {DEMO_PHONE_NUMBERS.map((p, idx) => (
-                  <PhoneNumberBadge
-                    {...p}
-                    key={idx}
-                    onSelect={setPhoneNumber}
-                  />
-                ))}
-              </div>
-            </div>
           </div>
 
-          <div className="space-y-2 pb-3">
-            <h2 className="font-bold tracking-tight text-primary">
-              DATA PLANS
-            </h2>
-            <div className="flex items-center overflow-auto gap-3">
-              {AVIALABLE_NETWORKS.map((n, idx) => (
-                <Button
-                  onClick={() => setNetwork(n)}
-                  variant={network === n ? "default" : "secondary"}
-                  size="sm"
-                  key={idx}
-                  className="gap-3 hover:bg-primary/80 hover:text-white border cursor-pointer flex items-center py-2 px-1 rounded-none w-[8rem] shrink-0"
-                >
-                  <Image
-                    src={getNetworkLogo(n)}
-                    alt={n}
-                    width={20}
-                    height={20}
-                    className="rounded-full"
+          <div className="mt-6">
+            <h3 className="font-medium text-sm text-gray-600 mb-3">
+              RECENTLY USED
+            </h3>
+            <div className="flex items-center overflow-x-auto pb-2 gap-3 scrollbar-hide">
+              {!recentlyUsed?.length ? (
+                <Text className="underline font-bold text-primary">
+                  No recently used contact
+                </Text>
+              ) : (
+                recentlyUsed?.map((p, idx) => (
+                  <PhoneNumberBadge
+                    key={idx}
+                    onSelect={setPhoneNumber}
+                    network={p.meta?.network!}
+                    number={p.uid}
+                    dataPlan={p.meta?.data!}
+                    amount={0}
+                    date={p.lastUsed}
                   />
-                  {n.toUpperCase()}
-                </Button>
-              ))}
+                ))
+              )}
             </div>
-            <div className="w-full border" />
+          </div>
+        </div>
+
+        {/* Data Plans Section */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">
+            Select Data Plan
+          </h2>
+
+          {/* Network Selection */}
+          <div className="flex flex-wrap gap-3 mb-6">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              <span className="text-sm font-medium">Choose Plan:</span>
+            </div>
+
+            <Select
+              value={(network as string) || ""}
+              onValueChange={(value: availableNetworks) => {
+                setNetwork(value);
+              }}
+            >
+              <SelectTrigger className="md:w-[180px] w-full rounded-none capitalize">
+                <SelectValue
+                  placeholder="Select Network"
+                  className="capitalize"
+                />
+              </SelectTrigger>
+              <SelectContent className="rounded-none">
+                <SelectItem value="all">All Networks</SelectItem>
+                {AVIALABLE_NETWORKS.map((type) => (
+                  <SelectItem key={type} value={type} className="capitalize">
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={planType}
+              onValueChange={(value) => {
+                setPlanType(value);
+              }}
+            >
+              <SelectTrigger className="md:w-[180px] w-full rounded-none capitalize">
+                <SelectValue
+                  placeholder="Select Data Type"
+                  className="capitalize"
+                />
+              </SelectTrigger>
+              <SelectContent className="rounded-none">
+                <SelectItem value="all">All Types</SelectItem>
+                {PLAN_TYPES.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-full h-px bg-gray-100 my-6" />
+
+          {/* Data Plan Cards */}
+          <AnimatePresence mode="popLayout">
             <motion.div
               layout
               transition={{
-                default: { ease: "linear" },
+                default: { ease: "easeInOut" },
                 layout: { duration: 0.3 },
               }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-              {sortPlan(dataPlans || [], network || undefined).map(
-                (plan, idx) => (
-                  <DataPlanCard {...plan} key={idx} />
-                )
+              {filteredDataPlans.length > 0 ? (
+                filteredDataPlans.map((plan, idx) => (
+                  <motion.div
+                    key={`${plan.network}-${plan.data}-${idx}`}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <DataPlanCard
+                      {...plan}
+                      _isLoading={isLoading}
+                      phoneNumber={phoneNumber}
+                    />
+                  </motion.div>
+                ))
+              ) : (
+                <motion.div
+                  key="no-results"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="col-span-full text-center py-8 text-gray-500"
+                >
+                  No data plans match your selected filters.
+                </motion.div>
               )}
             </motion.div>
-          </div>
+          </AnimatePresence>
         </div>
       </div>
     </div>

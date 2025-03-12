@@ -54,9 +54,8 @@ export async function POST(request: Request) {
     return NextResponse.json(
       httpStatusResponse(
         200,
-        "BVN_SUBMITTED: A virtual account number will be assign to you shortly."
-      ),
-      { status: 200 }
+        "ACCOUNT_VERIFIED: A dedicated virtual account will be assign to you shortly"
+      )
     );
   } catch (error) {
     console.log(error);

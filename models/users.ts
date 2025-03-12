@@ -25,6 +25,12 @@ const UserSchema: mongoose.Schema<IUser> = new mongoose.Schema(
         minlength: 6,
         select: false,
       },
+      transactionPin: {
+        type: String,
+        select: false,
+        min: [4, "Transaction pin must be at least 4 characters"],
+        max: [4, "Transaction pin must be at most 4 characters"],
+      },
     },
     phoneNumber: {
       type: String,
@@ -55,6 +61,10 @@ const UserSchema: mongoose.Schema<IUser> = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    hasSetPin: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
@@ -63,10 +73,30 @@ UserSchema.pre("save", async function (next) {
   this.isEmailVerified = !this.isModified("auth.email");
   this.isPhoneVerified = !this.isModified("phoneNumber");
 
+  if (this.auth.transactionPin) {
+    if (this.auth.transactionPin.length !== 4) {
+      next(new Error("PIN must be 4 digits"));
+    }
+
+    if (/^(.)\1{3}$/.test(this.auth.transactionPin)) {
+      next(new Error("PIN cannot be all the same digits"));
+    }
+
+    if (
+      /^(0123|1234|2345|3456|4567|5678|6789|7890)$/.test(
+        this.auth.transactionPin
+      )
+    ) {
+      next(new Error("PIN cannot be sequential digits"));
+    }
+
+    this.hasSetPin = true;
+  }
+
   next();
 });
 
-// After the user is created create an account number for the user --->
+// After the user is created create a dedicated account number for the user --->
 UserSchema.post("save", async function (doc) {});
 
 const User: mongoose.Model<IUser> =
@@ -98,4 +128,49 @@ const findUserByEmail = async (
   return u;
 };
 
-export { User, findUser, findUserByEmail };
+const verifyUserTransactionPin = async (
+  userEmail: string,
+  userPin: string,
+  throwOnIncorrect = true
+) => {
+  const isPinValid = await User.findOne({
+    "auth.email": userEmail,
+    "auth.transactionPin": userPin,
+  });
+
+  if (!isPinValid && throwOnIncorrect) {
+    const error = new Error("Incorrect transaction pin");
+    throw error;
+  }
+
+  return Boolean(isPinValid);
+};
+
+const verifyUserBalance = async (userEmail: string, requiredAmount: number) => {
+  const user = await findUserByEmail(userEmail);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (
+    isNaN(requiredAmount) ||
+    typeof requiredAmount !== "number" ||
+    requiredAmount <= 0
+  ) {
+    throw new Error("Invalid amount");
+  }
+
+  // Check if the user has sufficient balance
+  if (requiredAmount > user.balance) {
+    throw new Error("Insufficient balance");
+  }
+};
+
+export {
+  User,
+  findUser,
+  findUserByEmail,
+  verifyUserTransactionPin,
+  verifyUserBalance,
+};

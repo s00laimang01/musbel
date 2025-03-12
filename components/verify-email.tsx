@@ -235,7 +235,7 @@ const VerifyEmail: FC<{ children: React.ReactNode; email?: string }> = ({
             <DrawerFooter className="pt-0">
               <DrawerClose asChild>
                 <Button
-                  className="hover:bg-white text-primary rounded-none h-[3rem]"
+                  className="hover:bg-white text-primary hover:text-primary rounded-none h-[3rem]"
                   variant="outline"
                 >
                   Cancel
@@ -267,7 +267,7 @@ const VerifyEmail: FC<{ children: React.ReactNode; email?: string }> = ({
               variant="outline"
               onClick={() => handleOpenChange(false)}
               type="button"
-              className="hover:bg-white text-primary rounded-none h-[3rem]"
+              className="hover:bg-white text-primary hover:text-primary rounded-none h-[3rem]"
             >
               Cancel
             </Button>

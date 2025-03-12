@@ -68,6 +68,7 @@ const Page = () => {
         );
 
         setOpen(true);
+        setStep(3);
       } catch (error) {
         toast.error(errorMessage(error).message);
         console.log(error);
@@ -75,7 +76,10 @@ const Page = () => {
         startTransition(false);
       }
     }
-    setStep(stepCount);
+
+    if (stepCount !== 3) {
+      setStep(stepCount);
+    }
   };
 
   const disableBtn: Record<number, boolean> = {
@@ -85,11 +89,7 @@ const Page = () => {
     3: false,
   };
 
-  const {
-    isLoading,
-    data: _data,
-    error,
-  } = useQuery({
+  const { isLoading, data: _data } = useQuery({
     queryKey: ["transaction-fess", data.amount],
     queryFn: async () =>
       api.get<{
@@ -133,17 +133,18 @@ const Page = () => {
         <Card className="bg-primary/80 rounded-sm mt-4">
           <CardContent className="space-y-3">
             <Text className="font-semibold text-white/80">
-              {account?.hasDedicatedAccountNumber
-                ? "PREMIUM TRUST BANK"
-                : "USER ACCOUNT NOT VERIFIED"}
+              {account?.accountDetails.bankName.toUpperCase() ||
+                "USER ACCOUNT NOT VERIFIED"}
             </Text>
             <div className="w-full flex items-center justify-between">
               <CardTitle className="text-4xl font-bold text-white">
-                {account?.hasDedicatedAccountNumber ? "4051440580" : "N/A"}
+                {account?.accountDetails?.accountNumber || "N/A"}
               </CardTitle>
               {account?.hasDedicatedAccountNumber ? (
                 <Button
-                  onClick={() => copyAccountNumber("4051440580")}
+                  onClick={() =>
+                    copyAccountNumber(account.accountDetails.accountNumber)
+                  }
                   className="rounded-sm bg-white/20 hover:bg-white/30"
                 >
                   Copy
@@ -157,7 +158,8 @@ const Page = () => {
               )}
             </div>
             <Text className="text-white/80">
-              {configs.appName} / Suleiman Abubakar
+              {account?.accountDetails.accountName ||
+                "ACCOUNT NOT YET VERIFIED"}
             </Text>
           </CardContent>
         </Card>
@@ -259,7 +261,6 @@ const Page = () => {
               paymentId={virtualAccount?.tx_ref!}
               onSuccess={() => {}}
               onFailure={() => {
-                setStep(0);
                 toast.error("Payment Verification failed");
               }}
             />

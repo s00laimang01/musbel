@@ -1,9 +1,22 @@
 import {
+  AirtimeVendingResponse,
   availableNetworks,
+  BillPaymentResponse,
+  CableSubscriptionResponse,
   dataPlan,
+  DataVendingResponse,
   dedicatedAccountNumber,
+  ExamResponse,
   flutterwaveWebhook,
   IUser,
+  meterType,
+  MeterVerificationResponse,
+  paymentMethod,
+  PrintRechargeCard,
+  recentlyUsedContact,
+  transaction,
+  transactionStatus,
+  transactionType,
   VirtualAccountResponse,
 } from "@/types";
 import axios from "axios";
@@ -12,6 +25,8 @@ import { twMerge } from "tailwind-merge";
 import { configs } from "./constants";
 import { Session } from "next-auth";
 import { NextResponse } from "next/server";
+import queryString from "query-string";
+import { User } from "@/models/users";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -42,15 +57,26 @@ export const generateDate = () => {
   return currentDate.toISOString();
 };
 
-export const sortPlan = (plans: dataPlan[], network?: availableNetworks) => {
+export const sortPlan = (
+  plans: dataPlan[],
+  network?: availableNetworks,
+  planType?: string
+) => {
   let _plans: dataPlan[] = [];
   _plans = plans.sort((plan) => (plan.isPopular ? -1 : 1));
 
-  if (!network) return _plans;
+  if (network) {
+    console.log({ network });
+    _plans.filter(
+      (plan) => plan.network.toLowerCase() === network.toLowerCase()
+    );
+  }
 
-  return _plans.filter(
-    (plan) => plan.network.toLowerCase() === network.toLowerCase()
-  );
+  if (planType) {
+    _plans.filter((plan) => plan.type.toLowerCase() === planType.toLowerCase());
+  }
+
+  return _plans;
 };
 
 export const isPathMathching = (path: string) => {
@@ -302,10 +328,11 @@ export function countdownTime(targetDate: string) {
 }
 
 export const verifyTransaction = async (id: string) => {
-  const res = await axios.get<flutterwaveWebhook>(
-    `https://api.flutterwave.com/v3/transactions/${id}/verify`,
-    { headers: { Authorization: `Bearer ${configs.FLW_SECK}` } }
-  );
+  const res = await axios.get<
+    flutterwaveWebhook<{ user: string; type: paymentMethod }>
+  >(`https://api.flutterwave.com/v3/transactions/${id}/verify`, {
+    headers: { Authorization: `Bearer ${configs.FLW_SECK}` },
+  });
 
   return res.data.data;
 };
@@ -314,6 +341,270 @@ export const verifyTransactionWithTxRef = async (tx_ref: string) => {
   const res = await axios.get<flutterwaveWebhook>(
     `https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${tx_ref}`,
     { headers: { Authorization: `Bearer ${configs.FLW_SECK}` } }
+  );
+
+  return res.data.data;
+};
+
+export const getTransactions = async (payload: {
+  type?: transactionType;
+  status?: transactionStatus;
+  page?: number;
+  limit?: number;
+}) => {
+  const q = queryString.stringify(payload);
+  const res = await api.get<{
+    transactions: transaction[];
+    pagination: { total: number; page: number; limit: number; pages: number };
+  }>(`/transactions/all/?${q}`);
+
+  return res.data;
+};
+
+export const getRecentlyUsedContacts = async (
+  type: transactionType,
+  limit = 4
+) => {
+  const q = queryString.stringify({ type, limit });
+  const res = await api.get<{
+    data: recentlyUsedContact<{
+      user: string;
+      network: availableNetworks;
+      data: string;
+      amount: number;
+    }>[];
+  }>(`/users/me/recently-used/?${q}`);
+
+  return res.data.data;
+};
+
+/**
+ * Converts a string to base64 encoding
+ * @param {string} str - The input string to convert
+ * @returns {string} - The base64 encoded string
+ */
+export function stringToBase64(str: string) {
+  // For browser environments
+  if (typeof window !== "undefined" && window.btoa) {
+    // Handle Unicode characters properly
+    const binaryString = Array.from(str)
+      .map((char) => String.fromCharCode(char.charCodeAt(0)))
+      .join("");
+    return window.btoa(binaryString);
+  }
+
+  // For Node.js environments
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(str).toString("base64");
+  }
+
+  // Fallback implementation if neither browser nor Node.js methods are available
+  const base64chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  let result = "";
+  let i = 0;
+
+  // Convert string to UTF-8 byte array
+  const bytes = [];
+  for (let i = 0; i < str.length; i++) {
+    const charCode = str.charCodeAt(i);
+    if (charCode < 128) {
+      bytes.push(charCode);
+    } else if (charCode < 2048) {
+      bytes.push((charCode >> 6) | 192);
+      bytes.push((charCode & 63) | 128);
+    } else {
+      bytes.push((charCode >> 12) | 224);
+      bytes.push(((charCode >> 6) & 63) | 128);
+      bytes.push((charCode & 63) | 128);
+    }
+  }
+
+  // Process byte array in groups of 3
+  while (i < bytes.length) {
+    const triplet =
+      (bytes[i] << 16) +
+      (i + 1 < bytes.length ? bytes[i + 1] << 8 : 0) +
+      (i + 2 < bytes.length ? bytes[i + 2] : 0);
+
+    // Convert triplet to four base64 characters
+    result += base64chars[(triplet >> 18) & 63];
+    result += base64chars[(triplet >> 12) & 63];
+    result += i + 1 < bytes.length ? base64chars[(triplet >> 6) & 63] : "=";
+    result += i + 2 < bytes.length ? base64chars[triplet & 63] : "=";
+
+    i += 3;
+  }
+
+  return result;
+}
+
+export const buyData = async (
+  planId: number,
+  phoneNumber: string,
+  tx_ref: string,
+  byPassValidator = false
+) => {
+  const payload = {
+    data_plan: planId,
+    bypass: byPassValidator,
+    phone: phoneNumber,
+    "request-id": tx_ref,
+  };
+  const res = await axios.post<DataVendingResponse>(
+    "https://a4bdata.com/api/data/",
+    payload,
+    { headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` } }
+  );
+
+  return res.data;
+};
+
+export const buyAirtime = async (
+  network: number,
+  phoneNumber: string,
+  amount: number,
+  tx_ref: string,
+  byPassValidator = false,
+  plan_type = "VTU"
+) => {
+  const payload = {
+    network,
+    bypass: byPassValidator,
+    phone: phoneNumber,
+    "request-id": tx_ref,
+    amount: amount.toString(),
+    plan_type,
+  };
+  const res = await axios.post<AirtimeVendingResponse>(
+    "https://a4bdata.com/api/topup/",
+    payload,
+    { headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` } }
+  );
+
+  return res.data;
+};
+
+export const subscribeForCable = async (
+  cableId: number,
+  iuc: number,
+  cablePlan: number,
+  tx_ref: string,
+  byPassValidator = false
+) => {
+  const payload = {
+    cable: cableId,
+    iuc,
+    cable_plan: cablePlan,
+    bypass: byPassValidator,
+    "request-id": tx_ref,
+  };
+  const res = await axios.post<CableSubscriptionResponse>(
+    `https://a4bdata.com/api/cable/`,
+    payload,
+    { headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` } }
+  );
+
+  return res.data;
+};
+
+/**
+ * Function to make an exam API request
+ * @param {number} examId - The exam ID
+ * @param {number} quantity - The quantity of exams
+ * @returns {Promise} - Promise with the API response
+ */
+export async function buyExam(examId: number, requestId: string, quantity = 1) {
+  // Create the payload
+  const payload = {
+    exam: examId,
+    quantity: quantity,
+    "request-id": requestId,
+  };
+
+  // Make the request
+  const response = await axios.post<ExamResponse>(
+    "https://a4bdata.com/api/exam",
+    payload,
+    {
+      headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` },
+    }
+  );
+
+  // Parse and return the JSON response
+  return response.data;
+}
+
+export const billPayment = async (payload: {
+  disco: number;
+  meter_type: "prepaid" | "postpaid";
+  meter_number: number;
+  amount: number;
+  bypass?: boolean;
+  "request-id": string;
+}) => {
+  const res = await axios.post<BillPaymentResponse>(
+    `https://a4bdata.com/api/bill/`,
+    payload,
+    { headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` } }
+  );
+
+  return res.data;
+};
+
+export const printRechargeCard = async (payload: {
+  network: number;
+  plan_type: number;
+  quantity: number;
+  card_name: string;
+  "request-id": string;
+}) => {
+  const res = await axios.post<PrintRechargeCard>(
+    `https://a4bdata.com/api/recharge_card/`,
+    payload,
+    { headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` } }
+  );
+
+  return res.data;
+};
+
+export const verifyMeterNumber = async (
+  meter_number: number,
+  disco: number,
+  meter_type: meterType
+) => {
+  try {
+    const res = await axios.get<{
+      status: transactionStatus;
+      name: string;
+    }>(
+      `https://a4bdata.com/api/bill/bill-validation?meter_number=${meter_number}&disco=${disco}&meter_type=${meter_type}`,
+      {
+        headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` },
+      }
+    );
+
+    console.log(res.data);
+
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const _verifyMeterNumber = async (
+  meterType: meterType,
+  meterNumber: number,
+  disco: number
+) => {
+  const q = queryString.stringify({
+    meterType,
+    meterNumber,
+    disco,
+  });
+
+  const res = await api.get<{ data: MeterVerificationResponse }>(
+    `/create/electricity/verify-meter/?${q}`
   );
 
   return res.data.data;

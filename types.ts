@@ -36,9 +36,10 @@ export interface HeaderProps {
 }
 
 // BUY-DATA
-export type dataTypes = "SME";
+export type dataTypes = string;
 
 export type availableNetworks = "mtn" | "glo" | "airtel" | "9mobile";
+export type planTypes = "GIFTING" | "SME" | "COOPERATE GIFTING";
 
 export interface recentPurchaseNumbers {
   number: string;
@@ -50,12 +51,14 @@ export interface recentPurchaseNumbers {
 }
 
 export interface dataPlan {
-  network: string;
+  _id?: string;
+  network: availableNetworks;
   data: string;
   amount: number;
-  type: dataTypes;
+  type: planTypes;
   availability: string;
   isPopular?: boolean;
+  planId: number;
 }
 
 export interface FeatureCardProps {
@@ -101,10 +104,12 @@ export interface IUser {
   auth: {
     email: string;
     password: string;
+    transactionPin: string;
   };
   role: IUserRole;
   createdAt?: string;
   updatedAt?: string;
+  hasSetPin: boolean;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
 }
@@ -169,9 +174,12 @@ export type transactionType =
   | "bill"
   | "recharge-card"
   | "exam";
-export type paymentMethod = "dedicatedAccount" | "virtualAccount";
+export type paymentMethod =
+  | "dedicatedAccount"
+  | "virtualAccount"
+  | "ownAccount";
 
-export interface transaction {
+export interface transaction<T = any> {
   amount: number;
   tx_ref: string;
   user: string;
@@ -182,11 +190,30 @@ export interface transaction {
   type: transactionType;
   paymentMethod: paymentMethod;
   accountId?: string;
+  meta?: T;
+}
+
+export interface recentlyUsedContact<T = any> {
+  uid: string;
+  type: transactionType;
+  createdAt?: string;
+  updatedAt?: string;
+  lastUsed: string;
+  meta?: T;
+}
+
+export type meterType = "prepaid" | "postpaid";
+
+export interface electricity {
+  _id?: string;
+  discoId: string;
+  discoName: string;
+  logoUrl?: string;
 }
 
 // FLUTTERWAVE WEBHOOK
 
-export interface flutterwaveWebhook {
+export interface flutterwaveWebhook<T = any> {
   event: "charge.completed";
   data: {
     id: string;
@@ -213,6 +240,7 @@ export interface flutterwaveWebhook {
       email: string;
       created_at: string;
     };
+    meta?: T;
   };
 }
 
@@ -221,4 +249,118 @@ export interface VerifyingPaymentProps {
   paymentId: string;
   onSuccess?: () => void;
   onFailure?: () => void;
+}
+
+// APP CONFIGS
+
+export interface appProps {
+  stopAllTransactions: boolean;
+  stopSomeTransactions: transactionType[];
+  lockAccounts: string[];
+}
+
+// Vending Responses
+export interface DataVendingResponse {
+  network: string;
+  "request-id": string;
+  amount: string;
+  dataplan: string;
+  status: string;
+  message: string;
+  phone_number: string;
+  oldbal: string;
+  newbal: number;
+  system: string;
+  plan_type: string;
+  wallet_vending: string;
+}
+
+export interface AirtimeVendingResponse {
+  network: string;
+  "request-id": string;
+  amount: number;
+  discount: number;
+  status: string;
+  message: string;
+  phone_number: string;
+  oldbal: string;
+  newbal: number;
+  system: string;
+  plan_type: string;
+  wallet_vending: string;
+}
+
+export interface CableSubscriptionResponse {
+  cabl_name: string;
+  "request-id": string;
+  amount: string;
+  charges: number;
+  status: string;
+  message: string;
+  iuc: string;
+  oldbal: string;
+  newbal: number;
+  system: string;
+  wallet_vending: string;
+  plan_name: string;
+}
+
+export interface BillPaymentResponse {
+  disco_name: string;
+  "request-id": string;
+  amount: number;
+  charges: number;
+  status: transactionStatus;
+  message: string;
+  meter_number: string;
+  meter_type: "POSTPAID" | "PREPAID";
+  oldbal: string;
+  newbal: number;
+  system: "API";
+  token: string;
+  wallet_vending: "wallet";
+}
+
+export interface PrintRechargeCard {
+  network: availableNetworks;
+  "request-id": string;
+  amount: number;
+  quantity: number;
+  status: transactionStatus;
+  message: string;
+  card_name: string;
+  oldbal: string;
+  newbal: number;
+  system: "API";
+  serial: string;
+  pin: string;
+  load_pin: string;
+  check_balance: string;
+}
+
+export interface ExamResponse {
+  username: string;
+  amount: number;
+  quantity: number;
+  message: string;
+  oldbal: string;
+  newbal: number;
+  date: string;
+  status: "success";
+  "request-id": string;
+  pin: string;
+}
+
+export interface MeterVerificationResponse {
+  status: "success";
+  name: string;
+}
+
+export type examType = "waec" | "neco" | "nabteb";
+
+export interface exam {
+  _id?: string;
+  examType: examType;
+  amount: number;
+  examId: number;
 }

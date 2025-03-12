@@ -9,8 +9,9 @@ import {
   PhoneIcon,
   WifiIcon,
 } from "lucide-react";
-import { transaction, transactionType } from "@/types";
+import { PATHS, transaction, transactionType } from "@/types";
 import { formatCurrency } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface TransactionCardProps {
   transaction?: transaction | null;
@@ -21,7 +22,7 @@ export default function TransactionCard({
   transaction,
   isLoading = false,
 }: TransactionCardProps) {
-  // For demo purposes, using a sample transaction if none provided
+  const r = useRouter();
   const [lastTx, setLastTx] = useState<transaction | null>(transaction || null);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function TransactionCard({
 
   if (isLoading) {
     return (
-      <div className="mt-2 px-4 py-3 bg-gray-50 rounded-lg animate-pulse">
+      <div className="mt-2 px-4 py-3 bg-gray-50 rounded-none animate-pulse">
         <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
         <div className="h-5 bg-gray-200 rounded w-2/3"></div>
       </div>
@@ -99,8 +100,15 @@ export default function TransactionCard({
       .join(" ");
   };
 
+  const goToTransaction = () => {
+    r.push(PATHS.TRANSACTIONS + `?tx_ref=${transaction?.tx_ref}`);
+  };
+
   return (
-    <div className="mt-2 px-4 py-3 bg-gray-50 rounded-none">
+    <div
+      onClick={goToTransaction}
+      className="mt-2 px-4 py-3 bg-gray-50 rounded-none"
+    >
       <p className="text-xs text-gray-400 font-bold mb-1">Transaction</p>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

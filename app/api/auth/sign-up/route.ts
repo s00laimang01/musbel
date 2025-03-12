@@ -65,17 +65,16 @@ export async function POST(request: Request) {
       { session }
     );
 
-    const account = new Account(
-      {
-        user: user[0].auth.email,
-        hasDedicatedAccountNumber: false,
-      },
-      { session }
-    );
+    console.log({ user });
 
-    await account.save({ validateBeforeSave: true });
+    const account = new Account({
+      user: user[0].auth.email,
+      hasDedicatedAccountNumber: false,
+    });
 
-    session.abortTransaction();
+    await account.save({ validateBeforeSave: true, session });
+
+    session.commitTransaction();
     session.endSession();
     // Return success without exposing password
     return NextResponse.json(

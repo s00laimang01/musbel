@@ -1,8 +1,6 @@
 import {
-  checkIfUserIsAuthenticated,
   createVirtualAccount,
   getAccountNumber,
-  getTransferFee,
   httpStatusResponse,
 } from "@/lib/utils";
 import { Transaction } from "@/models/transactions";
@@ -55,24 +53,30 @@ export async function POST(request: Request) {
 
     const { amount } = validationResult.data;
 
-    // Authenticate user
+    // Get the user session
     const session = await getServerSession();
-    await checkIfUserIsAuthenticated(session);
 
+    // If the session does not contain an email address return for this request
     if (!session?.user?.email) {
       throw new AuthenticationError("User email not found in session");
     }
 
-    const user = await findUserByEmail(session.user.email);
+    // If the user using the email in the current session and throw404 if it does not exist
+    const user = await findUserByEmail(session.user.email, {
+      throwOn404: true,
+      includePassword: false,
+    });
 
-    // Check for recent duplicate transactions
+    // Check for recent duplicate transactions -> The expiry time is 1hour
     const expiryThreshold = new Date();
     expiryThreshold.setMinutes(
       expiryThreshold.getMinutes() - TRANSACTION_EXPIRY_MINUTES
     );
 
+    // Create a transaction refrence to be use to store the doc in the db and its unique
     const tx_ref = new mongoose.Types.ObjectId().toString();
 
+    // Check if the user already has a pending transaction of the same amount, if yes use the transaction
     const duplicateTransaction = await findDuplicateTransaction(
       user?._id!,
       amount,
@@ -95,14 +99,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const transferFee = await getTransferFee(amount);
-
     // Create new virtual account
     const virtualAccount = await createVirtualAccount<{ user: string }>(
       user?.auth.email!,
       tx_ref,
       false,
-      amount + transferFee.fee,
+      amount,
       undefined,
       "Please make the payment to this account.",
       {
@@ -110,6 +112,7 @@ export async function POST(request: Request) {
       }
     );
 
+    // If we are unable to create the virtual throe an error
     if (!virtualAccount) {
       return NextResponse.json(
         httpStatusResponse(
@@ -120,10 +123,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Record transaction in database
+    // Record transaction in database with
     await createTransactionRecord(
       user?._id!,
-      amount + transferFee.fee,
+      amount,
       virtualAccount?.order_ref!,
       tx_ref
     );

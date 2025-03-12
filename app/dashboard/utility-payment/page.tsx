@@ -1,10 +1,8 @@
 "use client";
 
 import BalanceCard from "@/components/balance-card";
-import Empty from "@/components/empty";
 import { FeatureCard } from "@/components/features";
 import RecentActivity from "@/components/recent-activities";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useNavBar } from "@/hooks/use-nav-bar";
 import { Utilities } from "@/lib/constants";
@@ -15,9 +13,9 @@ const Page = () => {
   useNavBar("Utility Payments");
   return (
     <div className="space-y-4">
-      <BalanceCard />
+      <BalanceCard flexBtn />
       <Input
-        className="w-full h-[3rem] rounded-sm placeholder:text-lg"
+        className="w-full h-[3rem] placeholder:text-lg rounded-none"
         placeholder="Search"
       />
       <div className="grid md:grid-cols-2 grid-cols-1 gap-3">
@@ -34,10 +32,11 @@ const Page = () => {
       </div>
       <div className="w-full border" />
       <div className="space-y-3">
-        <h2 className=" tracking-tight text-xl font-semibold text-primary">
-          RECENT TRANSACTIONS
-        </h2>
-        <Empty header="You have no utilities transactions" />
+        <RecentActivity
+          header="Recent Bill Transactions"
+          transactionType="bill"
+          description="An overview of the current status of your most recent bill transactions."
+        />
       </div>
     </div>
   );

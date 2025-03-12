@@ -10,9 +10,9 @@ export async function GET(request: Request) {
 
     const user = await User.findOne({ "auth.email": session?.user?.email });
 
-    const transaction = await Transaction.findOne({
-      user: user?.id,
-    }).sort({ createdAt: -1 });
+    const transaction = await Transaction.findOne({ user: user?.id }).sort({
+      createdAt: -1,
+    });
 
     return NextResponse.json(
       httpStatusResponse(

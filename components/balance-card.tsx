@@ -5,12 +5,19 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import Link from "next/link";
 import { useAuthentication } from "@/hooks/use-authentication";
+import { FC } from "react";
+import { cn } from "@/lib/utils";
 
-const BalanceCard = () => {
+const BalanceCard: FC<{ flexBtn?: boolean }> = ({ flexBtn }) => {
   const { user } = useAuthentication("me", 5000);
   return (
     <Card className="rounded-sm bg-primary/80 w-full">
-      <CardContent className="flex items-center justify-between flex-wrap">
+      <CardContent
+        className={cn(
+          "flex items-center justify-between flex-wrap",
+          flexBtn && "flex-col items-start justify-start"
+        )}
+      >
         <div className="flex items-baseline">
           <span className="text-6xl font-bold text-white">
             {user?.balance.toFixed(2) || "0.00"}

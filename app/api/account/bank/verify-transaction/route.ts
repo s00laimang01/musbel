@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { flutterwaveWebhook, transaction } from "@/types";
 import mongoose from "mongoose";
+import { Account } from "@/models/account";
 
 /**
  * Securely verifies the webhook signature using constant-time comparison
@@ -117,6 +118,55 @@ export async function POST(request: Request) {
         httpStatusResponse(200, "Currency not supported"),
         { status: 200 }
       );
+    }
+
+    // If we have a narration in the webhook
+    if (
+      (trx.meta?.user && trx.meta.type === "dedicatedAccount") ||
+      trx.narration
+    ) {
+      const tx_ref = new mongoose.Types.ObjectId().toString();
+
+      // The narration will usually contain the user email
+      const user =
+        (await User.findById(trx.meta?.user).session(session)) ||
+        (await User.findOne({ "auth.email": trx.narration }).session(session));
+
+      // If we found the user, we know this transaction is for dedicated accounts
+      if (user) {
+        // Now query to make sure that we are funcind the right account
+        const account = await Account.findOne({ user: user._id });
+
+        // Payload to create a new Transaction in the db
+        const trxPayload: transaction = {
+          accountId: account?.order_ref,
+          amount: trx.amount,
+          createdAt: new Date().toISOString(),
+          note: `Your account has been funded with ${trx.amount}`,
+          paymentMethod: "dedicatedAccount",
+          status: "pending",
+          tx_ref,
+          type: "funding",
+          user: user?._id.toString(),
+        };
+
+        user.balance += trx.amount;
+
+        const newTransaction = new Transaction(trxPayload);
+
+        await Promise.all([
+          newTransaction.save({ session }),
+          user.save({ session }),
+        ]);
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return NextResponse.json(
+          httpStatusResponse(200, "Payment successfully processed"),
+          { status: 200 }
+        );
+      }
     }
 
     // Find the user

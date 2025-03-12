@@ -7,14 +7,15 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { findUserByEmail, User } from "@/models/users";
 import { connectToDatabase } from "@/lib/connect-to-db";
+import { Exam } from "@/models/exam";
 
 export async function GET(request: Request) {
   try {
     const session = await getServerSession();
 
-    await checkIfUserIsAuthenticated(session);
-
     await connectToDatabase();
+
+    await Exam.find({});
 
     const user = await findUserByEmail(session?.user?.email || "");
 

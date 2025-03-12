@@ -25,7 +25,7 @@ const TransactionSchema: mongoose.Schema<transaction> = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["virtualAccount", "dedicatedAccount"],
+      enum: ["virtualAccount", "dedicatedAccount", "ownAccount"],
       default: "virtualAccount",
     },
     tx_ref: {
@@ -46,6 +46,9 @@ const TransactionSchema: mongoose.Schema<transaction> = new mongoose.Schema(
     accountId: {
       type: String,
       required: true,
+    },
+    meta: {
+      type: mongoose.Schema.Types.Mixed,
     },
   },
   {
