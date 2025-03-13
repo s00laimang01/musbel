@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { errorMessage } from "@/lib/utils";
 import { set } from "mongoose";
+import { useAuthentication } from "@/hooks/use-authentication";
 
 interface EnterPinProps {
   children: ReactNode;
@@ -38,6 +39,7 @@ const EnterPin: FC<EnterPinProps> = ({
   autoVerify = true,
   moreChild,
 }) => {
+  const { user } = useAuthentication();
   const [open, setOpen] = useState(false);
   const [pin, setPin] = useState("");
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -52,6 +54,17 @@ const EnterPin: FC<EnterPinProps> = ({
     } catch (error) {
       toast.error(errorMessage(error).message);
     }
+  };
+
+  const handleOpen = (open: boolean) => {
+    if (!user?.hasSetPin) {
+      toast.error(
+        "USER_PIN_NOT_REGISTERED: please head to settings and create your transaction pin."
+      );
+      return;
+    }
+
+    setOpen(open);
   };
 
   // Auto-verify when PIN is complete
@@ -98,7 +111,7 @@ const EnterPin: FC<EnterPinProps> = ({
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={setOpen}>
+      <Drawer open={open} onOpenChange={handleOpen}>
         <DrawerTrigger asChild className="w-full">
           {children}
         </DrawerTrigger>
@@ -112,7 +125,7 @@ const EnterPin: FC<EnterPinProps> = ({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogTitle className="sr-only" />

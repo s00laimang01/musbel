@@ -3,7 +3,9 @@
 import ActionButtons from "@/components/action-buttons";
 import Header from "@/components/dashboard-header";
 import FeatureCards from "@/components/features";
+import RemindUserToVerifyEmail from "@/components/notify-user-to-verify-email";
 import RecentActivity from "@/components/recent-activities";
+import RemindUserToCreateTransactionPin from "@/components/remind-user-to-create-pin";
 import TransactionCard from "@/components/transaction-card";
 import { useAuthentication } from "@/hooks/use-authentication";
 import { useNavBar } from "@/hooks/use-nav-bar";
@@ -17,7 +19,7 @@ const Page = () => {
 
   useNavBar(`Hi ${user?.fullName.split(" ")[0]} 👋`);
 
-  const { isLoading, data, error } = useQuery({
+  const { isLoading, data } = useQuery({
     queryKey: ["transactions", "last"],
     queryFn: () => api.get<{ data: transaction }>(`/transactions/last/`),
     refetchInterval: 1000 * 5,
@@ -27,6 +29,8 @@ const Page = () => {
 
   return (
     <main className="flex-1 md:p-8">
+      <RemindUserToVerifyEmail />
+      <RemindUserToCreateTransactionPin />
       {/* Desktop Header - hidden on mobile */}
       <div className="hidden md:block">
         <Header

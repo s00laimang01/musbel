@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthentication } from "@/hooks/use-authentication";
 import { useNavBar } from "@/hooks/use-nav-bar";
+import { sendWhatsAppMessage } from "@/lib/utils";
 import { PATHS } from "@/types";
 import { CreditCard } from "lucide-react";
 import Link from "next/link";
@@ -38,7 +39,15 @@ const Page = () => {
             >
               <Link href={PATHS.TOP_UP_ACCOUNT}>ADD MONEY</Link>
             </Button>
-            <Button className="rounded-sm bg-slate-900 hover:bg-slate-900/60">
+            <Button
+              onClick={() =>
+                sendWhatsAppMessage(
+                  "+2347040666904",
+                  `Hello, I would like to fund my account. My user ID is ${user?._id}, and I would like to fund my account with `
+                )
+              }
+              className="rounded-sm bg-slate-900 hover:bg-slate-900/60"
+            >
               FUND MANUALLY
             </Button>
           </div>

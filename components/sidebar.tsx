@@ -17,6 +17,7 @@ import Link from "next/link";
 import { PATHS } from "@/types";
 import { useAuthentication } from "@/hooks/use-authentication";
 import { useUserStore } from "@/stores/user.store";
+import { signOut } from "next-auth/react";
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -143,6 +144,9 @@ export function Sidebar({
             icon={<LogOut size={18} />}
             label="Logout"
             isActive={isPathMathching("")}
+            onClick={async () => {
+              await signOut({ redirect: true });
+            }}
           />
         </ul>
       </div>

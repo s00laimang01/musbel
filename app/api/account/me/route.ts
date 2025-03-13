@@ -1,5 +1,6 @@
 import { checkIfUserIsAuthenticated, httpStatusResponse } from "@/lib/utils";
 import { Account } from "@/models/account";
+import { findUserByEmail } from "@/models/users";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -9,7 +10,9 @@ export async function GET() {
 
     checkIfUserIsAuthenticated(session);
 
-    const account = await Account.findOne({ user: session?.user.email });
+    const user = await findUserByEmail(session?.user.email!);
+
+    const account = await Account.findOne({ user: user?.id });
 
     return NextResponse.json(
       httpStatusResponse(

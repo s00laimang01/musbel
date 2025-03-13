@@ -1,18 +1,14 @@
+import { useTimeGreeting } from "@/hooks/use-time-greeting";
 import { HeaderProps } from "@/types";
 
-export default function Header({
-  name,
-  fullName,
-  email,
-  balance,
-}: HeaderProps) {
+export default function Header({ name, balance }: HeaderProps) {
+  const { message } = useTimeGreeting();
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Hi, {name}</h1>
-        <p className="text-gray-500 mt-1 text-sm font-semibold">
-          Late hours! You've worked hard today, get some well-deserved rest. 🍊
-        </p>
+        <p className="text-gray-500 mt-1 text-sm font-semibold">{message}</p>
       </div>
 
       <div className="flex items-baseline">

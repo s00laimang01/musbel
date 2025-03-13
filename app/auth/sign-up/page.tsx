@@ -52,18 +52,13 @@ export default function SignUpPage() {
 
       toast.success("Account created successfully!");
 
-      const resp = await signIn("credentials", {
+      await signIn("credentials", {
         email: form.email,
         password: form.password,
         redirect: false,
       });
 
-      toast.loading("Authenticating user...");
-
-      if (resp?.ok) {
-        toast.dismiss();
-        r.push(PATHS.HOME);
-      }
+      r.push(PATHS.HOME);
     } catch (error) {
       toast.error(errorMessage(error).message);
     } finally {

@@ -1,3 +1,4 @@
+import { createOneTimeVirtualAccount } from "@/lib/server-utils";
 import {
   createVirtualAccount,
   getAccountNumber,
@@ -5,15 +6,15 @@ import {
 } from "@/lib/utils";
 import { Transaction } from "@/models/transactions";
 import { findUserByEmail } from "@/models/users";
+import { transaction } from "@/types";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 // Constants
-const TRANSACTION_EXPIRY_MINUTES = 60;
+const TRANSACTION_EXPIRY_MINUTES = 30;
 const TRANSACTION_TYPE = "funding";
-const TRANSACTION_STATUS_PENDING = "pending";
 const PAYMENT_METHOD = "virtualAccount";
 
 // Input validation schema
@@ -67,53 +68,26 @@ export async function POST(request: Request) {
       includePassword: false,
     });
 
-    // Check for recent duplicate transactions -> The expiry time is 1hour
-    const expiryThreshold = new Date();
-    expiryThreshold.setMinutes(
-      expiryThreshold.getMinutes() - TRANSACTION_EXPIRY_MINUTES
-    );
-
     // Create a transaction refrence to be use to store the doc in the db and its unique
     const tx_ref = new mongoose.Types.ObjectId().toString();
+    // Expiry time for the virtual Account number
+    const now = new Date();
 
-    // Check if the user already has a pending transaction of the same amount, if yes use the transaction
-    const duplicateTransaction = await findDuplicateTransaction(
-      user?._id!,
-      amount,
-      expiryThreshold
-    );
+    now.setMinutes(now.getMinutes() + TRANSACTION_EXPIRY_MINUTES);
 
-    // Return existing account details if duplicate transaction found
-    if (duplicateTransaction) {
-      const virtualAccount = await getAccountNumber(
-        duplicateTransaction.accountId!
-      );
-
-      return NextResponse.json(
-        httpStatusResponse(
-          200,
-          "Existing virtual account retrieved to prevent duplication",
-          { ...virtualAccount, tx_ref }
-        ),
-        { status: 200 }
-      );
-    }
+    // Create new one time virtual account
+    const virtualAccount = await createOneTimeVirtualAccount({
+      amount: amount + "",
+      currency: "NGN",
+      email: "s00laimang20@gmail.com",
+      name: user?.fullName!,
+      reference: tx_ref,
+    });
 
     // Create new virtual account
-    const virtualAccount = await createVirtualAccount<{ user: string }>(
-      user?.auth.email!,
-      tx_ref,
-      false,
-      amount,
-      undefined,
-      "Please make the payment to this account.",
-      {
-        user: user?._id!,
-      }
-    );
 
     // If we are unable to create the virtual throe an error
-    if (!virtualAccount) {
+    if (!virtualAccount.status) {
       return NextResponse.json(
         httpStatusResponse(
           400,
@@ -127,8 +101,14 @@ export async function POST(request: Request) {
     await createTransactionRecord(
       user?._id!,
       amount,
-      virtualAccount?.order_ref!,
-      tx_ref
+      virtualAccount?.data.account_number,
+      tx_ref,
+      {
+        expirationTime: now.toISOString(),
+        accountNumber: virtualAccount.data.account_number,
+        accountName: virtualAccount.data.account_name,
+        bankName: virtualAccount.data.bank_name,
+      }
     );
 
     return NextResponse.json(
@@ -154,8 +134,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Generic error handling
-    console.error("Virtual account creation error:", error);
     return NextResponse.json(
       httpStatusResponse(
         500,
@@ -169,32 +147,16 @@ export async function POST(request: Request) {
 }
 
 /**
- * Finds a duplicate transaction for the same user and amount within the expiry threshold
- */
-async function findDuplicateTransaction(
-  userId: string,
-  amount: number,
-  expiryThreshold: Date
-) {
-  return Transaction.findOne({
-    user: userId,
-    type: TRANSACTION_TYPE,
-    status: TRANSACTION_STATUS_PENDING,
-    createdAt: { $gte: expiryThreshold },
-    amount: { $eq: amount },
-  });
-}
-
-/**
  * Creates a new transaction record in the database
  */
 async function createTransactionRecord(
   userId: string,
   amount: number,
   accountId: string,
-  txRef: string
+  txRef: string,
+  meta?: any
 ) {
-  const transaction = new Transaction({
+  const trxPayload: transaction = {
     amount,
     note: "Please make the payment to this account",
     paymentMethod: PAYMENT_METHOD,
@@ -202,7 +164,11 @@ async function createTransactionRecord(
     type: TRANSACTION_TYPE,
     tx_ref: txRef,
     user: userId,
-  });
+    status: "pending",
+    meta,
+  };
+
+  const transaction = new Transaction(trxPayload);
 
   return transaction.save({ validateBeforeSave: true });
 }

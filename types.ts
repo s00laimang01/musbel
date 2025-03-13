@@ -14,7 +14,7 @@ export enum PATHS {
   SIGNIN = "/auth/sign-in/",
   SIGNUP = "/auth/sign-up/",
   FORGET_PASSWORD = "/auth/forget-password/",
-  TOP_UP_ACCOUNT = "/dashboard/top-up/",
+  TOP_UP_ACCOUNT = "/dashboard/wallet/top-up/",
   HOME = "/dashboard/home/",
   WALLET = "/dashboard/wallet/",
   BUY_DATA = "/dashboard/buy-data/",
@@ -125,14 +125,12 @@ export interface accountDetailsTypes {
 
 export interface dedicatedAccountNumber {
   accountDetails: accountDetailsTypes;
-  bvn: string;
   user: string;
   hasDedicatedAccountNumber: boolean;
-  _id: string;
+  _id?: string;
   createdAt?: string;
   updatedAt?: string;
   order_ref: string;
-  flw_ref: string;
 }
 
 export interface otp {
@@ -363,4 +361,204 @@ export interface exam {
   examType: examType;
   amount: number;
   examId: number;
+}
+
+// BUDPAY TYPES
+
+export interface createOneTimeVirtualAccountProps {
+  email: string;
+  amount: string;
+  currency: "NGN";
+  reference: string;
+  name: string;
+}
+
+export interface createOneTimeVirtualAccountResponse {
+  status: boolean;
+  message: string;
+  data: {
+    account_name: string;
+    account_number: string;
+    bank_name: string;
+  };
+  tx_ref?: string;
+}
+
+export interface createCustomerProps<T = any> {
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  metadata?: T;
+}
+
+export interface createCustomerResponse {
+  status: boolean;
+  message: string;
+  data: {
+    email: string;
+    domain: "test";
+    customer_code: string;
+    id: number;
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+// Bank information
+interface Bank {
+  name: string;
+  id: number;
+  bank_code: string;
+  prefix: string;
+}
+
+// Customer information
+interface Customer {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  customer_code: string;
+  phone: string;
+}
+
+// NUBAN account data
+interface NubanAccountData {
+  bank: Bank;
+  account_name: string;
+  account_number: number;
+  currency: string;
+  status: null | string;
+  reference: string;
+  assignment: string;
+  id: number;
+  created_at: string;
+  updated_at: string;
+  customer: Customer;
+}
+
+// Main response structure
+export interface createDedicatedVirtualAccountResponse {
+  status: boolean;
+  message: string;
+  data: NubanAccountData;
+}
+
+// BUDPAY WEBHOOK PROPS
+// Customer information
+interface Customer {
+  id: number;
+  email: string;
+  phone: string;
+  domain: string;
+  status: string;
+  metadata: string;
+  last_name: string;
+  first_name: string;
+  customer_code: string;
+}
+
+// Transfer details
+interface TransferDetails {
+  amount: string;
+  bankcode: string;
+  bankname: string;
+  craccount: string;
+  narration: string;
+  sessionid: string;
+  craccountname: string;
+  originatorname: string;
+  paymentReference: string;
+  originatoraccountnumber: string;
+}
+
+// Transaction data
+interface TransactionData {
+  id: number;
+  fees: string;
+  plan: null;
+  type: string;
+  amount: string;
+  domain: string;
+  status: string;
+  channel: string;
+  gateway: string;
+  message: string;
+  paid_at: string;
+  currency: string;
+  customer: Customer;
+  reference: string;
+  created_at: string;
+  ip_address: null;
+  business_id: number;
+  customer_id: number;
+  card_attempt: number;
+  requested_amount: string;
+}
+
+// Main response structure
+export interface BudPayWebhookPayload {
+  data: TransactionData;
+  notify: string;
+  notifyType: string;
+  transferDetails: TransferDetails;
+}
+
+// History entry in transaction log
+interface LogHistoryEntry {
+  type: string;
+  message: string;
+  time: number;
+}
+
+// Transaction log information
+interface TransactionLog {
+  time_spent: number;
+  attempts: number;
+  authentication: null | string;
+  errors: number;
+  success: boolean;
+  channel: string;
+  history: LogHistoryEntry[];
+}
+
+// Customer information
+interface Customer {
+  id: number;
+  customer_code: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  metadata: string;
+}
+
+// Transaction data
+interface TransactionData {
+  id: number;
+  domain: string;
+  status: string;
+  reference: string;
+  amount: string;
+  gateway_response: null | string;
+  paid_at: string;
+  created_at: string;
+  channel: string;
+  currency: string;
+  // ip_address: string;
+}
+
+// Main response structure
+export interface FetchTransactionResponse {
+  status: boolean;
+  message: string;
+  data: TransactionData;
+  log: TransactionLog;
+  fees: null | string | number;
+  customer: Customer;
+  plan: null | string | object;
+  paid_at: string;
+  created_at: string;
+  requested_amount: string;
 }

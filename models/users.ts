@@ -1,6 +1,10 @@
-import { validatePhoneNumber } from "@/lib/utils";
-import { IUser } from "@/types";
+import { dedicatedAccountNumber, IUser } from "@/types";
 import mongoose from "mongoose";
+import { Account } from "./account";
+import {
+  createCustomer,
+  createDedicatedVirtualAccount,
+} from "@/lib/server-utils";
 
 const UserSchema: mongoose.Schema<IUser> = new mongoose.Schema(
   {
@@ -97,7 +101,55 @@ UserSchema.pre("save", async function (next) {
 });
 
 // After the user is created create a dedicated account number for the user --->
-UserSchema.post("save", async function (doc) {});
+UserSchema.post("save", async function (doc) {
+  try {
+    // Run only when the user email is verified
+    if (doc.isEmailVerified) {
+      // Check if the user already has an account assign to them
+      const account = await Account.exists({
+        user: doc._id,
+        hasDedicatedAccountNumber: true,
+      });
+
+      // if the user has an account already return
+      if (account) return;
+
+      const [first_name, last_name] = doc.fullName.split(" ");
+
+      const customer = await createCustomer({
+        email: doc.auth.email,
+        first_name,
+        last_name,
+        phone: doc.phoneNumber,
+      });
+
+      // Proceed to create an account for the user
+      const virtualAccount = await createDedicatedVirtualAccount(
+        customer.data.customer_code
+      );
+
+      const newAcctPayload: dedicatedAccountNumber = {
+        accountDetails: {
+          accountName: virtualAccount.data.account_name,
+          accountNumber: virtualAccount.data.account_number + "",
+          accountRef: customer.data.customer_code,
+          bankCode: virtualAccount.data.bank.bank_code,
+          bankName: virtualAccount.data.bank.name,
+          expirationDate: virtualAccount.data.assignment,
+        },
+        hasDedicatedAccountNumber: true,
+        user: doc.id,
+        order_ref: virtualAccount.data.id + "",
+      };
+
+      const newAccount = new Account(newAcctPayload);
+
+      await newAccount.save();
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
 
 const User: mongoose.Model<IUser> =
   mongoose.models.User || mongoose.model("User", UserSchema);
@@ -133,6 +185,11 @@ const verifyUserTransactionPin = async (
   userPin: string,
   throwOnIncorrect = true
 ) => {
+  if (!userPin) {
+    const error = new Error("Transaction pin is required");
+    throw error;
+  }
+
   const isPinValid = await User.findOne({
     "auth.email": userEmail,
     "auth.transactionPin": userPin,

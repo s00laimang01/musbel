@@ -2,7 +2,7 @@ import { Clock } from "lucide-react";
 import React from "react";
 
 const Empty = ({
-  header = "You have no pending shipments",
+  header = "You have no pending or successful transaction",
   message = "If you have any transaction, they will appear here.",
 }: {
   header?: string;

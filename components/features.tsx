@@ -70,7 +70,7 @@ export default function FeatureCards() {
         <FeatureCard
           icon={Download}
           title="Download Data"
-          description="If you have want to download your data, it's right here!"
+          description="If you ever want to download your data, it's right here!"
         />
       </div>
     </div>

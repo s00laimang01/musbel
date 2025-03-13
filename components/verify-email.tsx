@@ -30,12 +30,13 @@ import { CheckCircle2, Loader2, Mail, RefreshCw } from "lucide-react";
 import { api, errorMessage } from "@/lib/utils";
 import { toast } from "sonner";
 
-const VerifyEmail: FC<{ children: React.ReactNode; email?: string }> = ({
-  email = "user@example.com",
-  children,
-}) => {
+const VerifyEmail: FC<{
+  children?: React.ReactNode;
+  email?: string;
+  isOpen?: boolean;
+}> = ({ email = "user@example.com", children = <div />, isOpen = false }) => {
   const [isMobile, setIsMobile] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(isOpen);
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -139,7 +140,8 @@ const VerifyEmail: FC<{ children: React.ReactNode; email?: string }> = ({
           </div>
           <h3 className="mb-2 text-xl font-semibold">Email Verified!</h3>
           <p className="mb-6 text-muted-foreground">
-            Your email address has been successfully verified.
+            Your email address has been successfully verified, A dedicated
+            virtual account will be assigned to you shortly.
           </p>
           <Button
             onClick={() => handleOpenChange(false)}

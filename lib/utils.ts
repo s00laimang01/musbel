@@ -221,7 +221,7 @@ export const getDedicatedAccount = async () => {
     "/account/me/"
   );
 
-  return res.data.data;
+  return res.data;
 };
 
 export const getInitials = (name = "") => {
@@ -609,3 +609,20 @@ export const _verifyMeterNumber = async (
 
   return res.data.data;
 };
+
+export function sendWhatsAppMessage(
+  phoneNumber: string,
+  message: string
+): void {
+  // Clean the phone number (remove spaces, dashes, parentheses, etc.)
+  const cleanedPhoneNumber = phoneNumber.replace(/\D/g, "");
+
+  // Encode the message for URL
+  const encodedMessage = encodeURIComponent(message);
+
+  // Create the WhatsApp API URL
+  const whatsappUrl = `https://wa.me/${cleanedPhoneNumber}?text=${encodedMessage}`;
+
+  // Open WhatsApp in a new tab
+  window.open(whatsappUrl, "_blank");
+}

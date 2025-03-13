@@ -7,7 +7,7 @@ const PUBLIC_ROUTES = [
   "/auth/sign-in",
   "/auth/sign-up",
   "/auth/forget-password",
-  "/api/auth/signin",
+  "/api/auth/",
   "/api/auth/sign-up",
   "/api/account/bank/verify-transaction",
   // Add any other public routes here

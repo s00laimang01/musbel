@@ -18,6 +18,11 @@ export async function POST(request: NextRequest) {
 
     const user = await findUserByEmail(session?.user?.email!);
 
+    if (!user)
+      return NextResponse.json(httpStatusResponse(404, "User not found"), {
+        status: 404,
+      });
+
     if (user?.hasSetPin) {
       return NextResponse.json(
         httpStatusResponse(400, "Transaction pin already set"),

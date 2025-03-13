@@ -23,9 +23,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { TransactionDetailsSheet } from "@/components/transaction-details";
+import { useSearchParams } from "next/navigation";
 
 const Page = () => {
   useNavBar("Transactions");
+  const q = useSearchParams();
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState<transactionStatus | "all">(
@@ -130,6 +133,11 @@ const Page = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
+      <TransactionDetailsSheet
+        key={q.get("tx_ref")}
+        open={Boolean(q.get("tx_ref"))}
+        tx_ref={q.get("tx_ref")!}
+      />
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-4">Transactions</h1>
 

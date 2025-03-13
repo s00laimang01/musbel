@@ -39,7 +39,6 @@ type Step = "enterCurrentPin" | "enterNewPin" | "confirmNewPin" | "success";
 const CreateOrUpdatePin: FC<CreateOrUpdatePinProps> = ({
   children,
   mode,
-  onSuccess,
   onCancel,
   verifyCurrentPin,
 }) => {
@@ -70,7 +69,7 @@ const CreateOrUpdatePin: FC<CreateOrUpdatePinProps> = ({
 
   const createTransactionPin = async (pin: string) => {
     try {
-      const res = await api.post<{ message: string }>(`/auth/pin/create/`, {
+      const res = await api.post<{ message: string }>(`/auth/pin/`, {
         pin,
         confirmPin,
       });
@@ -152,9 +151,11 @@ const CreateOrUpdatePin: FC<CreateOrUpdatePinProps> = ({
   const handleConfirmPin = async () => {
     try {
       if (mode === "create") {
-        createTransactionPin(newPin).then(() => setCurrentStep("success"));
+        await createTransactionPin(newPin);
+        setCurrentStep("success");
       } else {
-        await changeTransactionPin().then(() => setCurrentStep("success"));
+        await changeTransactionPin();
+        setCurrentStep("success");
       }
 
       // Close modal after a brief delay
