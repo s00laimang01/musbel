@@ -63,14 +63,14 @@ export default function RemindUserToCreateTransactionPin() {
             <Button
               variant="default"
               disabled={isLoading}
-              className="mb-2 sm:mb-0 rounded-none h-[3rem]"
+              className="mb-2 sm:mb-0 rounded-none h-[3rem] w-full"
             >
               Create Pin
             </Button>
           </CreateOrUpdatePin>
           <Button
             variant="outline"
-            className="rounded-none h-[3rem]"
+            className="rounded-none h-[3rem] w-full"
             onClick={handleDismiss}
             disabled={isLoading}
           >

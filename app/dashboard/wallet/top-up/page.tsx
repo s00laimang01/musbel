@@ -122,7 +122,11 @@ const Page = () => {
             accountName: string;
             bankName: string;
           }>;
-        }>(`/transactions/get-transaction?tx_ref=${q.get("tx_ref")}`)
+        }>(
+          `/transactions/get-transaction?tx_ref=${q.get(
+            "tx_ref"
+          )}&status=pending`
+        )
       ).data,
     enabled: Boolean(q.get("tx_ref") && !virtualAccount),
   });
@@ -136,8 +140,6 @@ const Page = () => {
   });
 
   const { data: account } = __data || {};
-
-  console.log({ account });
 
   useEffect(() => {
     if (transaction) {

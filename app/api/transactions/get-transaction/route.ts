@@ -7,8 +7,7 @@ export async function GET(request: NextRequest) {
     const q = request.nextUrl.searchParams;
     const tx_ref = q.get("tx_ref");
     const useExpirationDate = q.get("useExpirationDate") || true;
-
-    console.log({ useExpirationDate });
+    const status = q.get("status");
 
     let query: Record<string, any> = {};
 
@@ -16,9 +15,12 @@ export async function GET(request: NextRequest) {
       query["meta.expirationTime"] = { $gte: new Date().toISOString() };
     }
 
+    if (status) {
+      query["status"] = status;
+    }
+
     const transaction = await Transaction.findOne({
       tx_ref,
-      status: "pending",
       ...query,
     });
 

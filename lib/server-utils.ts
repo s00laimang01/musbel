@@ -53,9 +53,15 @@ export const createDedicatedVirtualAccount = async (customer: string) => {
 };
 
 export const verifyTransactionWithBudPay = async (id: string) => {
-  const res = await budPay().get<fetchTransactionResponse>(
-    `/transaction/${id}`
-  );
+  try {
+    const res = await budPay("s2s").get<fetchTransactionResponse>(
+      `/transaction/verify/${id}`,
+      { headers: { Authorization: `Bearer ${process.env.BUDPAY_SECRET_KEY}` } }
+    );
 
-  return res.data;
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    return { status: false } as fetchTransactionResponse;
+  }
 };

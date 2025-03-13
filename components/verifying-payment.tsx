@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Text from "./text";
 import { api } from "@/lib/utils";
-import { flutterwaveWebhook, VerifyingPaymentProps } from "@/types";
+import { transaction, VerifyingPaymentProps } from "@/types";
 
 const VerifyingPayment: React.FC<VerifyingPaymentProps> = ({
   paymentId,
@@ -26,13 +26,13 @@ const VerifyingPayment: React.FC<VerifyingPaymentProps> = ({
   const { data, isError, refetch } = useQuery({
     queryKey: ["paymentVerification", paymentId],
     queryFn: () =>
-      api.get<flutterwaveWebhook>(
-        `/account/bank/verify-transaction-with-tx-ref/?tx_ref=${paymentId}`
+      api.get<{ data: transaction }>(
+        `/transactions/get-transaction/?tx_ref=${paymentId}`
       ),
     retry: MAX_RETRY_COUNT,
     retryDelay: RETRY_INTERVAL * 1000,
     refetchInterval: (data) =>
-      data?.state.data?.data.data.status === "successful"
+      data?.state.data?.data.data.status === "success"
         ? false
         : RETRY_INTERVAL * 1000,
     refetchIntervalInBackground: true,
@@ -42,7 +42,7 @@ const VerifyingPayment: React.FC<VerifyingPaymentProps> = ({
 
   // Handle success callback
   useEffect(() => {
-    if (data?.data.data.status === "successful") {
+    if (data?.data.data.status === "success") {
       onSuccess?.();
     }
   }, [data, onSuccess]);
@@ -51,7 +51,7 @@ const VerifyingPayment: React.FC<VerifyingPaymentProps> = ({
   useEffect(() => {
     if (
       isError ||
-      (elapsedTime >= MAX_RETRY_TIME && data?.data.data.status !== "successful")
+      (elapsedTime >= MAX_RETRY_TIME && data?.data.data.status !== "success")
     ) {
       onFailure?.();
     }
@@ -59,7 +59,7 @@ const VerifyingPayment: React.FC<VerifyingPaymentProps> = ({
 
   // Update elapsed time and progress
   useEffect(() => {
-    if (data?.data.data.status === "successful" || isError) return;
+    if (data?.data.data.status === "success" || isError) return;
 
     const timer = setInterval(() => {
       setElapsedTime((prev) => {
@@ -85,7 +85,7 @@ const VerifyingPayment: React.FC<VerifyingPaymentProps> = ({
   };
 
   const getVerificationStatus = () => {
-    if (data?.data.data.status === "successful") return "success";
+    if (data?.data.data.status === "success") return "success";
     if (isError || elapsedTime >= MAX_RETRY_TIME) return "failed";
     return "loading";
   };
