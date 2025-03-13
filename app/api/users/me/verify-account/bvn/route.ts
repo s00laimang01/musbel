@@ -39,18 +39,6 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!account) {
-      const dedicatedAccountNumber = new Account({
-        user: user.auth.email,
-        bvn,
-      });
-
-      await dedicatedAccountNumber.save();
-    } else {
-      account.bvn = bvn;
-      await account.save({ validateBeforeSave: true });
-    }
-
     return NextResponse.json(
       httpStatusResponse(
         200,
