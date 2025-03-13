@@ -6,6 +6,7 @@ import FeatureCards from "@/components/features";
 import RemindUserToVerifyEmail from "@/components/notify-user-to-verify-email";
 import RecentActivity from "@/components/recent-activities";
 import RemindUserToCreateTransactionPin from "@/components/remind-user-to-create-pin";
+import TopUpCard from "@/components/top-up-card";
 import TransactionCard from "@/components/transaction-card";
 import { useAuthentication } from "@/hooks/use-authentication";
 import { useNavBar } from "@/hooks/use-nav-bar";
@@ -54,6 +55,8 @@ const Page = () => {
       {transaction && (
         <TransactionCard isLoading={isLoading} transaction={transaction} />
       )}
+
+      <TopUpCard />
 
       <div className="mt-8 md:mt-12">
         <ActionButtons />
