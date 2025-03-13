@@ -550,7 +550,7 @@ interface TransactionData {
 }
 
 // Main response structure
-export interface FetchTransactionResponse {
+export interface fetchTransactionResponse {
   status: boolean;
   message: string;
   data: TransactionData;
