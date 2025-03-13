@@ -9,7 +9,7 @@ function ActionButton({ icon, label, onClick = () => {} }: ActionButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors rounded-lg p-6 w-full"
+      className="flex flex-col items-center justify-center bg-green-700/5 cursor-pointer hover:bg-gray-100 transition-colors rounded-lg p-6 w-full"
     >
       <div className="mb-2">{icon}</div>
       <span className="text-sm text-gray-800 font-bold">{label}</span>
