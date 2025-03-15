@@ -591,6 +591,7 @@ export interface BillStackWebhookPayload {
     type: "RESERVED_ACCOUNT_TRANSACTION";
     reference: string;
     merchant_reference: string;
+    transaction_ref: string;
     wiaxy_ref: string;
     amount: number;
     created_at: string;

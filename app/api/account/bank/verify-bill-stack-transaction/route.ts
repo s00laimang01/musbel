@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     await connectToDatabase();
 
     const transaction = await Transaction.findOne({
-      tx_ref: payload.data.reference,
+      tx_ref: payload.data.transaction_ref,
     });
 
     if (transaction?.status === "success") {
