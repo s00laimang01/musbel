@@ -5,8 +5,8 @@ const TransactionSchema: mongoose.Schema<transaction> = new mongoose.Schema(
   {
     amount: {
       type: Number, // Changed from String to Number to match the actual data type
-      min: 100,
       required: true,
+      min: 0,
       validate: {
         validator(amount: number) {
           return !isNaN(amount);
