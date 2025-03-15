@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
 
     if (payload.event !== "PAYMENT_NOTIFIFICATION") {
       return NextResponse.json(
-        httpStatusResponse(400, "INVALID_EVENT_TYPE: please contact admin"),
-        { status: 400 }
+        httpStatusResponse(429, "INVALID_EVENT_TYPE: please contact admin"),
+        { status: 429 }
       );
     }
 
@@ -146,7 +146,8 @@ export async function POST(request: NextRequest) {
       httpStatusResponse(
         200,
         "PAYMENT_RECEIVED_SUCCESSFULLY: User account will be creditted shortly."
-      )
+      ),
+      { status: 200 }
     );
   } catch (error) {
     // Check if session exists and has an active transaction before aborting
