@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const amountToFund = payload.data.amount;
+    const amountToFund = payload.data.amount - 35;
 
     user.balance += amountToFund;
     const trxPayload: transaction = {
@@ -117,9 +117,9 @@ export async function POST(request: NextRequest) {
       meta: {
         ...payload.data.payer,
       },
-      note: "",
+      note: `Your account has been credited with ${amountToFund}`,
       paymentMethod: "dedicatedAccount",
-      status: "pending",
+      status: "success",
       tx_ref: payload.data.reference,
       type: "funding",
       user: user._id,
