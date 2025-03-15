@@ -58,8 +58,7 @@ export async function POST(request: Request) {
         "SAFEHAVEN",
       ];
 
-      dedicatedAccountToOpenForUsers =
-        banks[Math.floor(Math.random() * banks.length)];
+      dedicatedAccountToOpenForUsers = banks[2];
     }
 
     // Check if user already exists
