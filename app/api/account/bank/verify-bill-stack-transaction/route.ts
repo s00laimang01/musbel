@@ -1,5 +1,5 @@
 import { configs } from "@/lib/constants";
-import { httpStatusResponse } from "@/lib/utils";
+import { formatCurrency, httpStatusResponse } from "@/lib/utils";
 import { Account } from "@/models/account";
 import { Transaction } from "@/models/transactions";
 import { User } from "@/models/users";
@@ -117,10 +117,13 @@ export async function POST(request: NextRequest) {
       meta: {
         ...payload.data.payer,
       },
-      note: `Your account has been credited with ${amountToFund}`,
+      note: `Your account has been credited with ${formatCurrency(
+        amountToFund,
+        2
+      )}`,
       paymentMethod: "dedicatedAccount",
       status: "success",
-      tx_ref: payload.data.reference,
+      tx_ref: payload.data.wiaxy_ref,
       type: "funding",
       user: user._id,
     };

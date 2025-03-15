@@ -40,7 +40,7 @@ const Page = () => {
     useState<createOneTimeVirtualAccountResponse>();
   const [isPending, startTransition] = useState(false);
   const [data, setData] = useState({
-    useVBT: true,
+    useVBT: false,
     amount: 0,
     iHaveMadePayment: false,
     expiryTime: "",
@@ -171,7 +171,9 @@ const Page = () => {
             id="virtualbank-transfer"
             className="rounded-full"
             checked={data.useVBT}
-            onCheckedChange={(e: boolean) => setData({ ...data, useVBT: e })}
+            onCheckedChange={(e: boolean) =>
+              setData({ ...data, useVBT: false })
+            }
           />
         </Label>
         <div className="border" />
