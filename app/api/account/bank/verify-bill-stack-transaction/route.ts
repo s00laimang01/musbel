@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     const payload = (await request.json()) as BillStackWebhookPayload;
 
-    if (payload.event !== "PAYMENT_NOTIFIFICATION") {
+    if (payload.event !== "PAYMENT_NOTIFICATION") {
       return NextResponse.json(
         httpStatusResponse(429, "INVALID_EVENT_TYPE: please contact admin"),
         { status: 429 }

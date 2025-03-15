@@ -586,7 +586,7 @@ export interface fetchTransactionResponse {
 
 // BILL_STACK_WEBHOOK_PAYLOAD
 export interface BillStackWebhookPayload {
-  event: "PAYMENT_NOTIFIFICATION";
+  event: "PAYMENT_NOTIFICATION";
   data: {
     type: "RESERVED_ACCOUNT_TRANSACTION";
     reference: string;
