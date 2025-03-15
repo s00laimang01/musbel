@@ -1,10 +1,8 @@
-import { configs } from "@/lib/constants";
 import { formatCurrency, httpStatusResponse } from "@/lib/utils";
 import { Account } from "@/models/account";
 import { Transaction } from "@/models/transactions";
 import { User } from "@/models/users";
 import { BillStackWebhookPayload, transaction } from "@/types";
-import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import crypto from "crypto";
@@ -108,7 +106,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const amountToFund = payload.data.amount - 35;
+    const fees = payload.data.amount * 0.01;
+    const amountToFund = payload.data.amount - fees;
 
     user.balance += amountToFund;
     const trxPayload: transaction = {
