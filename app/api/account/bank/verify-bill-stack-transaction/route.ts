@@ -81,10 +81,10 @@ export async function POST(request: NextRequest) {
     if (transaction?.status === "success") {
       return NextResponse.json(
         httpStatusResponse(
-          400,
+          409,
           "TRANSACTION_ALREADY_PROCESSED: please contact admin"
         ),
-        { status: 400 }
+        { status: 409 }
       );
     }
 
@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
 
     if (!account) {
       return NextResponse.json(
-        httpStatusResponse(400, "ACCOUNT_NOT_FOUND: please contact admin"),
-        { status: 400 }
+        httpStatusResponse(404, "ACCOUNT_NOT_FOUND: please contact admin"),
+        { status: 404 }
       );
     }
 
@@ -103,8 +103,8 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        httpStatusResponse(400, "USER_NOT_FOUND: please contact admin"),
-        { status: 400 }
+        httpStatusResponse(404, "USER_NOT_FOUND: please contact admin"),
+        { status: 404 }
       );
     }
 
@@ -129,18 +129,18 @@ export async function POST(request: NextRequest) {
 
     await Promise.all([user.save(), newTransaction.save()]);
 
-    try {
-      const { data, error } = await resend.emails.send({
-        from: `${configs.appName}`,
-        to: user.auth.email,
-        text: "",
-        subject: "FUNDING SUCCESSFUL",
-      });
+    // try {
+    //   const { data, error } = await resend.emails.send({
+    //     from: `${configs.appName}`,
+    //     to: user.auth.email,
+    //     text: "",
+    //     subject: "FUNDING SUCCESSFUL",
+    //   });
 
-      console.log({ data, error });
-    } catch (error) {
-      console.log("FAIL_TO_SEND_EMAIL: ", error);
-    }
+    //   console.log({ data, error });
+    // } catch (error) {
+    //   console.log("FAIL_TO_SEND_EMAIL: ", error);
+    // }
 
     return NextResponse.json(
       httpStatusResponse(
