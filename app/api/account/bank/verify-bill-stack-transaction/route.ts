@@ -11,11 +11,9 @@ import crypto from "crypto";
 
 // Your secret key from the Wiaxy dashboard
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-export async function POST(request: NextRequest) {
-  // Function to verify the Wiaxy webhook signature
-  function verifyWiaxySignature(): boolean {
+// Function to verify the Wiaxy webhook signature
+function verifyWiaxySignature(request: NextRequest): boolean {
+  try {
     const SECRET_KEY = process.env.BILL_STACK_SECRET_KEY!;
 
     // Get the signature from the header
@@ -37,17 +35,23 @@ export async function POST(request: NextRequest) {
     const isValid = receivedSignature === expectedSignature;
 
     return isValid;
+  } catch (error) {
+    return false;
   }
+}
 
-  //   First verify that the request is from Wiaxy
-  if (!verifyWiaxySignature()) {
-    return NextResponse.json(
-      httpStatusResponse(401, "INVALID_SIGNATURE: Unauthorized request"),
-      { status: 401 }
-    );
-  }
+const resend = new Resend(process.env.RESEND_API_KEY);
 
+export async function POST(request: NextRequest) {
   try {
+    //   First verify that the request is from Wiaxy
+    if (!verifyWiaxySignature(request)) {
+      return NextResponse.json(
+        httpStatusResponse(401, "INVALID_SIGNATURE: Unauthorized request"),
+        { status: 401 }
+      );
+    }
+
     // const payload = (await request.json()) as BillStackWebhookPayload;
 
     // if (payload.event !== "PAYMENT_NOTIFIFICATION") {
