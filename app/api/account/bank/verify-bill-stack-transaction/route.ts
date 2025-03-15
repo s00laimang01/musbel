@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import crypto from "crypto";
+import { connectToDatabase } from "@/lib/connect-to-db";
 
 // Your secret key from the Wiaxy dashboard
 const SECRET_KEY = process.env.BILL_STACK_SECRET_KEY!;
@@ -65,6 +66,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    await connectToDatabase();
 
     const transaction = await Transaction.findOne({
       tx_ref: payload.data.reference,
