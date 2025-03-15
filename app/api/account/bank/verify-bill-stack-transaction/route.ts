@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import crypto from "crypto";
+import { connectToDatabase } from "@/lib/connect-to-db";
 
 // Your secret key from the Wiaxy dashboard
 
@@ -52,94 +53,94 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // const payload = (await request.json()) as BillStackWebhookPayload;
+    const payload = (await request.json()) as BillStackWebhookPayload;
 
-    // if (payload.event !== "PAYMENT_NOTIFIFICATION") {
-    //   return NextResponse.json(
-    //     httpStatusResponse(400, "INVALID_EVENT_TYPE: please contact admin"),
-    //     { status: 400 }
-    //   );
-    // }
+    if (payload.event !== "PAYMENT_NOTIFIFICATION") {
+      return NextResponse.json(
+        httpStatusResponse(400, "INVALID_EVENT_TYPE: please contact admin"),
+        { status: 400 }
+      );
+    }
 
-    // if (payload.data.type !== "RESERVED_ACCOUNT_TRANSACTION") {
-    //   return NextResponse.json(
-    //     httpStatusResponse(
-    //       400,
-    //       "INVALID_TRANSACTION_TYPE: please contact admin"
-    //     ),
-    //     { status: 400 }
-    //   );
-    // }
+    if (payload.data.type !== "RESERVED_ACCOUNT_TRANSACTION") {
+      return NextResponse.json(
+        httpStatusResponse(
+          400,
+          "INVALID_TRANSACTION_TYPE: please contact admin"
+        ),
+        { status: 400 }
+      );
+    }
 
-    // await connectToDatabase();
+    await connectToDatabase();
 
-    // const transaction = await Transaction.findOne({
-    //   tx_ref: payload.data.reference,
-    // });
+    const transaction = await Transaction.findOne({
+      tx_ref: payload.data.reference,
+    });
 
-    // if (transaction?.status === "success") {
-    //   return NextResponse.json(
-    //     httpStatusResponse(
-    //       400,
-    //       "TRANSACTION_ALREADY_PROCESSED: please contact admin"
-    //     ),
-    //     { status: 400 }
-    //   );
-    // }
+    if (transaction?.status === "success") {
+      return NextResponse.json(
+        httpStatusResponse(
+          400,
+          "TRANSACTION_ALREADY_PROCESSED: please contact admin"
+        ),
+        { status: 400 }
+      );
+    }
 
-    // const account = await Account.findOne({
-    //   user: payload.data.merchant_reference,
-    // });
+    const account = await Account.findOne({
+      user: payload.data.merchant_reference,
+    });
 
-    // if (!account) {
-    //   return NextResponse.json(
-    //     httpStatusResponse(400, "ACCOUNT_NOT_FOUND: please contact admin"),
-    //     { status: 400 }
-    //   );
-    // }
+    if (!account) {
+      return NextResponse.json(
+        httpStatusResponse(400, "ACCOUNT_NOT_FOUND: please contact admin"),
+        { status: 400 }
+      );
+    }
 
-    // const user = await User.findById(account.user);
+    const user = await User.findById(account.user);
 
-    // if (!user) {
-    //   return NextResponse.json(
-    //     httpStatusResponse(400, "USER_NOT_FOUND: please contact admin"),
-    //     { status: 400 }
-    //   );
-    // }
+    if (!user) {
+      return NextResponse.json(
+        httpStatusResponse(400, "USER_NOT_FOUND: please contact admin"),
+        { status: 400 }
+      );
+    }
 
-    // const amountToFund = payload.data.amount;
+    const amountToFund = payload.data.amount;
 
-    // user.balance += amountToFund;
-    // const trxPayload: transaction = {
-    //   accountId: payload.data.account.account_number,
-    //   amount: amountToFund,
-    //   meta: {
-    //     ...payload.data.payer,
-    //   },
-    //   note: "",
-    //   paymentMethod: "dedicatedAccount",
-    //   status: "pending",
-    //   tx_ref: payload.data.reference,
-    //   type: "funding",
-    //   user: user._id,
-    // };
+    user.balance += amountToFund;
+    const trxPayload: transaction = {
+      accountId: payload.data.account.account_number,
+      amount: amountToFund,
+      meta: {
+        ...payload.data.payer,
+      },
+      note: "",
+      paymentMethod: "dedicatedAccount",
+      status: "pending",
+      tx_ref: payload.data.reference,
+      type: "funding",
+      user: user._id,
+    };
 
-    // const newTransaction = new Transaction(trxPayload);
+    const newTransaction = new Transaction(trxPayload);
 
-    // await Promise.all([user.save(), newTransaction.save()]);
+    await Promise.all([user.save(), newTransaction.save()]);
 
-    // try {
-    //   const { data, error } = await resend.emails.send({
-    //     from: `${configs.appName}`,
-    //     to: user.auth.email,
-    //     text: "",
-    //     subject: "FUNDING SUCCESSFUL",
-    //   });
+    try {
+      const { data, error } = await resend.emails.send({
+        from: `${configs.appName}`,
+        to: user.auth.email,
+        text: "",
+        subject: "FUNDING SUCCESSFUL",
+      });
 
-    //   console.log({ data, error });
-    // } catch (error) {
-    //   console.log("FAIL_TO_SEND_EMAIL: ", error);
-    // }
+      console.log({ data, error });
+    } catch (error) {
+      console.log("FAIL_TO_SEND_EMAIL: ", error);
+    }
 
     return NextResponse.json(
       httpStatusResponse(
