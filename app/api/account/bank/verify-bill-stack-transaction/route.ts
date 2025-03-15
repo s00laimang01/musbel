@@ -39,13 +39,13 @@ function verifyWiaxySignature(request: NextRequest): boolean {
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
-  // First verify that the request is from Wiaxy
-  //   if (!verifyWiaxySignature(request)) {
-  //     return NextResponse.json(
-  //       httpStatusResponse(401, "INVALID_SIGNATURE: Unauthorized request"),
-  //       { status: 401 }
-  //     );
-  //   }
+  //   First verify that the request is from Wiaxy
+  if (!verifyWiaxySignature(request)) {
+    return NextResponse.json(
+      httpStatusResponse(401, "INVALID_SIGNATURE: Unauthorized request"),
+      { status: 401 }
+    );
+  }
 
   try {
     // const payload = (await request.json()) as BillStackWebhookPayload;
