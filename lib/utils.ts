@@ -443,6 +443,7 @@ export const buyData = async (
   planId: number,
   phoneNumber: string,
   tx_ref: string,
+  network: number,
   byPassValidator = false
 ) => {
   const payload = {
@@ -450,14 +451,24 @@ export const buyData = async (
     bypass: byPassValidator,
     phone: phoneNumber,
     "request-id": tx_ref,
+    network,
   };
-  const res = await axios.post<DataVendingResponse>(
-    "https://a4bdata.com/api/data/",
-    payload,
-    { headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` } }
-  );
 
-  return res.data;
+  console.log({ payload });
+  try {
+    const res = await axios.post<DataVendingResponse>(
+      "https://a4bdata.com/api/data/",
+      payload,
+      {
+        headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    return { status: "failed" } as DataVendingResponse;
+  }
 };
 
 export const buyAirtime = async (
@@ -468,21 +479,29 @@ export const buyAirtime = async (
   byPassValidator = false,
   plan_type = "VTU"
 ) => {
-  const payload = {
-    network,
-    bypass: byPassValidator,
-    phone: phoneNumber,
-    "request-id": tx_ref,
-    amount: amount.toString(),
-    plan_type,
-  };
-  const res = await axios.post<AirtimeVendingResponse>(
-    "https://a4bdata.com/api/topup/",
-    payload,
-    { headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` } }
-  );
+  try {
+    const payload = {
+      network,
+      bypass: byPassValidator,
+      phone: phoneNumber,
+      "request-id": tx_ref,
+      amount: amount.toString(),
+      plan_type,
+    };
+    console.log({ payload });
+    const res = await axios.post<AirtimeVendingResponse>(
+      "https://a4bdata.com/api/topup/",
+      payload,
+      {
+        headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` },
+      }
+    );
 
-  return res.data;
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    return { status: "failed" } as AirtimeVendingResponse;
+  }
 };
 
 export const subscribeForCable = async (

@@ -86,8 +86,9 @@ const Page = () => {
     setPhoneNumber(value);
   };
 
-  const selectPhoneNumber = (number: string) => {
+  const selectPhoneNumber = (number: string, network?: availableNetworks) => {
     setPhoneNumber(number);
+    setNetwork(network as availableNetworks);
   };
 
   return (
@@ -157,7 +158,7 @@ const Page = () => {
                 {recentlyContact.map((p, idx) => (
                   <div
                     key={idx}
-                    onClick={() => selectPhoneNumber(p.uid)}
+                    onClick={() => selectPhoneNumber(p.uid, p.meta?.network)}
                     className={`cursor-pointer transition-all duration-200 ${
                       phoneNumber === p.uid
                         ? "ring-2 ring-primary"

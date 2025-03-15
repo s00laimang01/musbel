@@ -1,6 +1,7 @@
 import {
   createCustomerProps,
   createCustomerResponse,
+  createDedicatedAccountProps,
   createDedicatedVirtualAccountResponse,
   createOneTimeVirtualAccountProps,
   createOneTimeVirtualAccountResponse,
@@ -40,16 +41,25 @@ export const createCustomer = async (payload: createCustomerProps) => {
   return response.data;
 };
 
-export const createDedicatedVirtualAccount = async (customer: string) => {
-  const response = await budPay().post<createDedicatedVirtualAccountResponse>(
-    `/dedicated_virtual_account/`,
-    {
-      customer,
-    },
-    { headers: { Authorization: `Bearer ${process.env.BUDPAY_SECRET_KEY}` } }
-  );
+export const createDedicatedVirtualAccount = async (
+  payload: createDedicatedAccountProps
+) => {
+  try {
+    const response = await axios.post<createDedicatedVirtualAccountResponse>(
+      `https://api.billstack.co/v2/thirdparty/generateVirtualAccount/`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.BILL_STACK_SECRET_KEY}`,
+        },
+      }
+    );
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    return { status: false } as createDedicatedVirtualAccountResponse;
+  }
 };
 
 export const verifyTransactionWithBudPay = async (id: string) => {

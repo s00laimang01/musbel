@@ -25,6 +25,7 @@ export enum PATHS {
   ELECTRICITY_PAYMENTS = "/dashboard/utility-payment/electricity/",
   EXAM = "/dashboard/utility-payment/exam",
   RECHARGE_CARD = "/dashboard/utility-payment/recharge-card/",
+  DATA_PLAN_PRICING = "/dashboard/data-plans/",
 }
 
 // DASHBOARD
@@ -94,6 +95,7 @@ export interface userStore {
 // MODELS
 
 export type IUserRole = "user" | "admin";
+export type accountStatus = "active" | "inactive";
 
 export interface IUser {
   _id?: string;
@@ -112,6 +114,7 @@ export interface IUser {
   hasSetPin: boolean;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
+  status: accountStatus;
 }
 
 export interface accountDetailsTypes {
@@ -255,6 +258,8 @@ export interface appProps {
   stopAllTransactions: boolean;
   stopSomeTransactions: transactionType[];
   lockAccounts: string[];
+  bankAccountToCreateForUsers: availableBanks | "random";
+  stopAccountCreation: boolean;
 }
 
 // Vending Responses
@@ -384,6 +389,14 @@ export interface createOneTimeVirtualAccountResponse {
   tx_ref?: string;
 }
 
+export interface createDedicatedAccountProps {
+  email: string;
+  reference: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  bank: availableBanks;
+}
 export interface createCustomerProps<T = any> {
   email: string;
   first_name: string;
@@ -423,26 +436,34 @@ interface Customer {
   phone: string;
 }
 
-// NUBAN account data
-interface NubanAccountData {
-  bank: Bank;
+export type availableBanks =
+  | "9PSB"
+  | "SAFEHAVEN"
+  | "PROVIDUS"
+  | "BANKLY"
+  | "PALMPAY";
+
+export interface generatedBankAccount {
+  account_number: string;
   account_name: string;
-  account_number: number;
-  currency: string;
-  status: null | string;
-  reference: string;
-  assignment: string;
-  id: number;
+  bank_name: string;
+  bank_id: availableBanks;
   created_at: string;
-  updated_at: string;
-  customer: Customer;
 }
 
 // Main response structure
 export interface createDedicatedVirtualAccountResponse {
   status: boolean;
   message: string;
-  data: NubanAccountData;
+  data: {
+    reference: string;
+    account: generatedBankAccount[];
+    meta: {
+      firstName: string;
+      lastName: string;
+      email: string;
+    };
+  };
 }
 
 // BUDPAY WEBHOOK PROPS
@@ -561,4 +582,29 @@ export interface fetchTransactionResponse {
   paid_at: string;
   created_at: string;
   requested_amount: string;
+}
+
+// BILL_STACK_WEBHOOK_PAYLOAD
+export interface BillStackWebhookPayload {
+  event: "PAYMENT_NOTIFIFICATION";
+  data: {
+    type: "RESERVED_ACCOUNT_TRANSACTION";
+    reference: string;
+    merchant_reference: string;
+    wiaxy_ref: string;
+    amount: number;
+    created_at: string;
+    account: {
+      account_number: string;
+      account_name: string;
+      bank_name: string;
+      created_at: string;
+    };
+    payer: {
+      account_number: string;
+      first_name: string;
+      last_name: string;
+      createdAt: string;
+    };
+  };
 }

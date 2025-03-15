@@ -43,6 +43,10 @@ const handler = NextAuth({
             );
           }
 
+          if (user.status === "inactive") {
+            throw new Error("USER_INACTIVE: Your account is inactive.");
+          }
+
           // Verify that the user password is correct
           const isPasswordValid = await bcrypt.compare(
             credentials.password,

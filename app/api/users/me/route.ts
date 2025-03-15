@@ -54,6 +54,7 @@ export async function PATCH(request: Request) {
       "createdAt",
       "auth",
       "auth.password",
+      "status",
     ]);
 
     //   Get the user and update the user information

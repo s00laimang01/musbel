@@ -52,7 +52,7 @@ export default function FeatureCards() {
           description="AEDC, IKEJA, KADUNA and More companies"
         />
       </Link>
-      <Link href={PATHS.HOME} className="h-[12rem]">
+      <Link href={PATHS.DATA_PLAN_PRICING} className="h-[12rem]">
         <FeatureCard
           icon={Tag}
           title="Check Rates"

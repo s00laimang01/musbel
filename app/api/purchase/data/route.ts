@@ -13,6 +13,7 @@ import { DataPlan } from "@/models/data-plan";
 import { Transaction } from "@/models/transactions";
 import { transaction } from "@/types";
 import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
+import { networkTypes } from "@/lib/constants";
 
 // Define a schema for request validation
 const requestSchema = z.object({
@@ -20,7 +21,7 @@ const requestSchema = z.object({
   _id: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
     message: "Invalid plan ID format",
   }),
-  phoneNumber: z.string().regex(/^\d{11}$/, "Phone number must be 11 digits"),
+  phoneNumber: z.string(),
   byPassValidator: z.boolean().optional().default(false),
 });
 
@@ -30,7 +31,6 @@ export async function POST(request: Request) {
   try {
     // Parse and validate request data
     const body = await request.json();
-    console.log({ body });
     const validatedData = requestSchema.parse(body);
     const { pin, _id, phoneNumber, byPassValidator = false } = validatedData;
 
@@ -59,6 +59,8 @@ export async function POST(request: Request) {
     // Find data plan
     const dataPlan = await DataPlan.findById(_id).session(session);
 
+    console.log({ dataPlan });
+
     if (!dataPlan) {
       throw new Error("Plan not found");
     }
@@ -74,8 +76,23 @@ export async function POST(request: Request) {
       dataPlan.planId!,
       phoneNumber,
       tx_ref,
+      networkTypes[dataPlan.network],
       byPassValidator
     );
+
+    console.log({ purchaseResult });
+
+    if (purchaseResult.status === "failed") {
+      await session.abortTransaction();
+      session.endSession();
+      return NextResponse.json(
+        httpStatusResponse(
+          400,
+          "SOMETHING_WENT_WRONG: please contact the admin"
+        ),
+        { status: 400 }
+      );
+    }
 
     // Create transaction record
     const trxPayload: transaction = {
@@ -83,11 +100,25 @@ export async function POST(request: Request) {
       amount: dataPlan.amount,
       note: purchaseResult.message,
       paymentMethod: "ownAccount",
-      status: purchaseResult.status === "success" ? "success" : "pending",
+      status:
+        purchaseResult.status === "success"
+          ? "success"
+          : purchaseResult.status === "fail"
+          ? "failed"
+          : "pending",
       tx_ref,
       type: "data",
       user: user.id.toString(),
     };
+
+    if (purchaseResult.status === "fail") {
+      await session.abortTransaction();
+      session.endSession();
+      return NextResponse.json(
+        httpStatusResponse(400, purchaseResult.message),
+        { status: 400 }
+      );
+    }
 
     // Update user balance
     user.balance -= dataPlan.amount;
@@ -107,6 +138,7 @@ export async function POST(request: Request) {
 
     // Commit transaction
     await session.commitTransaction();
+    session.endSession();
 
     return NextResponse.json(
       httpStatusResponse(

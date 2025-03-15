@@ -28,6 +28,8 @@ const Page = () => {
 
   const { data: transaction } = data?.data || {};
 
+  const firstName = user?.fullName?.split(" ")[0];
+
   return (
     <main className="flex-1 md:p-8">
       <RemindUserToVerifyEmail />
@@ -35,9 +37,9 @@ const Page = () => {
       {/* Desktop Header - hidden on mobile */}
       <div className="hidden md:block">
         <Header
-          name="Suleiman"
-          fullName="Suleiman Abubakar"
-          email="au611640@gmail.com"
+          name={firstName!}
+          fullName={user?.fullName!}
+          email={user?.auth.email!}
           balance={user?.balance.toFixed(2) || "0.00"}
         />
       </div>

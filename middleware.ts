@@ -10,6 +10,7 @@ const PUBLIC_ROUTES = [
   "/api/auth/",
   "/api/auth/sign-up",
   "/api/account/bank/verify-transaction",
+  "/api/account/bank/verify-bill-stack-transaction",
   // Add any other public routes here
 ];
 

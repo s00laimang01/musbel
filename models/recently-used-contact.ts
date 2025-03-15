@@ -23,15 +23,6 @@ const RecentlyUsedContactSchema: mongoose.Schema<recentlyUsedContact> =
     },
     lastUsed: {
       type: String,
-      validate: {
-        validator(date: string) {
-          const now = new Date();
-          const lastUsed = new Date(date);
-
-          return lastUsed > now;
-        },
-        message: "Last used date must be in the future.",
-      },
     },
   });
 
@@ -54,6 +45,7 @@ const addToRecentlyUsedContact = async (
   // Update the last use, if contact already exist;
   if (contactAlreadyExist) {
     contactAlreadyExist.lastUsed = now.toISOString();
+    contactAlreadyExist.meta = meta;
 
     await contactAlreadyExist.save({ validateModifiedOnly: true, session });
     return contactAlreadyExist;

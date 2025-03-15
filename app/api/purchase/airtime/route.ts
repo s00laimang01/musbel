@@ -1,3 +1,4 @@
+import { networkTypes } from "@/lib/constants";
 import { buyAirtime, httpStatusResponse } from "@/lib/utils";
 import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
 import { Transaction } from "@/models/transactions";
@@ -6,7 +7,7 @@ import {
   verifyUserBalance,
   verifyUserTransactionPin,
 } from "@/models/users";
-import { transaction } from "@/types";
+import { availableNetworks, transaction } from "@/types";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
@@ -22,7 +23,13 @@ export async function POST(request: Request) {
       network,
       phoneNumber,
       byPassValidator = false,
-    } = await request.json();
+    } = (await request.json()) as {
+      pin: string;
+      amount: number;
+      network: availableNetworks;
+      phoneNumber: string;
+      byPassValidator?: boolean;
+    };
 
     const _session = await getServerSession();
 
@@ -40,13 +47,12 @@ export async function POST(request: Request) {
 
     await verifyUserTransactionPin(user?.auth.email!, pin);
 
-    console.log({ amount });
     await verifyUserBalance(user?.auth.email!, amount);
 
     const tx_ref = new mongoose.Types.ObjectId().toString();
 
     const res = await buyAirtime(
-      network,
+      networkTypes[network],
       phoneNumber,
       amount,
       tx_ref,
@@ -54,12 +60,26 @@ export async function POST(request: Request) {
       "VTU"
     );
 
+    if (res.status === "failed") {
+      await session.abortTransaction();
+      session.endSession();
+      return NextResponse.json(
+        httpStatusResponse(
+          400,
+          "SOMETHING_WENT_WRONG: please contact the admin"
+        ),
+        {
+          status: 400,
+        }
+      );
+    }
+
     const trxPayload: transaction = {
       accountId: res["request-id"],
       amount,
       note: res.message,
       paymentMethod: "ownAccount",
-      status: "pending",
+      status: "success",
       tx_ref,
       type: "airtime",
       user: user?.id,
@@ -75,7 +95,7 @@ export async function POST(request: Request) {
       addToRecentlyUsedContact(
         phoneNumber,
         "airtime",
-        { amount, network },
+        { amount, network, user: user.id },
         session
       ),
       await user.save({ session }),

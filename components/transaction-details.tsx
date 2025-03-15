@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/utils";
+import { api, cn } from "@/lib/utils";
 import type {
   paymentMethod,
   transaction,
@@ -209,7 +209,12 @@ export function TransactionDetailsSheet({
                     : "N/A"}
                 </h3>
                 {transaction?.status && (
-                  <Badge className={getStatusColor(transaction.status)}>
+                  <Badge
+                    className={cn(
+                      getStatusColor(transaction.status),
+                      "rounded-none"
+                    )}
+                  >
                     <span className="flex items-center gap-1">
                       {getStatusIcon(transaction.status)}
                       <span className="capitalize">{transaction.status}</span>

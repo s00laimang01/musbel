@@ -3,6 +3,7 @@
 import { PrivacyFooter } from "@/components/privacy-footer";
 import { ScrollArea } from "@/components/scroll-area";
 import Text from "@/components/text";
+import TopUpCard from "@/components/top-up-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -94,16 +95,6 @@ const Page = () => {
     }
   };
 
-  const sendVerificationCode = async () => {
-    try {
-      await api.post(`users/me/verify-account/`, { type: "email" });
-
-      toast.success("Verification code sent successfully");
-    } catch (error) {
-      toast.error(errorMessage(error).message);
-    }
-  };
-
   const disableBtn: Record<number, boolean> = {
     0: !data.useVBT,
     1: data.amount < 100,
@@ -132,14 +123,6 @@ const Page = () => {
   });
 
   const { data: transaction } = _data || {};
-
-  const { isLoading, data: __data } = useQuery({
-    queryKey: ["get-dedicated-account"],
-    queryFn: getDedicatedAccount,
-    refetchInterval: 5000,
-  });
-
-  const { data: account } = __data || {};
 
   useEffect(() => {
     if (transaction) {
@@ -176,45 +159,7 @@ const Page = () => {
         </Text>
       </header>
 
-      {isLoading ? (
-        <Skeleton className="w-full h-[11rem]" />
-      ) : (
-        <Card className="bg-primary/80 rounded-sm mt-4">
-          <CardContent className="space-y-3">
-            <Text className="font-semibold text-white/80">
-              {account?.accountDetails.bankName.toUpperCase() ||
-                "USER ACCOUNT NOT VERIFIED"}
-            </Text>
-            <div className="w-full flex items-center justify-between">
-              <CardTitle className="text-4xl font-bold text-white">
-                {account?.accountDetails?.accountNumber || "N/A"}
-              </CardTitle>
-              {account?.hasDedicatedAccountNumber ? (
-                <Button
-                  onClick={() =>
-                    copyAccountNumber(account.accountDetails.accountNumber)
-                  }
-                  className="rounded-sm bg-white/20 hover:bg-white/30"
-                >
-                  Copy
-                </Button>
-              ) : (
-                <VerifyEmail email={session?.user.email!}>
-                  <Button
-                    onClick={sendVerificationCode}
-                    className="rounded-sm bg-white/20 hover:bg-white/30"
-                  >
-                    VERIFY EMAIL
-                  </Button>
-                </VerifyEmail>
-              )}
-            </div>
-            <Text className="text-white/80">
-              {account?.accountDetails.accountName || "EMAIL NOT YET VERIFIED"}
-            </Text>
-          </CardContent>
-        </Card>
-      )}
+      <TopUpCard />
 
       <div className="space-y-3 px-1">
         <Label

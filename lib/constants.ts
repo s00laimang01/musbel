@@ -1,6 +1,5 @@
 import {
   availableNetworks,
-  dataPlan,
   meterType,
   PATHS,
   planTypes,
@@ -657,3 +656,10 @@ export const DATA_PLANS = [
 export const PLAN_TYPES: planTypes[] = ["SME", "GIFTING", "COOPERATE GIFTING"];
 
 export const METER_TYPE: meterType[] = ["postpaid", "prepaid"];
+
+export const networkTypes: Record<availableNetworks, number> = {
+  mtn: 1,
+  glo: 2,
+  airtel: 3,
+  "9mobile": 4,
+};

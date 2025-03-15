@@ -1,10 +1,5 @@
 import { dedicatedAccountNumber, IUser } from "@/types";
 import mongoose from "mongoose";
-import { Account } from "./account";
-import {
-  createCustomer,
-  createDedicatedVirtualAccount,
-} from "@/lib/server-utils";
 
 const UserSchema: mongoose.Schema<IUser> = new mongoose.Schema(
   {
@@ -69,6 +64,11 @@ const UserSchema: mongoose.Schema<IUser> = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
+    },
   },
   { timestamps: true }
 );
@@ -95,50 +95,6 @@ UserSchema.pre("save", async function (next) {
     }
 
     this.hasSetPin = true;
-  }
-
-  // Run only when the user email is verified
-  if (this.isEmailVerified) {
-    // Check if the user already has an account assign to them
-    const account = await Account.exists({
-      user: this._id,
-      hasDedicatedAccountNumber: true,
-    });
-
-    // if the user has an account already return
-    if (account) return;
-
-    const [first_name, last_name] = this.fullName.split(" ");
-
-    const customer = await createCustomer({
-      email: this.auth.email,
-      first_name,
-      last_name,
-      phone: this.phoneNumber,
-    });
-
-    // Proceed to create an account for the user
-    const virtualAccount = await createDedicatedVirtualAccount(
-      customer.data.customer_code
-    );
-
-    const newAcctPayload: dedicatedAccountNumber = {
-      accountDetails: {
-        accountName: virtualAccount.data.account_name,
-        accountNumber: virtualAccount.data.account_number + "",
-        accountRef: customer.data.customer_code,
-        bankCode: virtualAccount.data.bank.bank_code,
-        bankName: virtualAccount.data.bank.name,
-        expirationDate: virtualAccount.data.assignment,
-      },
-      hasDedicatedAccountNumber: true,
-      user: this.id,
-      order_ref: virtualAccount.data.id + "",
-    };
-
-    const newAccount = new Account(newAcctPayload);
-
-    await newAccount.save();
   }
 
   next();
