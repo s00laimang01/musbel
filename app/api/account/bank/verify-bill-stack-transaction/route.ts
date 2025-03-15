@@ -8,39 +8,39 @@ import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import crypto from "crypto";
-import { connectToDatabase } from "@/lib/connect-to-db";
 
 // Your secret key from the Wiaxy dashboard
-const SECRET_KEY = process.env.BILL_STACK_SECRET_KEY!;
-
-// Function to verify the Wiaxy webhook signature
-function verifyWiaxySignature(request: NextRequest): boolean {
-  // Get the signature from the header
-  const receivedSignature = request.headers.get("x-wiaxy-signature");
-
-  // If there's no signature header, reject the request
-  if (!receivedSignature) {
-    console.error("Missing x-wiaxy-signature header");
-    return false;
-  }
-
-  // Generate the MD5 hash of your secret key
-  const expectedSignature = crypto
-    .createHash("md5")
-    .update(SECRET_KEY)
-    .digest("hex");
-
-  // Compare the received signature with the expected one
-  const isValid = receivedSignature === expectedSignature;
-
-  return isValid;
-}
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
+  // Function to verify the Wiaxy webhook signature
+  function verifyWiaxySignature(): boolean {
+    const SECRET_KEY = process.env.BILL_STACK_SECRET_KEY!;
+
+    // Get the signature from the header
+    const receivedSignature = request.headers.get("x-wiaxy-signature");
+
+    // If there's no signature header, reject the request
+    if (!receivedSignature) {
+      console.error("Missing x-wiaxy-signature header");
+      return false;
+    }
+
+    // Generate the MD5 hash of your secret key
+    const expectedSignature = crypto
+      .createHash("md5")
+      .update(SECRET_KEY)
+      .digest("hex");
+
+    // Compare the received signature with the expected one
+    const isValid = receivedSignature === expectedSignature;
+
+    return isValid;
+  }
+
   //   First verify that the request is from Wiaxy
-  if (!verifyWiaxySignature(request)) {
+  if (!verifyWiaxySignature()) {
     return NextResponse.json(
       httpStatusResponse(401, "INVALID_SIGNATURE: Unauthorized request"),
       { status: 401 }
