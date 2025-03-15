@@ -46,15 +46,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction(); // Explicitly start the transaction
-
   try {
     const payload = (await request.json()) as BillStackWebhookPayload;
 
     if (payload.event !== "PAYMENT_NOTIFIFICATION") {
-      await session.abortTransaction();
-      session.endSession();
       return NextResponse.json(
         httpStatusResponse(400, "INVALID_EVENT_TYPE: please contact admin"),
         { status: 400 }
@@ -62,8 +57,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (payload.data.type !== "RESERVED_ACCOUNT_TRANSACTION") {
-      await session.abortTransaction();
-      session.endSession();
       return NextResponse.json(
         httpStatusResponse(
           400,
@@ -78,8 +71,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (transaction?.status === "success") {
-      await session.abortTransaction();
-      session.endSession();
       return NextResponse.json(
         httpStatusResponse(
           400,
@@ -94,8 +85,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (!account) {
-      await session.abortTransaction();
-      session.endSession();
       return NextResponse.json(
         httpStatusResponse(400, "ACCOUNT_NOT_FOUND: please contact admin"),
         { status: 400 }
@@ -105,8 +94,6 @@ export async function POST(request: NextRequest) {
     const user = await User.findById(account.user);
 
     if (!user) {
-      await session.abortTransaction();
-      session.endSession();
       return NextResponse.json(
         httpStatusResponse(400, "USER_NOT_FOUND: please contact admin"),
         { status: 400 }
@@ -132,13 +119,7 @@ export async function POST(request: NextRequest) {
 
     const newTransaction = new Transaction(trxPayload);
 
-    await Promise.all([
-      user.save({ session }),
-      newTransaction.save({ session }),
-    ]);
-
-    await session.commitTransaction();
-    session.endSession();
+    await Promise.all([user.save(), newTransaction.save()]);
 
     try {
       const { data, error } = await resend.emails.send({
@@ -161,14 +142,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     // Check if session exists and has an active transaction before aborting
-    if (session) {
-      try {
-        await session.abortTransaction();
-      } catch (abortError) {
-        console.log("Error aborting transaction:", abortError);
-      }
-      session.endSession();
-    }
+
     console.log(error);
 
     return NextResponse.json(
