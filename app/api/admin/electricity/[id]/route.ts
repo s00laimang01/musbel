@@ -91,12 +91,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectToDatabase();
 
-    const id = params.id;
+    const { id } = await params;
     const body = await request.json();
 
     // Find and update bill
