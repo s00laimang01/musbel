@@ -145,12 +145,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectToDatabase();
 
-    const id = params.id;
+    const { id } = await params;
 
     // Find and delete bill
     const deletedBill = await Transaction.findOneAndDelete({
