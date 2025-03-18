@@ -36,6 +36,7 @@ import { api, errorMessage, updateSectionSettings } from "@/lib/utils";
 
 export default function SettingsPage() {
   // Initial state based on the AppProps interface
+  // @ts-ignore
   const [settings, setSettings] = useState<appProps>({
     stopAllTransactions: false,
     stopSomeTransactions: [],

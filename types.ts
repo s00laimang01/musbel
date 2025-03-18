@@ -126,6 +126,7 @@ export interface IUser extends Document {
   verifyUserBalance: (amount: number) => Promise<void>;
   sendResetPasswordToken: () => Promise<void>;
   verifyResetPasswordToken: (token: string) => Promise<boolean>;
+  resetPassword: (password: string) => Promise<void>;
 }
 
 export interface accountDetailsTypes {
