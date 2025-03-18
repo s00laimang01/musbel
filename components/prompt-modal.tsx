@@ -12,18 +12,35 @@ import {
 import { Button } from "./ui/button";
 
 const PromptModal: FC<{
-  children: ReactNode;
+  children?: ReactNode;
   title?: string;
   description?: string;
   onConfirm: () => void;
+  _open?: boolean;
+  onClose?: () => void;
 }> = ({
   children,
   title = "Delete Account",
   description = "Are you sure you want to delete your account? Deleting your account mean you will lose access to all your data",
   onConfirm,
+  _open = false,
+  onClose = () => {},
 }) => {
+  const [open, setOpen] = React.useState(_open);
+
   return (
-    <Dialog>
+    <Dialog
+      open={open}
+      onOpenChange={(e) => {
+        if (!e) {
+          setOpen(false);
+          onClose();
+          return;
+        }
+
+        setOpen(e);
+      }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="rounded-none max-w-[90%]">
         <DialogHeader>

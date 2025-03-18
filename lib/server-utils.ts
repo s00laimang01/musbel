@@ -1,13 +1,29 @@
+import { Account } from "@/models/account";
+import { App } from "@/models/app";
+import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
+import { Transaction } from "@/models/transactions";
+import { User } from "@/models/users";
 import {
+  availableBanks,
+  availableNetworks,
+  ChartDataPoint,
   createCustomerProps,
   createCustomerResponse,
   createDedicatedAccountProps,
   createDedicatedVirtualAccountResponse,
   createOneTimeVirtualAccountProps,
   createOneTimeVirtualAccountResponse,
+  dedicatedAccountNumber,
   fetchTransactionResponse,
+  IUser,
+  transaction,
+  transactionRequestProps,
 } from "@/types";
 import axios from "axios";
+import mongoose, { isValidObjectId, PipelineStage } from "mongoose";
+import { buyAirtime } from "./utils";
+import { networkTypes } from "./constants";
+import { connectToDatabase } from "./connect-to-db";
 
 export const budPay = (type: "s2s" | "v2" = "v2") => {
   return axios.create({
@@ -58,7 +74,10 @@ export const createDedicatedVirtualAccount = async (
     return response.data;
   } catch (error) {
     console.log(error);
-    return { status: false } as createDedicatedVirtualAccountResponse;
+    return {
+      status: false,
+      message: (error as Error).message,
+    } as createDedicatedVirtualAccountResponse;
   }
 };
 
@@ -75,3 +94,403 @@ export const verifyTransactionWithBudPay = async (id: string) => {
     return { status: false } as fetchTransactionResponse;
   }
 };
+
+export async function getChartData(year?: number): Promise<ChartDataPoint[]> {
+  const currentYear = year || new Date().getFullYear();
+
+  // Get revenue data from transactions
+  const revenueData = await Transaction.aggregate([
+    // Filter transactions for the specified year
+    {
+      $match: {
+        createdAt: {
+          $gte: new Date(`${currentYear}-01-01`),
+          $lte: new Date(`${currentYear}-12-31`),
+        },
+        status: "success", // Only count successful transactions
+        type: "funding", // Only count funding transactions for revenue
+      },
+    },
+    // Group by month
+    {
+      $group: {
+        _id: { $month: "$createdAt" },
+        revenue: { $sum: "$amount" },
+      },
+    },
+    // Format the output
+    {
+      $project: {
+        _id: 0,
+        month: "$_id",
+        revenue: 1,
+      },
+    },
+    // Sort by month
+    {
+      $sort: { month: 1 },
+    },
+  ]);
+
+  // Get new user counts
+  const userData = await User.aggregate([
+    // Filter users created in the specified year
+    {
+      $match: {
+        createdAt: {
+          $gte: new Date(`${currentYear}-01-01`),
+          $lte: new Date(`${currentYear}-12-31`),
+        },
+      },
+    },
+    // Group by month
+    {
+      $group: {
+        _id: { $month: "$createdAt" },
+        count: { $sum: 1 },
+      },
+    },
+    // Format the output
+    {
+      $project: {
+        _id: 0,
+        month: "$_id",
+        users: "$count",
+      },
+    },
+    // Sort by month
+    {
+      $sort: { month: 1 },
+    },
+  ]);
+
+  // Create a map of month numbers to month names
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  // Initialize result array with all months
+  const result: ChartDataPoint[] = monthNames.map((name, index) => ({
+    name,
+    revenue: 0,
+    users: 0,
+  }));
+
+  // Fill in revenue data
+  revenueData.forEach((item: { month: number; revenue: number }) => {
+    if (item.month >= 1 && item.month <= 12) {
+      result[item.month - 1].revenue = item.revenue;
+    }
+  });
+
+  // Fill in user data
+  userData.forEach((item: { month: number; users: number }) => {
+    if (item.month >= 1 && item.month <= 12) {
+      result[item.month - 1].users = item.users;
+    }
+  });
+
+  return result;
+}
+
+export async function getTransactionsWithUserDetails(
+  options: transactionRequestProps,
+  filters: Record<string, any> = {}
+) {
+  const {
+    startDate,
+    endDate,
+    status,
+    limit = 50,
+    page = 1,
+    sortBy = "createdAt",
+    sortOrder = -1,
+  } = options;
+
+  // Build the match stage for the pipeline
+  const match: Record<string, any> = { ...filters };
+
+  if (filters.search) {
+    filters.$or = [{ _id: { $regex: filters.search, $options: "i" } }];
+  }
+
+  if (startDate || endDate) {
+    match.createdAt = {};
+    if (startDate) match.createdAt.$gte = new Date(startDate);
+    if (endDate) match.createdAt.$lte = new Date(endDate);
+  }
+
+  if (status) match.status = status;
+
+  try {
+    const pipeline: PipelineStage[] = [
+      { $match: match },
+      {
+        $lookup: {
+          from: "users",
+          let: { userId: "$user" },
+          pipeline: [
+            {
+              $match: { $expr: { $eq: ["$_id", { $toObjectId: "$$userId" }] } },
+            },
+            {
+              $project: {
+                email: "$auth.email",
+                fullName: 1,
+              },
+            },
+          ],
+          as: "userDetails",
+        },
+      },
+      { $unwind: { path: "$userDetails", preserveNullAndEmptyArrays: true } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+    ];
+
+    // Determine sort direction
+    const sortDirection = sortOrder || -1;
+
+    // Fetch transactions with user details
+    const transactions = await Transaction.aggregate(pipeline).sort({
+      [sortBy]: sortDirection,
+    });
+
+    // Format the result
+    const formattedTransactions = transactions.map((transaction) => ({
+      transaction_id: transaction._id,
+      amount: transaction.amount,
+      status: transaction.status,
+      createdAt: transaction.createdAt,
+      userEmail: transaction.userDetails?.email || "No email available",
+      userfullName: transaction.userDetails?.fullName || "Unknown user",
+      ...transaction,
+    }));
+
+    // Count the total number of matching transactions for pagination
+    const countPipeline = [{ $match: match }, { $count: "total" }];
+    const countResult = await Transaction.aggregate(countPipeline);
+    const totalCount = countResult.length > 0 ? countResult[0].total : 0;
+
+    return {
+      transactions: formattedTransactions,
+      pagination: {
+        total: totalCount,
+        page,
+        limit,
+        pages: Math.ceil(totalCount / limit),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching transactions with user details:", error);
+    throw error;
+  }
+}
+
+export async function getTransactionByIdWithUserDetails(id: string) {
+  try {
+    // Validate that the ID is a valid MongoDB ObjectId
+
+    // Execute the aggregation
+    const result = await Transaction.findById(id);
+
+    // If no transaction is found, return null
+    if (!result) {
+      return null;
+    }
+
+    const user = await User.findById(result.user);
+
+    return {
+      transaction_id: result._id,
+      amount: result.amount,
+      tx_ref: result.tx_ref,
+      user: result.user,
+      note: result.note,
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+      status: result.status,
+      type: result.type,
+      paymentMethod: result.paymentMethod,
+      accountId: result.accountId,
+      meta: result.meta,
+      userEmail: user?.auth.email || "No email available",
+      userfullName: user?.fullName || "Unknown user",
+    };
+  } catch (error) {
+    console.error("Error fetching transaction with user details:", error);
+    throw error;
+  }
+}
+
+/**
+ * Process an airtime purchase
+ *
+ * @param userId - The ID of the user making the purchase
+ * @param network - The network provider
+ * @param phoneNumber - The phone number to recharge
+ * @param amount - The amount to recharge
+ * @param pin - The user's transaction PIN
+ * @param byPassValidator - Whether to bypass validation
+ * @param session - Mongoose session for transaction
+ * @returns The result of the airtime purchase
+ */
+export async function processAirtimePurchase(
+  user: any,
+  network: availableNetworks,
+  phoneNumber: string,
+  amount: number,
+  tx_ref: string,
+  byPassValidator = false,
+  session: mongoose.ClientSession
+) {
+  // Process airtime purchase
+  const res = await buyAirtime(
+    networkTypes[network],
+    phoneNumber,
+    amount,
+    tx_ref,
+    byPassValidator,
+    "VTU"
+  );
+
+  if (res.status === "failed") {
+    throw new Error(res.message || "Failed to purchase airtime");
+  }
+
+  // Create transaction record
+  const trxPayload: transaction = {
+    accountId: res["request-id"],
+    amount,
+    note: res.message,
+    paymentMethod: "ownAccount",
+    status: "success",
+    tx_ref,
+    type: "airtime",
+    user: user.id,
+    meta: {
+      network,
+      phoneNumber,
+    },
+  };
+
+  // Update user balance
+  user.balance -= amount;
+
+  // Save all changes in parallel
+  const [transactionResult, contactResult, userResult] =
+    await Promise.allSettled([
+      new Transaction(trxPayload).save({ session }),
+      addToRecentlyUsedContact(
+        phoneNumber,
+        "airtime",
+        { amount, network, user: user.id },
+        session
+      ),
+      user.save({ session }),
+    ]);
+
+  // Check if any operations failed
+  const failedOperations = [transactionResult, contactResult, userResult]
+    .filter((result) => result.status === "rejected")
+    .map((result) => (result as PromiseRejectedResult).reason);
+
+  if (failedOperations.length > 0) {
+    throw new Error(
+      `Failed to complete transaction: ${failedOperations.join(", ")}`
+    );
+  }
+
+  return {
+    message: res.message,
+    transactionId: tx_ref,
+    amount,
+    phoneNumber,
+    network,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+export async function processVirtualAccountForUser(user: IUser) {
+  const appConfigs = await App.findOne({});
+
+  let dedicatedAccountToOpenForUsers: availableBanks;
+
+  await connectToDatabase();
+
+  // Check if the account to create for users is not random then assign the available one else generate randomly
+  if (
+    appConfigs?.bankAccountToCreateForUsers &&
+    appConfigs?.bankAccountToCreateForUsers !== "random"
+  ) {
+    dedicatedAccountToOpenForUsers = appConfigs?.bankAccountToCreateForUsers;
+  } else {
+    const banks: availableBanks[] = [
+      "9PSB",
+      "BANKLY",
+      "PALMPAY",
+      "PROVIDUS",
+      "SAFEHAVEN",
+    ];
+
+    dedicatedAccountToOpenForUsers = banks[2];
+  }
+
+  const newUser = user; //Assign this as newUser for clarity
+  const [firstName, lastName] = newUser?.fullName?.split(" "); //Split the user full name into firstName and lastName
+
+  // Create a virtual account for the user
+  const account = await createDedicatedVirtualAccount({
+    bank: dedicatedAccountToOpenForUsers,
+    email: newUser?.auth?.email,
+    firstName,
+    lastName,
+    phone: newUser.phoneNumber,
+    reference: newUser?._id!,
+  });
+
+  // If the creation is not successful, notify the user about it
+  if (!account.status) {
+    throw new Error(
+      "Unable to create a dedicated account for you, please try again later"
+    );
+  }
+
+  // destructure the the virtual account response and rename some propertird
+  const { account: newVirtualAccount, ...rest } = account.data;
+
+  // Save dedicated account
+  const virtualAccount = newVirtualAccount[0];
+
+  // Prepare the payload for saving the user account
+  const virtualAccountPayload: dedicatedAccountNumber = {
+    accountDetails: {
+      accountName: virtualAccount.account_name,
+      accountNumber: virtualAccount.account_number,
+      accountRef: rest.reference,
+      bankCode: virtualAccount.bank_id,
+      bankName: virtualAccount.bank_name,
+      expirationDate: account.message,
+    },
+    hasDedicatedAccountNumber: true,
+    order_ref: newUser._id!,
+    user: newUser._id!,
+  };
+
+  // Instanciate the Account method
+  const _account = new Account(virtualAccountPayload);
+
+  // Save the virtual account the user create
+  await _account.save();
+}

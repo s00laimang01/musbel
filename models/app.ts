@@ -1,17 +1,15 @@
-import { appProps, availableBanks } from "@/types";
 import mongoose from "mongoose";
-import { User } from "./users";
+import type { appProps, availableBanks, transactionType } from "@/types";
 
 const AppSchema: mongoose.Schema<appProps> = new mongoose.Schema({
-  lockAccounts: {
-    type: [String],
-  },
   stopAllTransactions: {
     type: Boolean,
+    default: false,
   },
   stopSomeTransactions: {
-    type: ["String"],
+    type: [String],
     enum: ["funding", "airtime", "data", "bill", "recharge-card", "exam"],
+    default: [],
   },
   stopAccountCreation: {
     type: Boolean,
@@ -25,8 +23,183 @@ const AppSchema: mongoose.Schema<appProps> = new mongoose.Schema({
     )[],
     default: "random",
   },
+  transactionLimit: {
+    type: Number,
+    default: 10000,
+  },
+  requireUserVerification: {
+    type: Boolean,
+    default: true,
+  },
+  maintenanceMode: {
+    type: Boolean,
+    default: false,
+  },
+  defaultUserRole: {
+    type: String,
+    enum: ["user", "customer", "client", "guest"],
+    default: "user",
+  },
+  maintenanceMessage: {
+    type: String,
+    default:
+      "System is currently undergoing scheduled maintenance. Please check back later.",
+  },
+  apiRateLimit: {
+    type: Number,
+    default: 60,
+  },
+  logLevel: {
+    type: String,
+    enum: ["error", "warn", "info", "debug", "trace"],
+    default: "info",
+  },
+  force2FA: {
+    type: Boolean,
+    default: false,
+  },
+  passwordPolicy: {
+    type: String,
+    enum: ["basic", "medium", "strong", "very-strong"],
+    default: "strong",
+  },
+  sessionTimeout: {
+    type: Number,
+    default: 30,
+  },
+  adminIpWhitelist: {
+    type: [String],
+    default: [],
+  },
 });
 
-const App = mongoose.model<appProps>("App", AppSchema);
+AppSchema.methods.isTransactionEnable = async function (
+  transactionType?: transactionType
+) {
+  if (this?.stopAllTransactions) {
+    throw new Error(
+      "ALL_TRANSACTIONS_DISABLE: All transactions has been disable, please contact the admin"
+    );
+  }
 
-export { App };
+  if (transactionType) {
+    const transactionsToStop = this?.stopSomeTransactions || [];
+
+    if (transactionsToStop.includes(transactionType)) {
+      throw new Error(
+        `${transactionType.toUpperCase}_TRANSACTION_HAS_BEEN_STOPPED: this transaction has stopped, please contact the admin.`
+      );
+    }
+  }
+};
+
+AppSchema.methods.checkTransactionLimit = async function (amount: number) {
+  if (isNaN(Number(amount))) {
+    throw new Error("Invalid amount");
+  }
+
+  if (amount <= 0) {
+    throw new Error("Amount must be greater than zero");
+  }
+
+  if (!this?.transactionLimit) return;
+
+  if (amount >= Number(this.transactionLimit)) {
+    throw new Error(
+      "TRANSACTION_LIMIT_EXCEEDED: this transaction limit has been exceeded."
+    );
+  }
+};
+
+AppSchema.methods.systemIsunderMaintainance = async function () {
+  if (this?.maintenanceMode) {
+    throw new Error(this?.maintenanceMessage);
+  }
+};
+
+AppSchema.methods.isAccountCreationStopped = async function () {
+  if (this?.stopAccountCreation) {
+    throw new Error(
+      "ACCOUNT_CREATION_TEMPORARILY_STOPPED: please contact the admin"
+    );
+  }
+};
+
+const App: mongoose.Model<appProps> =
+  mongoose.models.App || mongoose.model<appProps>("App", AppSchema);
+
+const accountRequiresVerificationBeforeVirtualAccountActivation = async () => {
+  const app = await App.findOne({});
+
+  return app?.requireUserVerification;
+};
+
+const systemPasswordPolicy = async (password: string) => {
+  const app = await App.findOne({});
+
+  if (!password) {
+    throw new Error("Password is required");
+  }
+
+  switch (app?.passwordPolicy) {
+    case "basic":
+      // Basic: Minimum 6 characters
+      if (password.length < 6) {
+        throw new Error("Password must be at least 6 characters long");
+      }
+      break;
+
+    case "medium":
+      // Medium: Minimum 8 characters, at least 1 letter and 1 number
+      if (
+        password.length < 8 ||
+        !/\d/.test(password) ||
+        !/[a-zA-Z]/.test(password)
+      ) {
+        throw new Error(
+          "Password must be at least 8 characters long and include at least one letter and one number"
+        );
+      }
+      break;
+
+    case "strong":
+      // Strong: Minimum 10 characters, at least 1 uppercase letter, 1 lowercase letter, and 1 number
+      if (
+        password.length < 10 ||
+        !/[A-Z]/.test(password) ||
+        !/[a-z]/.test(password) ||
+        !/\d/.test(password)
+      ) {
+        throw new Error(
+          "Password must be at least 10 characters long and include an uppercase letter, a lowercase letter, and a number"
+        );
+      }
+      break;
+
+    case "very-strong":
+      // Very-Strong: Minimum 12 characters, must include 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character
+      if (
+        password.length < 12 ||
+        !/[A-Z]/.test(password) ||
+        !/[a-z]/.test(password) ||
+        !/\d/.test(password) ||
+        !/[!@#$%^&*(),.?":{}|<>]/.test(password)
+      ) {
+        throw new Error(
+          "Password must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a special character"
+        );
+      }
+      break;
+
+    default:
+      throw new Error("Invalid password policy");
+  }
+
+  return app?.passwordPolicy;
+};
+
+export {
+  App,
+  accountRequiresVerificationBeforeVirtualAccountActivation,
+  systemPasswordPolicy,
+};

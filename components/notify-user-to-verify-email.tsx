@@ -72,7 +72,7 @@ export default function RemindUserToVerifyEmail() {
           </DialogTitle>
           <DialogDescription className="text-center">
             Your email address hasn't been verified yet. Verify your email to
-            get your dedicated account.
+            get access to all app features.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex flex-col sm:flex-row sm:justify-center sm:space-x-2 pt-4">

@@ -26,6 +26,12 @@ export enum PATHS {
   EXAM = "/dashboard/utility-payment/exam",
   RECHARGE_CARD = "/dashboard/utility-payment/recharge-card/",
   DATA_PLAN_PRICING = "/dashboard/data-plans/",
+  ADMIN_OVERVIEW = "/admin/overview/",
+  ADMIN_USERS = "/admin/users/",
+  ADMIN_TRANSACTIONS = "/admin/transactions/",
+  ADMIN_DATA_PLANS = "/admin/data-plans/",
+  ADMIN_ELECTRICITY_BILLS = "/admin/electricity-bills/",
+  ADMIN_SETTINGS = "/admin/settings/",
 }
 
 // DASHBOARD
@@ -97,7 +103,7 @@ export interface userStore {
 export type IUserRole = "user" | "admin";
 export type accountStatus = "active" | "inactive";
 
-export interface IUser {
+export interface IUser extends Document {
   _id?: string;
   fullName: string;
   phoneNumber: string;
@@ -115,6 +121,11 @@ export interface IUser {
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   status: accountStatus;
+
+  verifyTransactionPin: (pin: string) => Promise<boolean>;
+  verifyUserBalance: (amount: number) => Promise<void>;
+  sendResetPasswordToken: () => Promise<void>;
+  verifyResetPasswordToken: (token: string) => Promise<boolean>;
 }
 
 export interface accountDetailsTypes {
@@ -192,6 +203,7 @@ export interface transaction<T = any> {
   paymentMethod: paymentMethod;
   accountId?: string;
   meta?: T;
+  _id?: string;
 }
 
 export interface recentlyUsedContact<T = any> {
@@ -254,12 +266,34 @@ export interface VerifyingPaymentProps {
 
 // APP CONFIGS
 
-export interface appProps {
+export interface appProps extends Document {
   stopAllTransactions: boolean;
   stopSomeTransactions: transactionType[];
-  lockAccounts: string[];
-  bankAccountToCreateForUsers: availableBanks | "random";
   stopAccountCreation: boolean;
+  bankAccountToCreateForUsers: availableBanks | "random";
+  transactionLimit: number;
+  requireUserVerification: boolean;
+  maintenanceMode: boolean;
+  defaultUserRole: IUserRole;
+  maintenanceMessage?: string;
+  apiRateLimit?: number;
+  logLevel?: "error" | "warn" | "info" | "debug" | "trace";
+  force2FA?: boolean;
+  passwordPolicy?: "basic" | "medium" | "strong" | "very-strong";
+  sessionTimeout?: number;
+  adminIpWhitelist?: string[];
+
+  // Methods
+  isTransactionEnable: (transactionType?: transactionType) => Promise<void>;
+  checkTransactionLimit: (amount: number) => Promise<void>;
+  systemIsunderMaintainance: () => Promise<void>;
+  isAccountCreationStopped: () => Promise<void>;
+}
+
+export interface ChartDataPoint {
+  name: string; // month
+  revenue: number; // amount for that month
+  users: number; // users registered that month
 }
 
 // Vending Responses
@@ -369,7 +403,6 @@ export interface exam {
 }
 
 // BUDPAY TYPES
-
 export interface createOneTimeVirtualAccountProps {
   email: string;
   amount: string;
@@ -397,6 +430,7 @@ export interface createDedicatedAccountProps {
   phone: string;
   bank: availableBanks;
 }
+
 export interface createCustomerProps<T = any> {
   email: string;
   first_name: string;
@@ -418,14 +452,6 @@ export interface createCustomerResponse {
   };
 }
 
-// Bank information
-interface Bank {
-  name: string;
-  id: number;
-  bank_code: string;
-  prefix: string;
-}
-
 // Customer information
 interface Customer {
   id: number;
@@ -436,6 +462,7 @@ interface Customer {
   phone: string;
 }
 
+// BILL_STACK TYPES
 export type availableBanks =
   | "9PSB"
   | "SAFEHAVEN"
@@ -451,7 +478,6 @@ export interface generatedBankAccount {
   created_at: string;
 }
 
-// Main response structure
 export interface createDedicatedVirtualAccountResponse {
   status: boolean;
   message: string;
@@ -467,7 +493,6 @@ export interface createDedicatedVirtualAccountResponse {
 }
 
 // BUDPAY WEBHOOK PROPS
-// Customer information
 interface Customer {
   id: number;
   email: string;
@@ -606,6 +631,35 @@ export interface BillStackWebhookPayload {
       first_name: string;
       last_name: string;
       createdAt: string;
-    };
+    }[];
   };
 }
+
+export interface transactionRequestProps {
+  startDate?: string;
+  endDate?: string;
+  status?: transactionStatus;
+  limit?: number;
+  page?: number;
+  sortBy?: string;
+  sortOrder?: -1 | 1;
+  search?: string;
+}
+
+export interface transactionsWithUserDetails extends transaction {
+  transaction_id: string;
+  amount: number;
+  status: transactionStatus;
+  createdAt: string;
+  userEmail: string;
+  userfullName: string;
+}
+
+export type UsersResponse = {
+  status: string;
+  message: string;
+  data: {
+    users: IUser[];
+    total: number;
+  };
+};

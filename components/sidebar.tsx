@@ -11,11 +11,11 @@ import {
   CreditCard,
   Settings,
   LogOut,
+  ShieldAlert,
 } from "lucide-react";
 import { cn, getInitials, isPathMathching } from "@/lib/utils";
 import Link from "next/link";
 import { PATHS } from "@/types";
-import { useAuthentication } from "@/hooks/use-authentication";
 import { useUserStore } from "@/stores/user.store";
 import { signOut } from "next-auth/react";
 
@@ -133,6 +133,15 @@ export function Sidebar({
 
       <div className="mt-auto pt-8">
         <ul className="space-y-1">
+          {user?.role === "admin" && (
+            <NavItem
+              onClick={onClick}
+              icon={<ShieldAlert size={18} />}
+              label="Admin"
+              isActive={isPathMathching(PATHS.ADMIN_OVERVIEW)}
+              path={PATHS.ADMIN_OVERVIEW}
+            />
+          )}
           <NavItem
             onClick={onClick}
             icon={<Settings size={18} />}

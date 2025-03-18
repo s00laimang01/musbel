@@ -1,5 +1,7 @@
 import {
   AirtimeVendingResponse,
+  appProps,
+  availableBanks,
   availableNetworks,
   BillPaymentResponse,
   CableSubscriptionResponse,
@@ -9,24 +11,34 @@ import {
   ExamResponse,
   flutterwaveWebhook,
   IUser,
+  IUserRole,
   meterType,
   MeterVerificationResponse,
   paymentMethod,
   PrintRechargeCard,
   recentlyUsedContact,
   transaction,
+  transactionRequestProps,
   transactionStatus,
+  transactionsWithUserDetails,
   transactionType,
+  UsersResponse,
   VirtualAccountResponse,
 } from "@/types";
 import axios from "axios";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { configs } from "./constants";
+import { configs, networkTypes } from "./constants";
 import { Session } from "next-auth";
 import { NextResponse } from "next/server";
 import queryString from "query-string";
 import { User } from "@/models/users";
+import mongoose from "mongoose";
+// import { Transaction } from "@/models/transactions";
+import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
+import { createDedicatedVirtualAccount } from "./server-utils";
+// import { Account } from "@/models/account";
+// import { App } from "@/models/app";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -228,7 +240,7 @@ export const getInitials = (name = "") => {
   let c = "";
 
   name.split(" ").map((n) => {
-    c += n[0];
+    c += n[0]?.toUpperCase();
   });
 
   return c;
@@ -645,3 +657,150 @@ export function sendWhatsAppMessage(
   // Open WhatsApp in a new tab
   window.open(whatsappUrl, "_blank");
 }
+
+export const getTransactionsForAdmin = async (
+  params: transactionRequestProps
+) => {
+  try {
+    // Create filters object for search functionality
+    const q = queryString.stringify(params);
+
+    // Add search parameter if it exists
+
+    // Call the server function with params and filters
+    const response = await api.get<{
+      data: {
+        transactions: transactionsWithUserDetails[];
+        pagination: {
+          total: number;
+          page: number;
+          limit: number;
+          pages: number;
+        };
+      };
+    }>(`/admin/overview/transactions/?${q}`);
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    throw error;
+  }
+};
+
+export const getStatusColor = (status: transactionStatus) => {
+  switch (status) {
+    case "success":
+      return "text-green-500";
+    case "failed":
+      return "text-red-500";
+    case "pending":
+      return "text-yellow-500";
+    default:
+      return "text-gray-500";
+  }
+};
+
+export const fetchUsers = async ({
+  debouncedSearchQuery,
+  status,
+  role,
+  currentPage = 1,
+  limit = 10,
+}: {
+  debouncedSearchQuery?: string;
+  status?: transactionStatus;
+  role?: IUserRole;
+  currentPage?: number;
+  limit?: number;
+}): Promise<UsersResponse> => {
+  const params = new URLSearchParams();
+  params.set("page", currentPage.toString());
+  params.set("limit", limit.toString());
+
+  if (debouncedSearchQuery) params.set("search", debouncedSearchQuery);
+  if (status) params.set("status", status);
+  if (role) params.set("role", role);
+
+  const response = await fetch(`/api/admin/users?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch users");
+  }
+  return response.json();
+};
+
+export const exportTransactions = async (params: transactionRequestProps) => {
+  try {
+    // Show loading state in the UI
+    console.log("Exporting transactions with params:", params);
+
+    // Create filters object for search functionality
+    const filters: Record<string, any> = {};
+
+    // Call the API to get the data for export with responseType: 'blob'
+    const response = await api.post(
+      "/admin/overview/transactions/export",
+      { options: params, filters },
+      { responseType: "blob" } // This is important for Axios to handle the response as a blob
+    );
+
+    // With Axios, the blob is directly in response.data
+    const blob = new Blob([response.data], {
+      type: response.headers["content-type"] || "text/csv",
+    });
+
+    // Create a URL for the blob
+    const url = window.URL.createObjectURL(blob);
+
+    // Create a link element
+    const a = document.createElement("a");
+    a.href = url;
+
+    // Get filename from Content-Disposition header or use default
+    const contentDisposition = response.headers["content-disposition"];
+    const filename = contentDisposition
+      ? contentDisposition.split("filename=")[1].replace(/"/g, "")
+      : `transactions-export-${new Date().toISOString().split("T")[0]}.csv`;
+
+    a.download = filename;
+
+    // Append the link to the body
+    document.body.appendChild(a);
+
+    // Click the link to trigger the download
+    a.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    return true;
+  } catch (error) {
+    console.error("Error exporting transactions:", error);
+    throw error;
+  }
+};
+
+export const getTransactionById = async (id: string) => {
+  try {
+    const response = await api.get<{ data: transactionsWithUserDetails }>(
+      `/admin/overview/transactions/${id}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching transaction:", error);
+    throw error;
+  }
+};
+
+export const updateSectionSettings = async (
+  section: string,
+  updates: Partial<appProps>
+) => {
+  try {
+    const res = await api.patch<{ data: appProps }>(
+      `/admin/settings/${section}`,
+      updates
+    );
+    return res.data;
+  } catch (error) {}
+};

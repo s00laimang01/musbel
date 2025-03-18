@@ -109,12 +109,13 @@ export async function POST(request: NextRequest) {
     const fees = payload.data.amount * 0.01;
     const amountToFund = payload.data.amount - fees;
 
-    user.balance += amountToFund;
+    user.balance += Number(amountToFund);
+
     const trxPayload: transaction = {
       accountId: payload.data.account.account_number,
       amount: amountToFund,
       meta: {
-        ...payload.data.payer,
+        ...payload.data.payer[0],
       },
       note: `Your account has been credited with ${formatCurrency(
         amountToFund,
@@ -129,20 +130,9 @@ export async function POST(request: NextRequest) {
 
     const newTransaction = new Transaction(trxPayload);
 
-    await Promise.all([user.save(), newTransaction.save()]);
-
-    // try {
-    //   const { data, error } = await resend.emails.send({
-    //     from: `${configs.appName}`,
-    //     to: user.auth.email,
-    //     text: "",
-    //     subject: "FUNDING SUCCESSFUL",
-    //   });
-
-    //   console.log({ data, error });
-    // } catch (error) {
-    //   console.log("FAIL_TO_SEND_EMAIL: ", error);
-    // }
+    await user.save({ validateModifiedOnly: true }).then(async () => {
+      await newTransaction.save({ validateModifiedOnly: true });
+    });
 
     return NextResponse.json(
       httpStatusResponse(

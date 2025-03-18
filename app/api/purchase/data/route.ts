@@ -4,26 +4,17 @@ import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 
 import { buyData, httpStatusResponse } from "@/lib/utils";
-import {
-  User,
-  verifyUserBalance,
-  verifyUserTransactionPin,
-} from "@/models/users";
+import { User } from "@/models/users";
 import { DataPlan } from "@/models/data-plan";
 import { Transaction } from "@/models/transactions";
 import { transaction } from "@/types";
 import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
 import { networkTypes } from "@/lib/constants";
+import { dataRequestSchema } from "@/lib/validator.schema";
+import { App } from "@/models/app";
+import { connectToDatabase } from "@/lib/connect-to-db";
 
 // Define a schema for request validation
-const requestSchema = z.object({
-  pin: z.string().min(4),
-  _id: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
-    message: "Invalid plan ID format",
-  }),
-  phoneNumber: z.string(),
-  byPassValidator: z.boolean().optional().default(false),
-});
 
 export async function POST(request: Request) {
   let session: mongoose.ClientSession | null = null;
@@ -31,7 +22,7 @@ export async function POST(request: Request) {
   try {
     // Parse and validate request data
     const body = await request.json();
-    const validatedData = requestSchema.parse(body);
+    const validatedData = dataRequestSchema.parse(body);
     const { pin, _id, phoneNumber, byPassValidator = false } = validatedData;
 
     // Start transaction
@@ -44,29 +35,37 @@ export async function POST(request: Request) {
       throw new Error("Unauthorized access");
     }
 
+    await connectToDatabase();
+
+    const app = await App.findOne({});
+
+    await app?.systemIsunderMaintainance();
+
+    await app?.isTransactionEnable("data");
+
     const userEmail = serverSession.user.email;
-    const user = await User.findOne({
-      "auth.email": userEmail,
-    }).session(session);
+
+    const user = await User.findOne({ "auth.email": userEmail }).select(
+      "+auth.transactionPin"
+    );
+
+    await user?.verifyTransactionPin(pin);
 
     if (!user) {
-      throw new Error("User not found");
+      throw new Error("USER_NOT_FOUND: please contact admin");
     }
-
-    // Verify transaction PIN
-    await verifyUserTransactionPin(userEmail, pin);
 
     // Find data plan
     const dataPlan = await DataPlan.findById(_id).session(session);
-
-    console.log({ dataPlan });
 
     if (!dataPlan) {
       throw new Error("Plan not found");
     }
 
+    await app?.checkTransactionLimit(dataPlan.amount);
+
     // Verify user has sufficient balance
-    await verifyUserBalance(userEmail, dataPlan.amount);
+    await user.verifyUserBalance(dataPlan.amount);
 
     // Generate secure transaction reference
     const tx_ref = new mongoose.Types.ObjectId().toString();
@@ -79,8 +78,6 @@ export async function POST(request: Request) {
       networkTypes[dataPlan.network],
       byPassValidator
     );
-
-    console.log({ purchaseResult });
 
     if (purchaseResult.status === "failed") {
       await session.abortTransaction();
@@ -131,7 +128,7 @@ export async function POST(request: Request) {
       addToRecentlyUsedContact(
         phoneNumber,
         "airtime",
-        { network: dataPlan.network, user: user.id, plan: dataPlan.data },
+        { user: user.id, plan: dataPlan.data, ...dataPlan.toObject() },
         session
       ),
     ]);

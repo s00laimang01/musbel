@@ -11,11 +11,32 @@ const PUBLIC_ROUTES = [
   "/api/auth/sign-up",
   "/api/account/bank/verify-transaction",
   "/api/account/bank/verify-bill-stack-transaction",
-  // Add any other public routes here
+  "/auth/reset-password",
+  "/api/auth/reset-password",
 ];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  const response = NextResponse.next();
+
+  // Enhanced security headers
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=()"
+  );
+  response.headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none';"
+  );
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload"
+  );
 
   // Check if the current path is public
   const isPublicPath = PUBLIC_ROUTES.some((path) => pathname.startsWith(path));
@@ -34,7 +55,12 @@ export async function middleware(request: NextRequest) {
         JSON.stringify({ error: "Unauthorized access" }),
         {
           status: 401,
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "X-XSS-Protection": "1; mode=block",
+          },
         }
       );
     }
@@ -43,7 +69,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth/sign-in", request.url));
   }
 
-  return NextResponse.next();
+  // Check for admin routes - restrict to admin users only
+  if (pathname.startsWith("/api/admin/") || pathname.startsWith("/admin/")) {
+    // Verify the user has admin role
+    const userRole = token?.role;
+
+    if (userRole !== "admin") {
+      return new NextResponse(
+        JSON.stringify({ error: "Forbidden: Admin access required" }),
+        {
+          status: 403,
+          headers: {
+            "Content-Type": "application/json",
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "X-XSS-Protection": "1; mode=block",
+          },
+        }
+      );
+    }
+  }
+
+  return response;
 }
 
 // Configure which paths the middleware runs on

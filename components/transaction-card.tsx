@@ -10,7 +10,7 @@ import {
   WifiIcon,
 } from "lucide-react";
 import { PATHS, transaction, transactionType } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getStatusColor } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
 interface TransactionCardProps {
@@ -79,18 +79,6 @@ export default function TransactionCard({
   };
 
   // Get status color
-  const getStatusColor = () => {
-    switch (lastTx.status) {
-      case "success":
-        return "text-green-500";
-      case "failed":
-        return "text-red-500";
-      case "pending":
-        return "text-yellow-500";
-      default:
-        return "text-gray-500";
-    }
-  };
 
   // Format transaction type for display
   const formatType = (type: transactionType) => {
@@ -129,7 +117,7 @@ export default function TransactionCard({
             {lastTx.type === "funding" ? "+" : "-"}
             {formatCurrency(lastTx.amount, 2)}
           </p>
-          <p className={`text-xs ${getStatusColor()}`}>
+          <p className={`text-xs ${getStatusColor(lastTx.status)}`}>
             {lastTx.status.charAt(0).toUpperCase() + lastTx.status.slice(1)}
           </p>
         </div>
