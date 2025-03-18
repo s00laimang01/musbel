@@ -1,5 +1,5 @@
 import { httpStatusResponse } from "@/lib/utils";
-import { User, verifyUserTransactionPin } from "@/models/users";
+import { User } from "@/models/users";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -23,16 +23,19 @@ export async function PATCH(request: Request) {
 
     const session = await getServerSession();
 
-    await verifyUserTransactionPin(session?.user?.email as string, oldPin);
+    const user = await User.findOne({ "auth.email": session?.user?.email });
 
-    await User.findOneAndUpdate(
-      { "auth.email": session?.user?.email },
-      {
-        $set: {
-          "auth.transactionPin": newPin,
-        },
-      }
-    );
+    if (!user) {
+      return NextResponse.json(httpStatusResponse(404, "User not found"), {
+        status: 404,
+      });
+    }
+
+    await user.verifyTransactionPin(oldPin);
+
+    user.auth.transactionPin = newPin;
+
+    await user.save({ validateModifiedOnly: true });
 
     return NextResponse.json(
       httpStatusResponse(200, "Transaction pin updated successfully"),

@@ -4,12 +4,12 @@ import { connectToDatabase } from "@/lib/connect-to-db";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectToDatabase();
 
-    const id = params.id;
+    const { id } = await params;
 
     // Find bill by tx_ref with user lookup
     const bills = await Transaction.aggregate([
