@@ -15,9 +15,6 @@ import { connectToDatabase } from "@/lib/connect-to-db";
  * @access Private - Requires authentication
  */
 export async function POST(request: Request) {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     // Parse and validate request body
     const body = await request.json();
@@ -48,6 +45,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Connect to database BEFORE starting the session
     await connectToDatabase();
 
     const app = await App.findOne({});
@@ -62,13 +60,9 @@ export async function POST(request: Request) {
     // Find user and verify transaction pin and balance
     const user = await User.findOne({
       "auth.email": authSession.user.email,
-    })
-      .session(session)
-      .select("+auth.transactionPin");
+    }).select("+auth.transactionPin");
 
     if (!user) {
-      await session.abortTransaction();
-      session.endSession();
       return NextResponse.json(httpStatusResponse(404, "User not found"), {
         status: 404,
       });
@@ -81,60 +75,33 @@ export async function POST(request: Request) {
     // Generate transaction reference
     const tx_ref = new mongoose.Types.ObjectId().toString();
 
-    try {
-      // Process the airtime purchase
-      const result = await processAirtimePurchase(
-        user,
-        network,
-        phoneNumber,
-        amount,
-        tx_ref,
-        byPassValidator,
-        session
-      );
+    // Process the airtime purchase
+    const result = await processAirtimePurchase(
+      user,
+      network,
+      phoneNumber,
+      amount,
+      tx_ref,
+      byPassValidator
+    );
 
-      // Commit transaction and return success response
-      await session.commitTransaction();
-      session.endSession();
-
-      return NextResponse.json(
-        httpStatusResponse(200, "Airtime purchase successful", result),
-        { status: 200 }
-      );
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-
-      return NextResponse.json(
-        httpStatusResponse(400, (error as Error).message),
-        { status: 400 }
-      );
-    }
+    return NextResponse.json(
+      httpStatusResponse(200, "Airtime purchase successful", result),
+      { status: 200 }
+    );
   } catch (error) {
     // Rollback transaction on error
-    await session.abortTransaction();
-    session.endSession();
 
     console.error("Airtime purchase error:", error);
 
-    // Handle different types of errors
-    if (error instanceof mongoose.Error) {
-      return NextResponse.json(
-        httpStatusResponse(500, "Database error", { message: error.message }),
-        { status: 500 }
-      );
-    }
-
-    if (error instanceof Error) {
-      const statusCode = error.message.includes("Unauthorized") ? 401 : 500;
-      return NextResponse.json(httpStatusResponse(statusCode, error.message), {
-        status: statusCode,
-      });
-    }
-
+    const statusCode = (error as Error).message.includes("Unauthorized")
+      ? 401
+      : 500;
     return NextResponse.json(
-      httpStatusResponse(500, "An unexpected error occurred"),
-      { status: 500 }
+      httpStatusResponse(statusCode, (error as Error).message),
+      {
+        status: statusCode,
+      }
     );
   }
 }

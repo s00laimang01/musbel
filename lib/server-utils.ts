@@ -347,13 +347,19 @@ export async function getTransactionByIdWithUserDetails(id: string) {
  * @returns The result of the airtime purchase
  */
 export async function processAirtimePurchase(
-  user: any,
+  user:
+    | mongoose.Document<unknown, {}, IUser> &
+        IUser &
+        Required<{
+          _id: string;
+        }> & {
+          __v: number;
+        },
   network: availableNetworks,
   phoneNumber: string,
   amount: number,
   tx_ref: string,
-  byPassValidator = false,
-  session: mongoose.ClientSession
+  byPassValidator = false
 ) {
   // Process airtime purchase
   const res = await buyAirtime(
@@ -385,32 +391,15 @@ export async function processAirtimePurchase(
     },
   };
 
+  const transaction = new Transaction(trxPayload);
+
+  await transaction.save().then(async () => {
+    addToRecentlyUsedContact(phoneNumber, "airtime", { user: user.id, ...res });
+  });
+
   // Update user balance
   user.balance -= amount;
-
-  // Save all changes in parallel
-  const [transactionResult, contactResult, userResult] =
-    await Promise.allSettled([
-      new Transaction(trxPayload).save({ session }),
-      addToRecentlyUsedContact(
-        phoneNumber,
-        "airtime",
-        { user: user.id, ...res },
-        session
-      ),
-      user.save({ session }),
-    ]);
-
-  // Check if any operations failed
-  const failedOperations = [transactionResult, contactResult, userResult]
-    .filter((result) => result.status === "rejected")
-    .map((result) => (result as PromiseRejectedResult).reason);
-
-  if (failedOperations.length > 0) {
-    throw new Error(
-      `Failed to complete transaction: ${failedOperations.join(", ")}`
-    );
-  }
+  await user.updateOne({ $inc: { balance: -amount } });
 
   return {
     message: res.message,
