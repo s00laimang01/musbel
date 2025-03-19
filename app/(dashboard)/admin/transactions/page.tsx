@@ -167,11 +167,11 @@ export default function TransactionsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-xs md:text-sm">
               View and manage financial transactions.
             </p>
           </div>
-          <Button variant="outline" className="rounded-none" disabled>
+          <Button size="sm" variant="outline" className="rounded-none" disabled>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>

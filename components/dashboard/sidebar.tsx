@@ -76,15 +76,6 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
               <div className="flex items-center">
                 <h2 className="text-lg font-semibold">Admin Dashboard</h2>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="ml-auto"
-                onClick={() => onOpenChange(false)}
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-              </Button>
             </div>
             <ScrollArea className="flex-1">
               <div className="px-2 py-4">

@@ -227,14 +227,15 @@ export default function ElectricityBillsPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="md:text-3xl text-2xl font-bold tracking-tight">
             Electricity Bills
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground md:text-sm text-xs">
             Manage and view electricity bill information.
           </p>
         </div>
         <Button
+          size="sm"
           variant="outline"
           className="rounded-none"
           onClick={handleExport}

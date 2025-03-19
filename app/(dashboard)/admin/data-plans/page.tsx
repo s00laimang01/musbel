@@ -292,7 +292,7 @@ export default function DataPlansPage() {
               </Button>
               <Button variant="destructive" asChild>
                 <Button
-                  onClick={() => setDataPlan(plan)}
+                  onClick={() => setDataId(plan._id)}
                   size="sm"
                   className="rounded-none h-[2.5rem] text-white"
                 >

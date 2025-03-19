@@ -76,7 +76,9 @@ export function RecentSales() {
               {transaction.userfullName}
             </p>
             <p className="text-sm text-muted-foreground">
-              {transaction.userEmail}
+              {transaction.userEmail.length > 15
+                ? transaction.userEmail.slice(0, 15) + "..."
+                : transaction.userEmail}
             </p>
           </div>
           <div

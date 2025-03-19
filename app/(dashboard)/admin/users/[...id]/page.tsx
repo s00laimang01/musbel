@@ -121,7 +121,9 @@ export default function UserDetailsPage() {
               </Avatar>
               <div>
                 <h2 className="text-xl font-semibold">{user?.fullName}</h2>
-                <p className="text-muted-foreground">{user?.auth?.email}</p>
+                <p className="text-muted-foreground md:text-sm text-xs">
+                  {user?.auth?.email}
+                </p>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge
                     variant={
@@ -211,13 +213,13 @@ export default function UserDetailsPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-none">
+        <Card className="rounded-none w-full">
           <CardHeader>
             <CardTitle>Account Summary</CardTitle>
             <CardDescription>Overview of account activity</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+          <CardContent className="w-full">
+            <div className="grid grid-cols-2 gap-2">
               <Card className="rounded-none">
                 <CardContent className="pt-6">
                   <div className="text-center">
@@ -273,7 +275,6 @@ export default function UserDetailsPage() {
                   </div>
                   <div className="flex flex-col items-center p-3 bg-muted rounded-none">
                     <Badge variant="warning" className="mb-2 rounded-none">
-                      <Clock className="h-3 w-3 mr-1" />
                       Pending
                     </Badge>
                     <span className="text-lg font-semibold">
@@ -293,7 +294,7 @@ export default function UserDetailsPage() {
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="rounded-none">
           <TabsTrigger value="all" className="rounded-none">
-            All Transactions
+            All
           </TabsTrigger>
           <TabsTrigger value="funding" className="rounded-none">
             Funding

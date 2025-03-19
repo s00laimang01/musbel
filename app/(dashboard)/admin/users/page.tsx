@@ -86,28 +86,6 @@ export default function UsersPage() {
     retry: 3,
   });
 
-  // Delete user mutation
-  const blockUserMutation = useMutation({
-    mutationFn: async (userId: string, options?: any) => {
-      const status = options.status === "active" ? "inactive" : "active";
-
-      const response = await api.patch<{ data: IUser }>(
-        `/admin/users/${userId}`,
-        { status }
-      );
-
-      return response.data;
-    },
-    onSuccess: () => {
-      toast("User deleted successfully");
-      // Invalidate and refetch users query
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-    },
-    onError: (err) => {
-      toast(errorMessage(err).message);
-    },
-  });
-
   const users = data?.data?.users || [];
   const total = data?.data?.total || 0;
 
@@ -178,12 +156,12 @@ export default function UsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground md:text-sm text-xs">
             Manage user accounts and permissions.
           </p>
         </div>
         <AddUserDialog>
-          <Button variant="ringHover" className="rounded-none">
+          <Button size="sm" variant="ringHover" className="rounded-none">
             <Plus className="mr-2 h-4 w-4" />
             Add User
           </Button>
