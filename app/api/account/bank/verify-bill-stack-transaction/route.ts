@@ -109,8 +109,6 @@ export async function POST(request: NextRequest) {
     const fees = payload.data.amount * 0.01;
     const amountToFund = payload.data.amount - fees;
 
-    user.balance += Number(amountToFund);
-
     const trxPayload: transaction = {
       accountId: payload.data.account.account_number,
       amount: amountToFund,
@@ -130,7 +128,7 @@ export async function POST(request: NextRequest) {
 
     const newTransaction = new Transaction(trxPayload);
 
-    await user.save({ validateModifiedOnly: true }).then(async () => {
+    await user.updateOne({ $inc: { balance: amountToFund } }).then(async () => {
       await newTransaction.save({ validateModifiedOnly: true });
     });
 

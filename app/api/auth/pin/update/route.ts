@@ -31,7 +31,7 @@ export async function PATCH(request: Request) {
       });
     }
 
-    await user.verifyTransactionPin(oldPin);
+    await user?.verifyTransactionPin(oldPin);
 
     user.auth.transactionPin = newPin;
 

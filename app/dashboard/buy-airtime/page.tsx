@@ -28,6 +28,7 @@ import {
 import type { AirtimeVendingResponse, availableNetworks } from "@/types";
 import EnterPin from "@/components/enter-pin";
 import { useQuery } from "@tanstack/react-query";
+import { Switch } from "@/components/ui/switch";
 
 const Page = () => {
   useNavBar("Buy Airtime");
@@ -36,6 +37,7 @@ const Page = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [network, setNetwork] = useState<availableNetworks | null>(null);
   const [isPending, startTransaction] = useState(false);
+  const [byPassValidator, setByPassValidator] = useState(false);
 
   const { data: recentlyContact = [] } = useQuery({
     queryKey: ["recently-used"],
@@ -65,7 +67,7 @@ const Page = () => {
         amount: amountToBuy,
         network,
         phoneNumber,
-        byPassValidator: false,
+        byPassValidator,
       });
 
       toast(res.data.message);
@@ -208,6 +210,19 @@ const Page = () => {
                 buyAirtime(amt, pin);
               }}
               key={amt}
+              moreChild={
+                <div className="w-full flex items-center justify-between pb-4">
+                  <h3 className="underline text-sm font-bold text-primary">
+                    ByPass Number Validator?
+                  </h3>
+
+                  <Switch
+                    checked={byPassValidator}
+                    onCheckedChange={setByPassValidator}
+                    disabled={isPending}
+                  />
+                </div>
+              }
             >
               <Button
                 disabled={isPending}
