@@ -466,7 +466,6 @@ export const buyData = async (
     network,
   };
 
-  console.log({ payload });
   try {
     const res = await axios.post<DataVendingResponse>(
       "https://a4bdata.com/api/data/",
@@ -477,9 +476,11 @@ export const buyData = async (
     );
 
     return res.data;
-  } catch (error) {
-    console.log(error);
-    return { status: "failed" } as DataVendingResponse;
+  } catch (error: any) {
+    return {
+      status: "failed",
+      message: error.response.data.message,
+    } as DataVendingResponse;
   }
 };
 
@@ -510,9 +511,11 @@ export const buyAirtime = async (
     );
 
     return res.data;
-  } catch (error) {
-    console.log(error);
-    return { status: "failed" } as AirtimeVendingResponse;
+  } catch (error: any) {
+    return {
+      status: "failed",
+      message: error.response.data.message,
+    } as AirtimeVendingResponse;
   }
 };
 
@@ -574,13 +577,22 @@ export const billPayment = async (payload: {
   bypass?: boolean;
   "request-id": string;
 }) => {
-  const res = await axios.post<BillPaymentResponse>(
-    `https://a4bdata.com/api/bill/`,
-    payload,
-    { headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` } }
-  );
+  try {
+    const res = await axios.post<BillPaymentResponse>(
+      `https://a4bdata.com/api/bill/`,
+      payload,
+      {
+        headers: { Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}` },
+      }
+    );
 
-  return res.data;
+    return res.data;
+  } catch (error: any) {
+    return {
+      status: "failed",
+      message: error.response.data.message,
+    } as BillPaymentResponse;
+  }
 };
 
 export const printRechargeCard = async (payload: {

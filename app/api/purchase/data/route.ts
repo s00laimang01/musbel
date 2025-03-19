@@ -83,10 +83,7 @@ export async function POST(request: Request) {
       await session.abortTransaction();
       session.endSession();
       return NextResponse.json(
-        httpStatusResponse(
-          400,
-          "SOMETHING_WENT_WRONG: please contact the admin"
-        ),
+        httpStatusResponse(400, purchaseResult.message),
         { status: 400 }
       );
     }

@@ -92,6 +92,14 @@ export async function POST(request: Request) {
       "request-id": tx_ref,
     });
 
+    if (res.status === "failed") {
+      await session.abortTransaction();
+      session.endSession();
+      return NextResponse.json(httpStatusResponse(400, res.message), {
+        status: 400,
+      });
+    }
+
     // Update user balance
     user.balance -= Number(amount);
 

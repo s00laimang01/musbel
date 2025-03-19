@@ -395,7 +395,7 @@ export async function processAirtimePurchase(
       addToRecentlyUsedContact(
         phoneNumber,
         "airtime",
-        { amount, network, user: user.id },
+        { user: user.id, ...res },
         session
       ),
       user.save({ session }),
