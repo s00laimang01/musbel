@@ -466,8 +466,6 @@ export const buyData = async (
     network,
   };
 
-  console.log(payload);
-
   try {
     const res = await axios.post<DataVendingResponse>(
       "https://a4bdata.com/api/data/",

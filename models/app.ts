@@ -112,7 +112,9 @@ AppSchema.methods.checkTransactionLimit = async function (amount: number) {
 
 AppSchema.methods.systemIsunderMaintainance = async function () {
   if (this?.maintenanceMode) {
-    throw new Error(this?.maintenanceMessage);
+    throw new Error(
+      "SYSTEM_IS_UNDER_MAINTENANCE: All transactions may be paused or delayed for maintenance."
+    );
   }
 };
 

@@ -114,21 +114,27 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update user balance
-    user.balance -= dataPlan.amount;
-
     // Save changes
     const transaction = new Transaction(trxPayload);
-    await Promise.all([
-      user.save({ validateModifiedOnly: true, session }),
-      transaction.save({ validateModifiedOnly: true, session }),
-      addToRecentlyUsedContact(
-        phoneNumber,
-        "airtime",
-        { user: user.id, plan: dataPlan.data, ...dataPlan.toObject() },
-        session
-      ),
-    ]);
+
+    await user
+      .updateOne(
+        {
+          balance: {
+            $inc: -dataPlan.amount,
+          },
+        },
+        { session }
+      )
+      .then(async () => {
+        await transaction.save({ validateModifiedOnly: true, session }),
+          await addToRecentlyUsedContact(
+            phoneNumber,
+            "data",
+            { user: user.id, plan: dataPlan.data, ...dataPlan.toObject() },
+            session
+          );
+      });
 
     // Commit transaction
     await session.commitTransaction();
@@ -145,6 +151,7 @@ export async function POST(request: Request) {
       }
     );
   } catch (error) {
+    console.log(error);
     // Rollback transaction on error
     if (session) {
       await session.abortTransaction().catch(console.error);
