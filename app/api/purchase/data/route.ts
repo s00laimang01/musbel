@@ -118,14 +118,7 @@ export async function POST(request: Request) {
     const transaction = new Transaction(trxPayload);
 
     await user
-      .updateOne(
-        {
-          balance: {
-            $inc: -dataPlan.amount,
-          },
-        },
-        { session }
-      )
+      .updateOne({ $inc: { balance: -dataPlan.amount } })
       .then(async () => {
         await transaction.save({ validateModifiedOnly: true, session }),
           await addToRecentlyUsedContact(
