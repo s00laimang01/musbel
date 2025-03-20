@@ -276,7 +276,7 @@ export interface appProps extends Document {
   requireUserVerification: boolean;
   maintenanceMode: boolean;
   defaultUserRole: IUserRole;
-  maintenanceMessage?: string;
+  systemMessage?: string;
   apiRateLimit?: number;
   logLevel?: "error" | "warn" | "info" | "debug" | "trace";
   force2FA?: boolean;
@@ -664,3 +664,15 @@ export type UsersResponse = {
     total: number;
   };
 };
+
+export interface systemMessage {
+  message: string;
+  messageId: string;
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+  title?: string;
+
+  // METHODS
+  updateMessage: (message: string, title?: string) => Promise<systemMessage>;
+}

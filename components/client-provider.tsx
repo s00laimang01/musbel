@@ -16,7 +16,8 @@ import { Toaster } from "./ui/sonner";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useUserStore } from "@/stores/user.store";
-import { getUser } from "@/lib/utils";
+import { getUser, sendWhatsAppMessage } from "@/lib/utils";
+import Image from "next/image";
 
 const ClientProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -51,8 +52,26 @@ const ClientProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }
 
   return (
-    <div className="flex min-h-screen bg-white w-screen">
+    <div className="flex min-h-screen bg-white w-screen relative">
       <Toaster position="top-center" richColors />
+      <Button
+        size="icon"
+        variant="ringHover"
+        className=" fixed bottom-3 right-3 rounded-full p-2"
+        onClick={() =>
+          sendWhatsAppMessage(
+            "+2347040666904",
+            `Hello, I want an assistance with`
+          )
+        }
+      >
+        <Image
+          alt="whatsapp-image"
+          width={30}
+          height={30}
+          src={`/WhatsApp_Logo_green.svg.png`}
+        />
+      </Button>
       {/* Desktop Sidebar - hidden on mobile */}
       <div className="hidden lg:fixed lg:flex lg:flex-col xl:w-80 pb-0 overflow-y-auto h-full border-slate-100">
         <div className="flex flex-col justify-between h-full overflow-y-auto">

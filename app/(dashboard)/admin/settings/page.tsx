@@ -28,8 +28,8 @@ import type {
   transactionType,
   appProps,
   IUserRole,
+  systemMessage,
 } from "@/types";
-// import { getSettings, updateSectionSettings } from "@/lib/actions/settings";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { api, errorMessage, updateSectionSettings } from "@/lib/utils";
@@ -46,8 +46,7 @@ export default function SettingsPage() {
     requireUserVerification: true,
     maintenanceMode: false,
     defaultUserRole: "user",
-    maintenanceMessage:
-      "System is currently undergoing scheduled maintenance. Please check back later.",
+    systemMessage: "",
     apiRateLimit: 60,
     logLevel: "info",
     force2FA: false,
@@ -84,7 +83,15 @@ export default function SettingsPage() {
       (await api.get<{ data: appProps }>(`/admin/settings/`))?.data,
   });
 
+  const { data: _systemMessage } = useQuery({
+    queryKey: ["system-message"],
+    queryFn: async () =>
+      (await api.get<{ data: systemMessage }>("/users/message/")).data,
+  });
+
   const { data: _settings } = data || {};
+
+  const { data: systemMessage } = _systemMessage || {};
 
   // Fetch settings on component mount
   useEffect(() => {
@@ -92,6 +99,12 @@ export default function SettingsPage() {
       setSettings({ ...settings, ..._settings });
     }
   }, [_settings]);
+
+  useEffect(() => {
+    if (systemMessage) {
+      setSettings({ ...settings, systemMessage: systemMessage.message || "" });
+    }
+  }, [systemMessage]);
 
   // Handle transaction type checkbox changes
   const handleTransactionTypeChange = (
@@ -132,7 +145,7 @@ export default function SettingsPage() {
         ],
         system: [
           "maintenanceMode",
-          "maintenanceMessage",
+          "systemMessage",
           "apiRateLimit",
           "logLevel",
         ],
@@ -152,6 +165,10 @@ export default function SettingsPage() {
       }, {} as Partial<appProps>);
 
       await updateSectionSettings(section, sectionSettings);
+
+      if (sectionSettings.systemMessage !== systemMessage?.message) {
+        await api.post(`/users/message/`, { message: settings.systemMessage });
+      }
 
       toast("Settings saved successfully");
     } catch (error) {
@@ -465,21 +482,21 @@ export default function SettingsPage() {
                   htmlFor="maintenance-message"
                   className="text-base font-medium"
                 >
-                  Maintenance Message
+                  System Message
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Message to display during maintenance mode.
+                  Message to display to users.
                 </p>
                 <Textarea
                   id="maintenance-message"
-                  value={settings.maintenanceMessage}
+                  value={settings.systemMessage}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
-                      maintenanceMessage: e.target.value,
+                      systemMessage: e.target.value,
                     })
                   }
-                  placeholder="System is currently undergoing scheduled maintenance. Please check back later."
+                  placeholder="Write a message to your users."
                   className="rounded-none"
                 />
               </div>

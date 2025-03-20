@@ -4,7 +4,6 @@ import { Transaction } from "@/models/transactions";
 import { User } from "@/models/users";
 import { BillStackWebhookPayload, transaction } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import crypto from "crypto";
 import { connectToDatabase } from "@/lib/connect-to-db";
 
@@ -38,8 +37,6 @@ function verifyWiaxySignature(request: NextRequest): boolean {
     return false;
   }
 }
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {

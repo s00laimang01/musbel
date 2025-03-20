@@ -112,6 +112,8 @@ export default function DataPlansPage() {
     queryFn: fetchDataPlans,
   });
 
+  console.log(data?.data.dataPlans);
+
   // Handle search input
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

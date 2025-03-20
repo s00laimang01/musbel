@@ -498,7 +498,10 @@ export function UserActionButtons({
                         </span>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">
-                            {userAccount.accountDetails.accountName}
+                            {userAccount.accountDetails.accountName.slice(
+                              0,
+                              12
+                            ) + "..."}
                           </span>
                           <Button
                             variant="ghost"
@@ -576,7 +579,7 @@ export function UserActionButtons({
                           Order Reference
                         </span>
                         <span className="font-medium">
-                          {userAccount.order_ref}
+                          {userAccount.order_ref.slice(0, 12) + "..."}
                         </span>
                       </div>
                     </div>

@@ -57,6 +57,8 @@ export default function DataPlanCard({
     return <Skeleton className="w-full h-[20rem]" />;
   }
 
+  console.log({ dataPlan });
+
   return (
     <Card
       className={`w-full rounded-none overflow-hidden border-2 shadow-lg transition-all hover:shadow-xl p-0 ${
