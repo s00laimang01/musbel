@@ -40,11 +40,6 @@ const AppSchema: mongoose.Schema<appProps> = new mongoose.Schema({
     enum: ["user", "customer", "client", "guest"],
     default: "user",
   },
-  maintenanceMessage: {
-    type: String,
-    default:
-      "System is currently undergoing scheduled maintenance. Please check back later.",
-  },
   apiRateLimit: {
     type: Number,
     default: 60,
@@ -70,6 +65,10 @@ const AppSchema: mongoose.Schema<appProps> = new mongoose.Schema({
   adminIpWhitelist: {
     type: [String],
     default: [],
+  },
+  systemMessage: {
+    type: String,
+    default: "",
   },
 });
 
