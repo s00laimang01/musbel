@@ -50,7 +50,10 @@ export async function GET(request: NextRequest) {
       query["type"] = planType;
     }
 
-    const dataPlans = await DataPlan.find({ ...query }).sort({ isPopular: -1 });
+    const dataPlans = await DataPlan.find({ ...query }).sort({
+      isPopular: -1,
+      planId: 1,
+    });
 
     return NextResponse.json(
       httpStatusResponse(200, "Data plans fetched", dataPlans),

@@ -347,19 +347,19 @@ export async function getTransactionByIdWithUserDetails(id: string) {
  * @returns The result of the airtime purchase
  */
 export async function processAirtimePurchase(
-  user:
-    | mongoose.Document<unknown, {}, IUser> &
-        IUser &
-        Required<{
-          _id: string;
-        }> & {
-          __v: number;
-        },
+  user: mongoose.Document<unknown, {}, IUser> &
+    IUser &
+    Required<{
+      _id: string;
+    }> & {
+      __v: number;
+    },
   network: availableNetworks,
   phoneNumber: string,
   amount: number,
   tx_ref: string,
-  byPassValidator = false
+  byPassValidator = false,
+  session?: mongoose.ClientSession
 ) {
   // Process airtime purchase
   const res = await buyAirtime(
@@ -371,7 +371,9 @@ export async function processAirtimePurchase(
     "VTU"
   );
 
-  if (res.status === "failed") {
+  console.log(res);
+
+  if (res.status === "fail") {
     throw new Error(res.message || "Failed to purchase airtime");
   }
 
@@ -393,13 +395,18 @@ export async function processAirtimePurchase(
 
   const transaction = new Transaction(trxPayload);
 
-  await transaction.save().then(async () => {
-    addToRecentlyUsedContact(phoneNumber, "airtime", { user: user.id, ...res });
+  // Use session for transaction save
+  await transaction.save({ session }).then(async () => {
+    await addToRecentlyUsedContact(
+      phoneNumber,
+      "airtime",
+      { user: user.id, ...res },
+      session
+    );
   });
 
-  // Update user balance
-  user.balance -= amount;
-  await user.updateOne({ $inc: { balance: -amount } });
+  // Update user balance with session
+  await user.updateOne({ $inc: { balance: -amount } }, { session });
 
   return {
     message: res.message,

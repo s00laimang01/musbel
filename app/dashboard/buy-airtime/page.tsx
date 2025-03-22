@@ -1,12 +1,10 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { Phone } from "lucide-react";
-
 import BalanceCard from "@/components/balance-card";
 import PhoneNumberBadge from "@/components/phone-number-badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { useNavBar } from "@/hooks/use-nav-bar";
 import {
   AVIALABLE_NETWORKS,
-  DEMO_PHONE_NUMBERS,
   FREQUENTLY_PURCHASE_AIRTIME,
 } from "@/lib/constants";
 import {
@@ -90,7 +87,7 @@ const Page = () => {
 
   const selectPhoneNumber = (number: string, network?: availableNetworks) => {
     setPhoneNumber(number);
-    setNetwork(network as availableNetworks);
+    setNetwork(network?.toLowerCase() as availableNetworks);
   };
 
   return (

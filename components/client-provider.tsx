@@ -55,9 +55,9 @@ const ClientProvider: FC<{ children: ReactNode }> = ({ children }) => {
     <div className="flex min-h-screen bg-white w-screen relative">
       <Toaster position="top-center" richColors />
       <Button
-        size="icon"
+        size="sm"
         variant="ringHover"
-        className=" fixed bottom-3 right-3 rounded-full p-2"
+        className=" fixed bottom-3 right-3 rounded-full p-3 h-[3rem] w-[3rem] z-50"
         onClick={() =>
           sendWhatsAppMessage(
             "+2347040666904",

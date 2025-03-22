@@ -1,7 +1,6 @@
 import {
   AirtimeVendingResponse,
   appProps,
-  availableBanks,
   availableNetworks,
   BillPaymentResponse,
   CableSubscriptionResponse,
@@ -28,17 +27,10 @@ import {
 import axios from "axios";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { configs, networkTypes } from "./constants";
+import { configs } from "./constants";
 import { Session } from "next-auth";
 import { NextResponse } from "next/server";
 import queryString from "query-string";
-import { User } from "@/models/users";
-import mongoose from "mongoose";
-// import { Transaction } from "@/models/transactions";
-import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
-import { createDedicatedVirtualAccount } from "./server-utils";
-// import { Account } from "@/models/account";
-// import { App } from "@/models/app";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -52,7 +44,7 @@ export const getNetworkLogo = (network: availableNetworks) => {
     "9mobile": "/9mobile-logo.png",
   };
 
-  return logos[network];
+  return logos[network.toLowerCase() as availableNetworks];
 };
 
 export const generateDate = () => {
@@ -503,7 +495,6 @@ export const buyAirtime = async (
       amount: amount.toString(),
       plan_type,
     };
-    console.log({ payload });
     const res = await axios.post<AirtimeVendingResponse>(
       "https://a4bdata.com/api/topup/",
       payload,
