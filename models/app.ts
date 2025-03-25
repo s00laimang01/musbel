@@ -86,7 +86,7 @@ AppSchema.methods.isTransactionEnable = async function (
 
     if (transactionsToStop.includes(transactionType)) {
       throw new Error(
-        `${transactionType.toUpperCase}_TRANSACTION_HAS_BEEN_STOPPED: this transaction has stopped, please contact the admin.`
+        `${transactionType.toUpperCase()}_TRANSACTION_HAS_BEEN_STOPPED: this transaction has stopped, please contact the admin.`
       );
     }
   }

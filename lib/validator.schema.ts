@@ -40,7 +40,8 @@ export const airtimeRequestSchema = z.object({
   ]),
   phoneNumber: z
     .string()
-    .regex(/^[0-9]{11}$/, "Phone number must be 11 digits"),
+    .min(10, "Phone number must be at least 10 characters long")
+    .max(17),
   byPassValidator: z.boolean().optional().default(false),
 });
 

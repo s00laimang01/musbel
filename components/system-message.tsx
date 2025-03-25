@@ -24,7 +24,9 @@ const SystemMessage = () => {
   });
 
   useEffect(() => {
-    if (systemMessage?.message) {
+    if (!systemMessage?.message) return;
+
+    if (systemMessage?.message?.length > 1) {
       const oldMessage = Cookies.get("system-message");
 
       if (!oldMessage) {

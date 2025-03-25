@@ -70,7 +70,12 @@ export default function TransactionsPage() {
   const { isLoading, data, error } = useQuery({
     queryKey: ["transactions", requestParams, searchInput],
     queryFn: () =>
-      getTransactionsForAdmin({ ...requestParams, search: searchInput }),
+      getTransactionsForAdmin({
+        ...requestParams,
+        search: searchInput,
+        sortBy: "updatedAt",
+        sortOrder: -1,
+      }),
   });
 
   const { transactions = [], pagination } = data?.data || {};

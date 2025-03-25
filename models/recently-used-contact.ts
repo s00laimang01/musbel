@@ -36,33 +36,39 @@ const addToRecentlyUsedContact = async (
   meta: any,
   session?: any
 ) => {
-  const contactAlreadyExist = await RecentlyUsedContact.findOne({
-    uid,
-    type,
-  }).session(session);
-  const now = new Date();
+  try {
+    const contactAlreadyExist = await RecentlyUsedContact.findOne({
+      uid,
+      type,
+    }).session(session);
+    const now = new Date();
 
-  // Update the last use, if contact already exist;
-  if (contactAlreadyExist) {
-    contactAlreadyExist.lastUsed = now.toISOString();
-    contactAlreadyExist.meta = meta;
+    // Update the last use, if contact already exist;
+    if (contactAlreadyExist) {
+      contactAlreadyExist.lastUsed = now.toISOString();
+      contactAlreadyExist.meta = meta;
 
-    await contactAlreadyExist.save({ validateModifiedOnly: true, session });
-    return contactAlreadyExist;
+      await contactAlreadyExist.save({ validateModifiedOnly: true, session });
+      return contactAlreadyExist;
+    }
+
+    const contactPayload: recentlyUsedContact = {
+      lastUsed: now.toISOString(),
+      meta,
+      type,
+      uid,
+    };
+
+    const recentlyUsedContact = new RecentlyUsedContact(contactPayload);
+
+    await recentlyUsedContact.save({ session });
+
+    return recentlyUsedContact;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
-
-  const contactPayload: recentlyUsedContact = {
-    lastUsed: now.toISOString(),
-    meta,
-    type,
-    uid,
-  };
-
-  const recentlyUsedContact = new RecentlyUsedContact(contactPayload);
-
-  await recentlyUsedContact.save({ session });
-
-  return recentlyUsedContact;
 };
 
 export { RecentlyUsedContact, addToRecentlyUsedContact };

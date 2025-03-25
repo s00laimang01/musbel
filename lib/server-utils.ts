@@ -255,17 +255,13 @@ export async function getTransactionsWithUserDetails(
         },
       },
       { $unwind: { path: "$userDetails", preserveNullAndEmptyArrays: true } },
+      { $sort: { [sortBy]: sortOrder } }, // Add $sort stage here
       { $skip: (page - 1) * limit },
       { $limit: limit },
     ];
 
-    // Determine sort direction
-    const sortDirection = sortOrder || -1;
-
     // Fetch transactions with user details
-    const transactions = await Transaction.aggregate(pipeline).sort({
-      [sortBy]: sortDirection,
-    });
+    const transactions = await Transaction.aggregate(pipeline);
 
     // Format the result
     const formattedTransactions = transactions.map((transaction) => ({
@@ -346,77 +342,6 @@ export async function getTransactionByIdWithUserDetails(id: string) {
  * @param session - Mongoose session for transaction
  * @returns The result of the airtime purchase
  */
-export async function processAirtimePurchase(
-  user: mongoose.Document<unknown, {}, IUser> &
-    IUser &
-    Required<{
-      _id: string;
-    }> & {
-      __v: number;
-    },
-  network: availableNetworks,
-  phoneNumber: string,
-  amount: number,
-  tx_ref: string,
-  byPassValidator = false,
-  session?: mongoose.ClientSession
-) {
-  // Process airtime purchase
-  const res = await buyAirtime(
-    networkTypes[network],
-    phoneNumber,
-    amount,
-    tx_ref,
-    byPassValidator,
-    "VTU"
-  );
-
-  console.log(res);
-
-  if (res.status === "fail") {
-    throw new Error(res.message || "Failed to purchase airtime");
-  }
-
-  // Create transaction record
-  const trxPayload: transaction = {
-    accountId: res["request-id"],
-    amount,
-    note: res.message,
-    paymentMethod: "ownAccount",
-    status: "success",
-    tx_ref,
-    type: "airtime",
-    user: user.id,
-    meta: {
-      network,
-      phoneNumber,
-    },
-  };
-
-  const transaction = new Transaction(trxPayload);
-
-  // Use session for transaction save
-  await transaction.save({ session }).then(async () => {
-    await addToRecentlyUsedContact(
-      phoneNumber,
-      "airtime",
-      { user: user.id, ...res },
-      session
-    );
-  });
-
-  // Update user balance with session
-  await user.updateOne({ $inc: { balance: -amount } }, { session });
-
-  return {
-    message: res.message,
-    transactionId: tx_ref,
-    amount,
-    phoneNumber,
-    network,
-    timestamp: new Date().toISOString(),
-  };
-}
 
 export async function processVirtualAccountForUser(user: IUser) {
   const appConfigs = await App.findOne({});

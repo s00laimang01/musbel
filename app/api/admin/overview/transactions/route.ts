@@ -11,11 +11,13 @@ export async function GET(request: NextRequest) {
     const page = Number(q.get("page") || 1);
     const search = q.get("search") || undefined;
     const sortBy = q.get("sortBy") || undefined;
-    const sortOrder = Number(q.get("sortDirection")) || -1;
+    const sortOrder = Number(q.get("sortOrder")) || -1;
+
+    console.log({ sortOrder, sortBy });
 
     const transactions = await getTransactionsWithUserDetails(
       {
-        sortOrder: sortOrder as -1 | 1,
+        sortOrder: Number(sortOrder) as -1 | 1,
         limit,
         status,
         page,

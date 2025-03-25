@@ -3,10 +3,13 @@ import { User } from "@/models/users";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { httpStatusResponse } from "@/lib/utils";
+import { buyAirtime, httpStatusResponse } from "@/lib/utils";
 import { airtimeRequestSchema } from "@/lib/validator.schema";
-import { processAirtimePurchase } from "@/lib/server-utils";
 import { connectToDatabase } from "@/lib/connect-to-db";
+import { transaction } from "@/types";
+import { Transaction } from "@/models/transactions";
+import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
+import { networkTypes } from "@/lib/constants";
 
 /**
  * Buy airtime for a phone number
@@ -15,6 +18,9 @@ import { connectToDatabase } from "@/lib/connect-to-db";
  * @access Private - Requires authentication
  */
 export async function POST(request: Request) {
+  // Start a MongoDB session for transaction
+  let session: null | mongoose.ClientSession = null;
+
   try {
     // Parse and validate request body
     const body = await request.json();
@@ -48,7 +54,11 @@ export async function POST(request: Request) {
     // Connect to database BEFORE starting the session
     await connectToDatabase();
 
-    const app = await App.findOne({});
+    // Start MongoDB session
+    session = await mongoose.startSession();
+    session.startTransaction();
+
+    const app = await App.findOne({}).session(session);
 
     await app?.systemIsunderMaintainance();
 
@@ -60,9 +70,13 @@ export async function POST(request: Request) {
     // Find user and verify transaction pin and balance
     const user = await User.findOne({
       "auth.email": authSession.user.email,
-    }).select("+auth.transactionPin");
+    })
+      .select("+auth.transactionPin")
+      .session(session);
 
     if (!user) {
+      await session.abortTransaction();
+      await session.endSession();
       return NextResponse.json(httpStatusResponse(404, "User not found"), {
         status: 404,
       });
@@ -75,22 +89,66 @@ export async function POST(request: Request) {
     // Generate transaction reference
     const tx_ref = new mongoose.Types.ObjectId().toString();
 
-    // Process the airtime purchase
-    const result = await processAirtimePurchase(
-      user,
-      network,
+    //Use this util function to purchase airtime
+    const res = await buyAirtime(
+      networkTypes[network],
       phoneNumber,
       amount,
       tx_ref,
-      byPassValidator
+      byPassValidator,
+      "VTU"
     );
 
+    if (res.status === "fail") {
+      throw new Error(res.message || "Failed to purchase airtime");
+    }
+
+    // Create transaction record
+    const trxPayload: transaction = {
+      accountId: res["request-id"],
+      amount,
+      note: res.message,
+      paymentMethod: "ownAccount",
+      status: "success",
+      tx_ref,
+      type: "airtime",
+      user: user.id,
+      meta: {
+        network,
+        phoneNumber,
+      },
+    };
+
+    const transaction = new Transaction(trxPayload);
+
+    // Update user balance with session
+    await user
+      .updateOne({ $inc: { balance: -amount } }, { session })
+      .then(async () => {
+        await transaction.save({ session });
+        await addToRecentlyUsedContact(
+          phoneNumber,
+          "airtime",
+          { user: user.id, ...res },
+          session
+        );
+      });
+
+    // Commit the transaction if everything succeeded
+    await session.commitTransaction();
+    await session.endSession();
+
     return NextResponse.json(
-      httpStatusResponse(200, "Airtime purchase successful", result),
+      httpStatusResponse(200, "Airtime purchase successful", {}),
       { status: 200 }
     );
   } catch (error) {
     // Rollback transaction on error
+    if (session) {
+      console.log(session);
+      await session.abortTransaction();
+      await session.endSession();
+    }
 
     console.error("Airtime purchase error:", error);
 
