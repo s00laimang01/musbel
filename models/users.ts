@@ -131,10 +131,9 @@ UserSchema.pre("save", async function (next) {
 
   console.log({ isSet: this.hasSetPin });
 
-  if (!this.hasSetPin) {
-    this.auth.transactionPin = "";
-    console.log("CHANGED");
-  }
+  //if (!this.hasSetPin) {
+  //  this.auth.transactionPin = "";
+  //}
 
   const verificationRequired =
     await accountRequiresVerificationBeforeVirtualAccountActivation();
@@ -213,9 +212,9 @@ UserSchema.pre("findOneAndUpdate", async function (next) {
   }
 
   // Handle PIN reset
-  if (!update?.$set.hasSetPin) {
-    update["auth.transactionPin"] = "";
-  }
+  //if (!update?.$set.hasSetPin) {
+  //  update["auth.transactionPin"] = "";
+  //}
 
   // For handling virtual account creation, we need to get the document first
   // since we need the _id and other fields
