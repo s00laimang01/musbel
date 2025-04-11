@@ -61,7 +61,6 @@ export function CreateDataPlanDialog({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      //@ts-ignore
       network: dataPlan?.network,
       data: dataPlan?.data || "",
       amount: dataPlan?.amount || undefined,
@@ -144,10 +143,10 @@ export function CreateDataPlanDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="mtn">MTN</SelectItem>
-                          <SelectItem value="airtel">Airtel</SelectItem>
-                          <SelectItem value="glo">Glo</SelectItem>
-                          <SelectItem value="9mobile">9mobile</SelectItem>
+                          <SelectItem value="Mtn">MTN</SelectItem>
+                          <SelectItem value="Airtel">Airtel</SelectItem>
+                          <SelectItem value="Glo">Glo</SelectItem>
+                          <SelectItem value="9Mobile">9mobile</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

@@ -1,4 +1,4 @@
-import { availableNetworks } from "@/types";
+import { availableNetworks, IBuyVtuNetworks } from "@/types";
 import mongoose from "mongoose";
 import { z } from "zod";
 
@@ -15,9 +15,12 @@ export const createDataPlanSchema = z.object({
 
 // Form schema with validation
 export const formSchema = z.object({
-  network: z.enum(["Mtn", "Airtel", "Glo", "9mobile"], {
-    required_error: "Please select a network",
-  }),
+  network: z.enum<IBuyVtuNetworks, ["Mtn", "Airtel", "Glo", "9Mobile"]>(
+    ["Mtn", "Airtel", "Glo", "9Mobile"],
+    {
+      required_error: "Please select a network",
+    }
+  ),
   data: z.string().min(1, "Data amount is required"),
   amount: z.coerce.number().positive("Amount must be positive"),
   availability: z.string().min(1, "Availability is required"),
