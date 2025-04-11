@@ -655,7 +655,7 @@ export const DATA_PLANS = [
 
 export const PLAN_TYPES: planTypes[] = ["SME", "GIFTING", "COOPERATE GIFTING"];
 
-export const METER_TYPE: meterType[] = ["postpaid", "prepaid"];
+export const METER_TYPE: meterType[] = ["POSTPAID", "PREPAID"];
 
 export const networkTypes: Record<availableNetworks, number> = {
   mtn: 1,
