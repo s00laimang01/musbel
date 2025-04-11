@@ -15,7 +15,7 @@ export const createDataPlanSchema = z.object({
 
 // Form schema with validation
 export const formSchema = z.object({
-  network: z.enum(["mtn", "airtel", "glo", "9mobile"], {
+  network: z.enum(["Mtn", "Airtel", "Glo", "9mobile"], {
     required_error: "Please select a network",
   }),
   data: z.string().min(1, "Data amount is required"),

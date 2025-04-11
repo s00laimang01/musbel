@@ -61,7 +61,8 @@ export function CreateDataPlanDialog({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      network: dataPlan?.network || "mtn",
+      //@ts-ignore
+      network: dataPlan?.network,
       data: dataPlan?.data || "",
       amount: dataPlan?.amount || undefined,
       availability: dataPlan?.availability || "30 Days",
