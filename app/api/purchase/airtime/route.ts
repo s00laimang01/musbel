@@ -1,36 +1,31 @@
 import { App } from "@/models/app";
 import { User } from "@/models/users";
-import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { buyAirtime, httpStatusResponse } from "@/lib/utils";
+import { httpStatusResponse } from "@/lib/utils";
 import { airtimeRequestSchema } from "@/lib/validator.schema";
 import { connectToDatabase } from "@/lib/connect-to-db";
-import { transaction } from "@/types";
-import { Transaction } from "@/models/transactions";
-import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
-import { networkTypes } from "@/lib/constants";
+import { BuyVTU } from "@/lib/server-utils";
 
-/**
- * Buy airtime for a phone number
- *
- * @route POST /api/airtime
- * @access Private - Requires authentication
- */
 export async function POST(request: Request) {
+  const body = await request.json(); //Get the body of our request of the client
+
   // Start a MongoDB session for transaction
-  let session: null | mongoose.ClientSession = null;
+  const buyVtu = new BuyVTU(undefined, {
+    validatePhoneNumber: body.byPassValidator ?? false,
+    network: body.network,
+    phoneNumber: body.phoneNumber,
+  });
 
   try {
-    // Parse and validate request body
-    const body = await request.json();
-    const validationResult = airtimeRequestSchema.safeParse(body);
+    const validationResult = airtimeRequestSchema.safeParse(body); //using zod validation to validate the data we want.
 
+    //If the validation process was not successfull
     if (!validationResult.success) {
       return NextResponse.json(
         httpStatusResponse(
           400,
-          "Invalid request data",
+          "INVALID_DATA_REQUEST: The format of your request is invalid",
           validationResult.error.format()
         ),
         {
@@ -39,11 +34,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const { pin, amount, network, phoneNumber, byPassValidator } =
-      validationResult.data;
+    //Get the data from the successfully parse data
+    const { pin, amount, network, phoneNumber } = validationResult.data;
 
     // Get user session
     const authSession = await getServerSession();
+
+    //If the user is not authenticated
     if (!authSession?.user?.email) {
       return NextResponse.json(
         httpStatusResponse(401, "Unauthorized: Please login"),
@@ -54,111 +51,89 @@ export async function POST(request: Request) {
     // Connect to database BEFORE starting the session
     await connectToDatabase();
 
-    // Start MongoDB session
-    session = await mongoose.startSession();
-    session.startTransaction();
+    //Start the session to avoid partial update on the DB
+    await buyVtu.startSession();
 
-    const app = await App.findOne({}).session(session);
+    //Get the app config
+    const app = await App.findOne({})
+      .select("+buyVtu")
+      .session(buyVtu?.session);
 
-    await app?.systemIsunderMaintainance();
+    const accessToken = await app?.refreshAccessToken(); //This is use to refresh the accessToken use for the buyVTU api requests
 
-    // Check if airtime transactions are enabled
-    await app?.isTransactionEnable("airtime");
+    buyVtu.setAccessToken = accessToken!; //Set the accessToken to the updated or old accessToken
 
-    await app?.checkTransactionLimit(amount);
+    await app?.systemIsunderMaintainance(); //Check to see if the system is under maintainance
+
+    await app?.isTransactionEnable("airtime"); // Check if airtime transactions are enabled
+
+    await app?.checkTransactionLimit(amount); //Check the transaction limit to see if the user request pass that amount.
 
     // Find user and verify transaction pin and balance
     const user = await User.findOne({
       "auth.email": authSession.user.email,
     })
       .select("+auth.transactionPin")
-      .session(session);
+      .session(buyVtu.session);
 
     if (!user) {
-      await session.abortTransaction();
-      await session.endSession();
+      await buyVtu.endSession();
       return NextResponse.json(httpStatusResponse(404, "User not found"), {
         status: 404,
       });
     }
 
-    await user.verifyTransactionPin(pin);
+    await user.verifyTransactionPin(pin); //Validate the user pin
 
-    await user.verifyUserBalance(amount);
-
-    // Generate transaction reference
-    const tx_ref = new mongoose.Types.ObjectId().toString();
+    await user.verifyUserBalance(amount); //Check if the user have the balance to buy the service.
 
     //Use this util function to purchase airtime
-    const res = await buyAirtime(
-      networkTypes[network],
-      phoneNumber,
-      amount,
-      tx_ref,
-      byPassValidator,
-      "VTU"
-    );
+    //const res = await buyAirtime(
+    //  networkTypes[network],
+    //  phoneNumber,
+    //  amount,
+    //  tx_ref,
+    //  byPassValidator,
+    //  "VTU"
+    //);
 
-    if (res.status === "fail") {
-      throw new Error(res.message || "Failed to purchase airtime");
+    //Use the buyAirtime function to purchase airtime.
+    await buyVtu.buyAirtime(phoneNumber, amount, network);
+
+    //If the service purchase is not successfull throw and error
+    if (!buyVtu.status) {
+      throw new Error(buyVtu.message || "Failed to purchase airtime");
     }
 
     // Create transaction record
-    const trxPayload: transaction = {
-      accountId: res["request-id"],
-      amount,
-      note: res.message,
-      paymentMethod: "ownAccount",
-      status: "success",
-      tx_ref,
-      type: "airtime",
-      user: user.id,
-      meta: {
-        network,
-        phoneNumber,
-      },
-    };
-
-    const transaction = new Transaction(trxPayload);
+    await buyVtu.createTransaction("airtime", user.id);
 
     // Update user balance with session
-    await user
-      .updateOne({ $inc: { balance: -amount } }, { session })
-      .then(async () => {
-        await transaction.save({ session });
-        await addToRecentlyUsedContact(
-          phoneNumber,
-          "airtime",
-          { user: user.id, ...res },
-          session
-        );
-      });
+    await user.updateOne(
+      { $inc: { balance: -amount } },
+      { session: buyVtu.session }
+    );
 
     // Commit the transaction if everything succeeded
-    await session.commitTransaction();
-    await session.endSession();
+    await buyVtu.commitSession();
 
     return NextResponse.json(
-      httpStatusResponse(200, "Airtime purchase successful", {}),
+      httpStatusResponse(
+        200,
+        buyVtu.message || "Airtime purchase successful",
+        {}
+      ),
       { status: 200 }
     );
   } catch (error) {
-    // Rollback transaction on error
-    if (session) {
-      console.log(session);
-      await session.abortTransaction();
-      await session.endSession();
+    if (buyVtu.session) {
+      await buyVtu.endSession();
     }
 
-    console.error("Airtime purchase error:", error);
-
-    const statusCode = (error as Error).message.includes("Unauthorized")
-      ? 401
-      : 500;
     return NextResponse.json(
-      httpStatusResponse(statusCode, (error as Error).message),
+      httpStatusResponse(500, (error as Error).message),
       {
-        status: statusCode,
+        status: 500,
       }
     );
   }

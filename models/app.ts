@@ -1,5 +1,26 @@
 import mongoose from "mongoose";
-import type { appProps, availableBanks, transactionType } from "@/types";
+import type {
+  appProps,
+  availableBanks,
+  buyVtuResponse,
+  transactionType,
+} from "@/types";
+import { buyVtuApi } from "@/lib/utils";
+
+const BuyVtuSchema = new mongoose.Schema({
+  accessToken: {
+    type: String,
+    default: "",
+  },
+  expiredAt: {
+    type: String,
+    default: "",
+  },
+  url: {
+    type: String,
+    default: "",
+  },
+});
 
 const AppSchema: mongoose.Schema<appProps> = new mongoose.Schema({
   stopAllTransactions: {
@@ -70,6 +91,10 @@ const AppSchema: mongoose.Schema<appProps> = new mongoose.Schema({
     type: String,
     default: "",
   },
+  buyVtu: {
+    type: BuyVtuSchema,
+    select: false,
+  },
 });
 
 AppSchema.methods.isTransactionEnable = async function (
@@ -124,6 +149,48 @@ AppSchema.methods.isAccountCreationStopped = async function () {
       "ACCOUNT_CREATION_TEMPORARILY_STOPPED: please contact the admin"
     );
   }
+};
+
+AppSchema.methods.refreshAccessToken = async function () {
+  const app = await App.findOne({}).select("+buyVtu");
+
+  if (!app) return;
+
+  const buyVtu = this.buyVtu as appProps["buyVtu"];
+
+  const now = new Date();
+  const expiredAt = new Date(buyVtu?.["expiredAt"] || now.toISOString());
+
+  if (!buyVtu?.["expiredAt"] || expiredAt < now) {
+    const phone_no = process.env.BUY_VTU_PHONE_NUMBER;
+    const password = process.env.BUY_VTU_PASSWORD;
+
+    try {
+      //Refresh the accessToken
+      const response = await buyVtuApi.post<
+        buyVtuResponse<{ token: string; success: boolean }>
+      >("/login", {
+        phone_no,
+        password,
+      });
+
+      now.setDate(now.getDate() + 25);
+
+      await App.findByIdAndUpdate(this._id, {
+        $set: {
+          "buyVtu.accessToken": response?.data?.data?.token,
+          "buyVtu.expiredAt": now.toISOString(),
+        },
+      });
+
+      return response.data.data.token;
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  }
+
+  return buyVtu?.accessToken;
 };
 
 const App: mongoose.Model<appProps> =

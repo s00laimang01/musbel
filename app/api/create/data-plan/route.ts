@@ -1,3 +1,4 @@
+import { connectToDatabase } from "@/lib/connect-to-db";
 import { httpStatusResponse } from "@/lib/utils";
 import { DataPlan } from "@/models/data-plan";
 import { dataPlan } from "@/types";
@@ -42,6 +43,8 @@ export async function GET(request: NextRequest) {
 
     let query: Record<any, any> = {};
 
+    await connectToDatabase();
+
     if (network) {
       query["network"] = network;
     }
@@ -60,6 +63,7 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    console.log(error);
     return NextResponse.json(
       httpStatusResponse(500, (error as Error).message),
       {

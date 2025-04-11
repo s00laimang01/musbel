@@ -1,154 +1,120 @@
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
 import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 
-import { buyData, httpStatusResponse } from "@/lib/utils";
+import { httpStatusResponse } from "@/lib/utils";
 import { User } from "@/models/users";
 import { DataPlan } from "@/models/data-plan";
-import { Transaction } from "@/models/transactions";
-import { transaction } from "@/types";
-import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
-import { networkTypes } from "@/lib/constants";
 import { dataRequestSchema } from "@/lib/validator.schema";
 import { App } from "@/models/app";
 import { connectToDatabase } from "@/lib/connect-to-db";
-
-// Define a schema for request validation
+import { BuyVTU } from "@/lib/server-utils";
 
 export async function POST(request: Request) {
-  let session: mongoose.ClientSession | null = null;
+  const buyVtu = new BuyVTU();
 
   try {
-    // Parse and validate request data
     const body = await request.json();
-    const validatedData = dataRequestSchema.parse(body);
-    const { pin, _id, phoneNumber, byPassValidator = false } = validatedData;
+    const validationResult = dataRequestSchema.safeParse(body);
 
-    // Start transaction
-    session = await mongoose.startSession();
-    session.startTransaction();
+    if (!validationResult.success) {
+      return NextResponse.json(
+        httpStatusResponse(
+          400,
+          "INVALID_DATA_REQUEST: The format of your request is invalid",
+          validationResult.error.format()
+        ),
+        { status: 400 }
+      );
+    }
 
-    // Authenticate user
+    const {
+      pin,
+      _id,
+      phoneNumber,
+      byPassValidator = false,
+    } = validationResult.data;
+
+    console.log(validationResult.data);
+
+    // Get the email of the current authenticated user
     const serverSession = await getServerSession();
     if (!serverSession?.user?.email) {
-      throw new Error("Unauthorized access");
+      throw new Error(
+        "UNAUTHORIZED_REQUEST: Please login before you continue."
+      );
     }
 
     await connectToDatabase();
+    await buyVtu.startSession();
 
-    const app = await App.findOne({});
+    // Get the entire application configuration
+    const app = await App.findOne({}).select("+buyVtu").session(buyVtu.session);
+
+    // Refresh/Retrieve the buyVtu accessToken
+    const accessToken = await app?.refreshAccessToken();
+    buyVtu.setAccessToken = accessToken!;
 
     await app?.systemIsunderMaintainance();
-
     await app?.isTransactionEnable("data");
 
     const userEmail = serverSession.user.email;
 
+    // Find the current user in the db and also the transaction pin
     const user = await User.findOne({ "auth.email": userEmail }).select(
       "+auth.transactionPin"
     );
-
-    await user?.verifyTransactionPin(pin);
 
     if (!user) {
       throw new Error("USER_NOT_FOUND: please contact admin");
     }
 
+    // Verify the user transaction pin
+    await user?.verifyTransactionPin(pin);
+
     // Find data plan
-    const dataPlan = await DataPlan.findById(_id).session(session);
+    const dataPlan = await DataPlan.findById(_id).session(buyVtu.session);
 
     if (!dataPlan) {
-      throw new Error("Plan not found");
+      throw new Error("PLAN_NOT_FOUND: we cannot find this plan");
     }
 
+    // Check the transaction limit
     await app?.checkTransactionLimit(dataPlan.amount);
 
     // Verify user has sufficient balance
     await user.verifyUserBalance(dataPlan.amount);
 
-    // Generate secure transaction reference
-    const tx_ref = new mongoose.Types.ObjectId().toString();
+    buyVtu.setNetwork = dataPlan.network;
 
-    // Process data purchase
-    const purchaseResult = await buyData(
-      dataPlan.planId!,
-      phoneNumber,
-      tx_ref,
-      networkTypes[dataPlan.network],
-      byPassValidator
-    );
+    // Buy data
+    await buyVtu.buyData(dataPlan.planId + "", phoneNumber);
 
-    if (purchaseResult.status === "failed") {
-      await session.abortTransaction();
-      session.endSession();
-      return NextResponse.json(
-        httpStatusResponse(400, purchaseResult.message),
-        { status: 400 }
-      );
+    console.log({ status: buyVtu.status, res: buyVtu.vendingResponse });
+
+    if (!buyVtu.status) {
+      throw new Error(buyVtu.message || "Failed to purchase data");
     }
 
-    // Create transaction record
-    const trxPayload: transaction = {
-      accountId: dataPlan._id.toString(),
-      amount: dataPlan.amount,
-      note: purchaseResult.message,
-      paymentMethod: "ownAccount",
-      status:
-        purchaseResult.status === "success"
-          ? "success"
-          : purchaseResult.status === "fail"
-          ? "failed"
-          : "pending",
-      tx_ref,
-      type: "data",
-      user: user.id.toString(),
-    };
-
-    if (purchaseResult.status === "fail") {
-      await session.abortTransaction();
-      session.endSession();
-      return NextResponse.json(
-        httpStatusResponse(400, purchaseResult.message),
-        { status: 400 }
-      );
-    }
-
-    // Save changes
-    const transaction = new Transaction(trxPayload);
-
-    await user
-      .updateOne({ $inc: { balance: -dataPlan.amount } })
-      .then(async () => {
-        await transaction.save({ validateModifiedOnly: true, session }),
-          await addToRecentlyUsedContact(
-            phoneNumber,
-            "data",
-            { user: user.id, plan: dataPlan.data, ...dataPlan.toObject() },
-            session
-          );
-      });
+    // Update user balance and create transaction record
+    await user.updateOne({ $inc: { balance: -dataPlan.amount } });
+    await buyVtu.createTransaction("data", user.id);
 
     // Commit transaction
-    await session.commitTransaction();
-    session.endSession();
+    await buyVtu.commitSession();
+
+    // At this point transaction is committed but session is still open
 
     return NextResponse.json(
       httpStatusResponse(
         200,
-        "Your data has been purchased successfully",
-        purchaseResult
+        buyVtu.message || "Your data has been purchased successfully",
+        buyVtu.vendingResponse
       ),
-      {
-        status: 200,
-      }
+      { status: 200 }
     );
   } catch (error) {
-    console.log(error);
-    // Rollback transaction on error
-    if (session) {
-      await session.abortTransaction().catch(console.error);
-    }
+    console.error("Data purchase error:", error);
 
     // Determine appropriate status code
     const statusCode = error instanceof z.ZodError ? 400 : 500;
@@ -159,9 +125,10 @@ export async function POST(request: Request) {
       status: statusCode,
     });
   } finally {
-    // Always end session
-    if (session) {
-      session.endSession().catch(console.error);
+    // End session regardless of success or failure
+    // This is now safe to call even after commitSession
+    if (buyVtu.session) {
+      await buyVtu.endSession();
     }
   }
 }

@@ -11,6 +11,7 @@ import {
   flutterwaveWebhook,
   IUser,
   IUserRole,
+  IValidateMeterResponse,
   meterType,
   MeterVerificationResponse,
   paymentMethod,
@@ -101,19 +102,19 @@ export const formatCurrency = (amount: number, mfd = 1) => {
   }).format(amount);
 };
 
-export const validatePhoneNumber = async (phoneNumber: string) => {
-  const res = await axios.get<{ is_valid: boolean }>(
-    `https://validate-phone-by-api-ninjas.p.rapidapi.com/v1/validatephone?number=${phoneNumber}&country=NG`,
-    {
-      headers: {
-        "x-rapidapi-host": configs["X-RAPIDAPI-HOST"],
-        "x-rapidapi-key": configs["X-RAPIDAPI-KEY"],
-      },
-    }
-  );
-
-  return res.data;
-};
+//export const validatePhoneNumber = async (phoneNumber: string) => {
+//  const res = await axios.get<{ is_valid: boolean }>(
+//    `https://validate-phone-by-api-ninjas.p.rapidapi.com/v1/validatephone?number=${phoneNumber}&country=NG`,
+//    {
+//      headers: {
+//        "x-rapidapi-host": configs["X-RAPIDAPI-HOST"],
+//        "x-rapidapi-key": configs["X-RAPIDAPI-KEY"],
+//      },
+//    }
+//  );
+//
+//  return res.data;
+//};
 
 export const errorMessage = (error: any) => {
   return error.response.data;
@@ -205,6 +206,10 @@ export const restrictPropertyModification = (
 
 export const api = axios.create({
   baseURL: "/api/",
+});
+
+export const buyVtuApi = axios.create({
+  baseURL: "https://buyvtu.online/api/v1",
 });
 
 export interface apiResponse<T = any> {
@@ -382,11 +387,6 @@ export const getRecentlyUsedContacts = async (
   return res.data.data;
 };
 
-/**
- * Converts a string to base64 encoding
- * @param {string} str - The input string to convert
- * @returns {string} - The base64 encoded string
- */
 export function stringToBase64(str: string) {
   // For browser environments
   if (typeof window !== "undefined" && window.btoa) {
@@ -535,12 +535,6 @@ export const subscribeForCable = async (
   return res.data;
 };
 
-/**
- * Function to make an exam API request
- * @param {number} examId - The exam ID
- * @param {number} quantity - The quantity of exams
- * @returns {Promise} - Promise with the API response
- */
 export async function buyExam(examId: number, requestId: string, quantity = 1) {
   // Create the payload
   const payload = {
@@ -628,18 +622,82 @@ export const verifyMeterNumber = async (
   }
 };
 
+export function validatePhoneNumber(phoneNumber: string, network: string) {
+  // Clean the number and ensure it's in a standard format
+  const cleaned = phoneNumber.replace(/\D/g, "");
+  network = network.toUpperCase();
+  let prefix;
+
+  // Extract the prefix - Nigerian networks are identified by the first 4 digits after the country code
+  if (cleaned.startsWith("0")) {
+    prefix = cleaned.substring(0, 4);
+  } else if (cleaned.startsWith("234")) {
+    prefix = "0" + cleaned.substring(3, 6);
+  } else {
+    prefix = "0" + cleaned.substring(0, 3);
+  }
+
+  // Network identification based on prefixes
+  const networks: Record<string, string> = {
+    // MTN prefixes
+    "0803": "MTN",
+    "0806": "MTN",
+    "0703": "MTN",
+    "0706": "MTN",
+    "0813": "MTN",
+    "0816": "MTN",
+    "0810": "MTN",
+    "0814": "MTN",
+    "0903": "MTN",
+    "0906": "MTN",
+    "0913": "MTN",
+    "0916": "MTN",
+
+    // Glo prefixes
+    "0805": "GLO",
+    "0807": "GLO",
+    "0705": "GLO",
+    "0815": "GLO",
+    "0811": "GLO",
+    "0905": "GLO",
+    "0915": "GLO",
+
+    // Airtel prefixes
+    "0802": "AIRTEL",
+    "0808": "AIRTEL",
+    "0708": "AIRTEL",
+    "0812": "AIRTEL",
+    "0701": "AIRTEL",
+    "0901": "AIRTEL",
+    "0902": "AIRTEL",
+    "0904": "AIRTEL",
+    "0912": "AIRTEL",
+
+    // 9mobile (formerly Etisalat) prefixes
+    "0809": "9MOBILE",
+    "0818": "9MOBILE",
+    "0817": "9MOBILE",
+    "0909": "9MOBILE",
+    "0908": "9MOBILE",
+    "0919": "9MOBILE",
+  };
+
+  return {
+    isValid: networks[prefix] === network,
+    network: networks[prefix] || "Unknown",
+  };
+}
+
 export const _verifyMeterNumber = async (
-  meterType: meterType,
-  meterNumber: number,
-  disco: number
+  meterNumber: string,
+  electricityId: string
 ) => {
   const q = queryString.stringify({
-    meterType,
     meterNumber,
-    disco,
+    electricityId,
   });
 
-  const res = await api.get<{ data: MeterVerificationResponse }>(
+  const res = await api.get<apiResponse<IValidateMeterResponse>>(
     `/create/electricity/verify-meter/?${q}`
   );
 

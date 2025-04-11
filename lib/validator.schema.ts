@@ -34,10 +34,7 @@ export const formSchema = z.object({
 export const airtimeRequestSchema = z.object({
   pin: z.string().min(4).max(6),
   amount: z.number().positive().min(50), // Assuming minimum airtime amount is 50
-  network: z.enum(["mtn", "glo", "airtel", "9mobile"] as [
-    availableNetworks,
-    ...availableNetworks[]
-  ]),
+  network: z.string(),
   phoneNumber: z
     .string()
     .min(10, "Phone number must be at least 10 characters long")
@@ -56,12 +53,7 @@ export const dataRequestSchema = z.object({
 
 // Define schema for request validation
 export const billPaymentSchema = z.object({
-  electricity: z.string().min(1, "Electricity provider is required"),
-  meterType: z.enum(["prepaid", "postpaid"], {
-    errorMap: () => ({
-      message: "Meter type must be either prepaid or postpaid",
-    }),
-  }),
+  electricityId: z.string().min(1, "Electricity provider is required"),
   meterNumber: z.string().min(1, "Meter number is required"),
   amount: z.number().positive("Amount must be greater than 0"),
   pin: z.string().min(4, "PIN must be at least 4 characters"),

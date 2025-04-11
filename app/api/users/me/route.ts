@@ -15,8 +15,6 @@ export async function GET(request: Request) {
 
     await connectToDatabase();
 
-    await Exam.find({});
-
     const user = await findUserByEmail(session?.user?.email || "");
 
     return NextResponse.json(

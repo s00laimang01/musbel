@@ -660,6 +660,6 @@ export const METER_TYPE: meterType[] = ["postpaid", "prepaid"];
 export const networkTypes: Record<availableNetworks, number> = {
   mtn: 1,
   glo: 3,
-  airtel: 2,
-  "9mobile": 4,
+  airtel: 4,
+  "9mobile": 2,
 };

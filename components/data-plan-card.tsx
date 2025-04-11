@@ -82,8 +82,10 @@ export default function DataPlanCard({
       </CardHeader>
       <CardContent className="pt-6 px-4">
         <div className="text-center mb-4">
-          <h2 className="text-3xl font-bold mb-1">{dataPlan.data}</h2>
-          <p className="text-sm text-muted-foreground">{dataPlan.type} Plan</p>
+          <h2 className="text-xl font-medium tracking-tight mb-1">
+            {dataPlan.data}
+          </h2>
+          <p className="text-sm text-muted-foreground">{dataPlan.type}</p>
         </div>
 
         <div className="space-y-1 mt-4">

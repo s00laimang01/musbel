@@ -59,7 +59,7 @@ export interface recentPurchaseNumbers {
 
 export interface dataPlan {
   _id?: string;
-  network: availableNetworks;
+  network: IBuyVtuNetworks;
   data: string;
   amount: number;
   type: planTypes;
@@ -216,13 +216,14 @@ export interface recentlyUsedContact<T = any> {
   meta?: T;
 }
 
-export type meterType = "prepaid" | "postpaid";
+export type meterType = "PREPAID" | "POSTPAID";
 
 export interface electricity {
   _id?: string;
   discoId: string;
   discoName: string;
   logoUrl?: string;
+  type: meterType;
 }
 
 // FLUTTERWAVE WEBHOOK
@@ -283,12 +284,18 @@ export interface appProps extends Document {
   passwordPolicy?: "basic" | "medium" | "strong" | "very-strong";
   sessionTimeout?: number;
   adminIpWhitelist?: string[];
+  buyVtu: {
+    accessToken: string;
+    expiredAt: string;
+    url: string;
+  };
 
   // Methods
   isTransactionEnable: (transactionType?: transactionType) => Promise<void>;
   checkTransactionLimit: (amount: number) => Promise<void>;
   systemIsunderMaintainance: () => Promise<void>;
   isAccountCreationStopped: () => Promise<void>;
+  refreshAccessToken: () => Promise<string>;
 }
 
 export interface ChartDataPoint {
@@ -675,4 +682,59 @@ export interface systemMessage {
 
   // METHODS
   updateMessage: (message: string, title?: string) => Promise<systemMessage>;
+}
+
+export interface buyVtuResponse<T = any> {
+  success: boolean;
+  data: T;
+  message: string;
+}
+
+export type IBuyVtuNetworks = "Mtn" | "9Mobile" | "Glo" | "Airtel";
+
+export interface buyVtuDataPlan {
+  id: number;
+  network: IBuyVtuNetworks;
+  data: string;
+  value: string;
+  amount: number;
+  validity: string;
+  availabilityStatus: number;
+}
+
+export interface IBuyNetworkResponse {
+  id: number;
+  name: string;
+}
+
+export interface IBuyVtuElectricityResponse {
+  id: number;
+  name: string;
+  type: "PREPAID" | "POSTPAID";
+}
+
+export interface IBuyVtuVendResponse {
+  recipientCount: number;
+  recipients: string;
+  cost: number;
+  totalAmount: number;
+  vendReport: Record<string, string>;
+  vendStatus: null;
+  commissionEarned: number;
+}
+
+export interface IValidateMeterResponse {
+  customerName: string;
+  customerAddress: string;
+}
+
+export interface IVendPowerResponse {
+  recipientCount: number;
+  recipients: string;
+  cost: number;
+  totalAmount: string;
+  vendReport: [];
+  vendStatus: "successful";
+  commissionEarned: number;
+  token: string;
 }

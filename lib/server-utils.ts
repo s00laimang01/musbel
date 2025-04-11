@@ -1,11 +1,10 @@
 import { Account } from "@/models/account";
 import { App } from "@/models/app";
-import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
 import { Transaction } from "@/models/transactions";
 import { User } from "@/models/users";
 import {
   availableBanks,
-  availableNetworks,
+  buyVtuResponse,
   ChartDataPoint,
   createCustomerProps,
   createCustomerResponse,
@@ -15,15 +14,26 @@ import {
   createOneTimeVirtualAccountResponse,
   dedicatedAccountNumber,
   fetchTransactionResponse,
+  IBuyNetworkResponse,
+  IBuyVtuElectricityResponse,
+  IBuyVtuNetworks,
   IUser,
-  transaction,
   transactionRequestProps,
+  IBuyVtuVendResponse,
+  buyVtuDataPlan,
+  IValidateMeterResponse,
+  IVendPowerResponse,
+  transaction,
+  transactionType,
 } from "@/types";
 import axios from "axios";
-import mongoose, { isValidObjectId, PipelineStage } from "mongoose";
-import { buyAirtime } from "./utils";
-import { networkTypes } from "./constants";
+import mongoose, { PipelineStage } from "mongoose";
 import { connectToDatabase } from "./connect-to-db";
+import {
+  buyVtuApi,
+  validatePhoneNumber as validatePhoneNumberApi,
+} from "./utils";
+import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
 
 export const budPay = (type: "s2s" | "v2" = "v2") => {
   return axios.create({
@@ -330,19 +340,6 @@ export async function getTransactionByIdWithUserDetails(id: string) {
   }
 }
 
-/**
- * Process an airtime purchase
- *
- * @param userId - The ID of the user making the purchase
- * @param network - The network provider
- * @param phoneNumber - The phone number to recharge
- * @param amount - The amount to recharge
- * @param pin - The user's transaction PIN
- * @param byPassValidator - Whether to bypass validation
- * @param session - Mongoose session for transaction
- * @returns The result of the airtime purchase
- */
-
 export async function processVirtualAccountForUser(user: IUser) {
   const appConfigs = await App.findOne({});
 
@@ -414,4 +411,382 @@ export async function processVirtualAccountForUser(user: IUser) {
 
   // Save the virtual account the user create
   await _account.save();
+}
+
+//Class to purchase data, airtime, exam token, electricity
+
+export class BuyVTU {
+  private accessToken?: string;
+  private transactionPin: string;
+  network?: IBuyVtuNetworks;
+  ref: string;
+  vendingResponse?: IBuyVtuVendResponse;
+  dataPlans?: buyVtuDataPlan[];
+  electricityDisco?: IBuyVtuElectricityResponse[];
+  networks?: IBuyNetworkResponse[];
+  validateMeterResponse?: IValidateMeterResponse;
+  powerVendResponse?: IVendPowerResponse;
+  transaction?: transaction;
+  session: null | mongoose.ClientSession;
+  status: boolean;
+  message: string | null;
+  validatePhoneNumber?: boolean;
+
+  constructor(
+    accessToken?: string,
+    phoneNumberValidatorPayload?: {
+      validatePhoneNumber?: boolean;
+      network?: string;
+      phoneNumber: string;
+    }
+  ) {
+    this.accessToken = accessToken;
+    this.transactionPin = process.env.BUY_VTU_TRANSACTION_PIN!;
+    this.ref = new mongoose.Types.ObjectId().toString();
+    this.session = null;
+    this.status = false;
+    this.message = null;
+    this.validatePhoneNumber = phoneNumberValidatorPayload?.validatePhoneNumber;
+
+    //If we want to validate the user phone number first before moving on
+    if (this.validatePhoneNumber) {
+      const { isValid } = validatePhoneNumberApi(
+        phoneNumberValidatorPayload?.phoneNumber!,
+        phoneNumberValidatorPayload?.network!
+      );
+
+      if (!isValid) {
+        throw new Error(
+          "NETWORK_MISMATCH: this phone number you provided is not matching with the network you selected."
+        );
+      }
+    }
+  }
+
+  public set setAccessToken(accessToken: string) {
+    this.accessToken = accessToken;
+  }
+
+  public set setNetwork(network: IBuyVtuNetworks) {
+    this.network = network;
+  }
+
+  public async startSession() {
+    if (!this.session) {
+      this.session = await mongoose.startSession();
+      this.session.startTransaction();
+    }
+    return this;
+  }
+
+  // Fixed session management - don't end session after committing
+  public async endSession() {
+    if (this.session) {
+      // Only abort if transaction is active
+      if (this.session.inTransaction()) {
+        await this.session.abortTransaction();
+      }
+      await this.session.endSession();
+      this.session = null;
+    }
+    return this;
+  }
+
+  public async commitSession() {
+    if (this.session && this.session.inTransaction()) {
+      await this.session.commitTransaction();
+      // Don't end session here, let caller control that
+      // The caller should call endSession separately if needed
+    }
+    return this;
+  }
+
+  // Error handling improved with try/catch blocks
+  public async getNetworks() {
+    try {
+      const resp = await buyVtuApi.get<buyVtuResponse<IBuyNetworkResponse[]>>(
+        `/networks`,
+        {
+          headers: { Authorization: `Bearer ${this.accessToken}` },
+        }
+      );
+
+      this.networks = resp.data.data;
+      return this;
+    } catch (error) {
+      this.status = false;
+      this.message =
+        error instanceof Error ? error.message : "Failed to fetch networks";
+      return this;
+    }
+  }
+
+  public async getElectricityDisco() {
+    try {
+      const resp = await buyVtuApi.get<
+        buyVtuResponse<IBuyVtuElectricityResponse[]>
+      >(`/power/discos/`, {
+        headers: { Authorization: `Bearer ${this.accessToken}` },
+      });
+
+      this.electricityDisco = resp.data.data;
+      return this;
+    } catch (error) {
+      this.status = false;
+      this.message =
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch electricity distributors";
+      return this;
+    }
+  }
+
+  public async getDataPlans() {
+    try {
+      if (!this.network) {
+        throw new Error("Network must be set before fetching data plans");
+      }
+
+      const network: Record<IBuyVtuNetworks, 1 | 2 | 3 | 4> = {
+        Mtn: 1,
+        "9Mobile": 2,
+        Glo: 3,
+        Airtel: 4,
+      };
+
+      const resp = await buyVtuApi.get<buyVtuResponse<buyVtuDataPlan[]>>(
+        `/data/plans/${network[this.network]}`,
+        {
+          headers: { Authorization: `Bearer ${this.accessToken}` },
+        }
+      );
+
+      this.dataPlans = resp.data.data;
+      this.status = true;
+      return this;
+    } catch (error) {
+      this.status = false;
+      this.message =
+        error instanceof Error ? error.message : "Failed to fetch data plans";
+      return this;
+    }
+  }
+
+  public async buyData(planId: string, phoneNumber: string) {
+    try {
+      if (!this.accessToken) {
+        throw new Error("Access token not set");
+      }
+
+      const resp = await buyVtuApi.post<buyVtuResponse<IBuyVtuVendResponse>>(
+        `/data/vend`,
+        {
+          planId,
+          customRef: this.ref,
+          transactionPin: this.transactionPin,
+          recipient: phoneNumber,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+          },
+        }
+      );
+
+      console.log({ resp });
+
+      this.vendingResponse = resp.data.data;
+      this.status = resp.data.success;
+      this.message = resp.data?.message ?? "Data purchase successful";
+
+      return this;
+    } catch (error) {
+      console.error("Data purchase error:", error);
+      this.status = false;
+      this.message =
+        error instanceof Error && error.message
+          ? error.message
+          : "DATA_PURCHASE_FAILED: unable to process your request.";
+      return this;
+    }
+  }
+
+  public async buyAirtime(
+    phoneNumber: string,
+    amount: number,
+    networkId: string
+  ) {
+    try {
+      if (!this.accessToken) {
+        throw new Error("Access token not set");
+      }
+
+      const resp = await buyVtuApi.post<buyVtuResponse<IBuyVtuVendResponse>>(
+        `/airtime/vend`,
+        {
+          customRef: this.ref,
+          transactionPin: this.transactionPin,
+          amount,
+          recipient: phoneNumber,
+          networkId,
+        },
+        { headers: { Authorization: `Bearer ${this.accessToken}` } }
+      );
+
+      this.vendingResponse = resp.data.data;
+      this.status = resp.data?.success;
+      this.message = resp.data?.message ?? "Airtime purchase successful";
+
+      return this;
+    } catch (error) {
+      this.status = false;
+      this.message =
+        error instanceof Error
+          ? error.message
+          : "AIRTIME_PURCHASE_FAILED: unable to process your request.";
+      return this;
+    }
+  }
+
+  public async validateMeterNo(discoId: string, meterNo: string) {
+    try {
+      if (!this.accessToken) {
+        throw new Error("Access token not set");
+      }
+
+      const resp = await buyVtuApi.post<buyVtuResponse<IValidateMeterResponse>>(
+        `/power/validateMeterNo`,
+        {
+          meterNo,
+          discoId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+          },
+        }
+      );
+
+      this.validateMeterResponse = resp.data.data;
+      this.status = true;
+      return this;
+    } catch (error) {
+      this.status = false;
+      this.message =
+        error instanceof Error
+          ? error.message
+          : "METER_VALIDATION_FAILED: unable to validate meter.";
+      return this;
+    }
+  }
+
+  public async buyPower(payload: {
+    amount: number;
+    discoId: string;
+    meterNo: string;
+  }) {
+    try {
+      if (!this.accessToken) {
+        throw new Error("Access token not set");
+      }
+
+      const resp = await buyVtuApi.post<buyVtuResponse<IVendPowerResponse>>(
+        `/power/vend`,
+        {
+          customRef: this.ref,
+          transactionPin: this.transactionPin,
+          ...payload,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+          },
+        }
+      );
+
+      this.powerVendResponse = resp.data.data;
+      this.status = resp.data?.success;
+      this.message = resp.data?.message ?? "Power purchase successful";
+
+      return this;
+    } catch (error) {
+      this.status = false;
+      this.message =
+        error instanceof Error
+          ? error.message
+          : "POWER_PURCHASE_FAILED: unable to process your request.";
+      return this;
+    }
+  }
+
+  public async createTransaction(type: transactionType, userId: string) {
+    try {
+      if (!this.session) {
+        throw new Error("Session not started. Call startSession first.");
+      }
+
+      const trxPayload: transaction = {
+        amount:
+          this.vendingResponse?.totalAmount ||
+          this.powerVendResponse?.cost ||
+          0,
+        paymentMethod: "ownAccount",
+        accountId:
+          this.vendingResponse?.recipients ??
+          this.powerVendResponse?.recipients,
+        status: this.status ? "success" : "failed",
+        tx_ref: this.ref,
+        type,
+        user: userId,
+      };
+
+      const transaction = new Transaction(trxPayload);
+      await transaction.save({ session: this.session });
+
+      const meta = {
+        ...this.vendingResponse,
+        ...this.powerVendResponse,
+      };
+
+      // Save the user contact to recently used contact
+      await addToRecentlyUsedContact(
+        trxPayload.accountId!,
+        trxPayload.type,
+        meta,
+        this.session
+      );
+
+      this.transaction = transaction;
+      this.status = true;
+      return this;
+    } catch (error) {
+      this.status = false;
+      this.message =
+        error instanceof Error
+          ? error.message
+          : "TRANSACTION_CREATION_FAILED: unable to create transaction.";
+      return this;
+    }
+  }
+
+  // Implementation for validator method
+  public async validator(phoneNumber: string) {
+    try {
+      // Add your validation logic here
+      // For example, check if phoneNumber is valid for the network
+      if (!phoneNumber || phoneNumber.length < 10) {
+        throw new Error("Invalid phone number");
+      }
+
+      this.status = true;
+      return this;
+    } catch (error) {
+      this.status = false;
+      this.message =
+        error instanceof Error
+          ? error.message
+          : "VALIDATION_FAILED: Invalid input.";
+      return this;
+    }
+  }
 }

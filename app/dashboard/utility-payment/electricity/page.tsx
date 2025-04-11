@@ -63,6 +63,8 @@ const SelectElectricityCompany: FC<{
     enabled: isOpen,
   });
 
+  console.log(electricity);
+
   const content = (
     <div>
       <Input
@@ -77,7 +79,7 @@ const SelectElectricityCompany: FC<{
             <Skeleton className="w-full h-[3rem] rounded-none" />
           </div>
         ) : (
-          <ScrollArea className="h-[300px] w-full flex flex-col gap-5">
+          <ScrollArea className="h-[400px] w-full flex flex-col gap-5">
             {electricity?.map((e) => (
               <div
                 key={e._id}
@@ -87,13 +89,17 @@ const SelectElectricityCompany: FC<{
                   setIsOpen(false);
                 }}
               >
-                <img
-                  src={e.logoUrl!}
-                  alt={e.discoName}
-                  width={30}
-                  height={30}
-                />
-                {e.discoName}
+                <div className="bg-primary/50">
+                  <img
+                    src={e.logoUrl!}
+                    alt={e.discoName}
+                    width={30}
+                    height={30}
+                  />
+                </div>
+                <Text>
+                  {e.discoName} ({e.type.toUpperCase()})
+                </Text>
               </div>
             ))}
           </ScrollArea>
@@ -134,58 +140,6 @@ const SelectElectricityCompany: FC<{
   );
 };
 
-const SelectMeterType: FC<{
-  children: ReactNode;
-  onSelect: (type: meterType) => void;
-}> = ({ children, onSelect }) => {
-  const isMobile = useMediaQuery("(max-width: 767px) ");
-  const [isOpen, setIsOpen] = useState(false);
-
-  const content = (
-    <div className="w-full flex flex-col mt-3 gap-2">
-      {METER_TYPE?.map((type) => (
-        <div
-          key={type}
-          className="w-full rounded-none text-left flex flex-row gap-3 items-center justify-start h-[3rem] cursor-pointer hover:bg-primary/10 p-3"
-          onClick={() => {
-            onSelect(type);
-            setIsOpen(false);
-          }}
-        >
-          {type.toUpperCase()}
-        </div>
-      ))}
-    </div>
-  );
-
-  if (!isMobile) {
-    return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Select Electricity Type</DialogTitle>
-          </DialogHeader>
-
-          {content}
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
-      <DrawerTrigger asChild>{children}</DrawerTrigger>
-      <DrawerContent className="p-3">
-        <DrawerHeader>
-          <DrawerTitle>Select Electricity Type</DrawerTitle>
-        </DrawerHeader>
-        {content}
-      </DrawerContent>
-    </Drawer>
-  );
-};
-
 const Page = () => {
   useNavBar("Electricity Payments");
   const [electricity, setElectricity] = useState<electricity>();
@@ -200,14 +154,11 @@ const Page = () => {
     error: meterVerificationError,
   } = useQuery({
     queryKey: ["verify-meter-number", meterNumber, meterType, electricity],
-    queryFn: async () =>
-      _verifyMeterNumber(
-        meterType!,
-        Number(meterNumber),
-        Number(electricity?.discoId)
-      ),
-    enabled: Boolean(electricity && meterType && meterNumber?.length === 13),
+    queryFn: async () => _verifyMeterNumber(meterNumber, electricity?._id!),
+    enabled: Boolean(electricity && meterNumber?.length === 13),
   });
+
+  console.log(meter);
 
   const purchaseElectricity = async (pin: string, _amount?: number) => {
     try {
@@ -276,18 +227,6 @@ const Page = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0 space-y-2">
-          <SelectMeterType onSelect={setMeterType}>
-            <Button
-              variant="ghost"
-              className="w-full flex items-center justify-between p-2 cursor-pointer rounded-none h-[3rem]"
-            >
-              <h2 className="font-semibold">
-                {meterType?.toUpperCase() || "Select Meter Type"}
-              </h2>
-              <ChevronDown className="text-primary " />
-            </Button>
-          </SelectMeterType>
-          <Separator />
           <Input
             onChange={(e) => {
               if (isNaN(Number(e.target.value))) return;
@@ -318,7 +257,7 @@ const Page = () => {
                 {isLoading
                   ? "VERIFYING..."
                   : !meterVerificationError
-                  ? meter?.name?.toUpperCase()
+                  ? meter?.customerName?.toUpperCase()
                   : "SOMETHING WENT WRONG, PLEASE CONTINUE"}
               </Text>
             </div>
