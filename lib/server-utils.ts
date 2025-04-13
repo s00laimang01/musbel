@@ -637,13 +637,12 @@ export class BuyVTU {
 
       return this;
     } catch (error) {
-      //@ts-ignore
-      console.log(error?.response);
       this.status = false;
+
       this.message =
-        error instanceof Error
-          ? error.message
-          : "AIRTIME_PURCHASE_FAILED: unable to process your request.";
+        //@ts-ignore
+        error.response?.data?.data?.errorDesc ||
+        "AIRTIME_PURCHASE_FAILED: unable to process your request.";
       return this;
     }
   }

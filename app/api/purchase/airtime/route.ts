@@ -37,8 +37,6 @@ export async function POST(request: Request) {
     //Get the data from the successfully parse data
     const { pin, amount, network, phoneNumber } = validationResult.data;
 
-    console.log({ network });
-
     // Get user session
     const authSession = await getServerSession();
 
