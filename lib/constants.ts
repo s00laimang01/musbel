@@ -4,6 +4,7 @@ import {
   PATHS,
   planTypes,
   recentPurchaseNumbers,
+  IBuyVtuNetworks,
 } from "@/types";
 import z from "zod";
 import { CreditCard, GraduationCap, Zap } from "lucide-react";
@@ -31,42 +32,11 @@ export const signUpSchema = z.object({
   password: z.string().min(6, "Password is too short"),
 });
 
-export const AVIALABLE_NETWORKS: availableNetworks[] = [
-  "mtn",
-  "glo",
-  "airtel",
-  "9mobile",
-];
-
-export const DEMO_PHONE_NUMBERS: recentPurchaseNumbers[] = [
-  {
-    amount: 1000,
-    dataPlan: "",
-    date: new Date().toISOString(),
-    network: "mtn",
-    number: "07061508325",
-  },
-  {
-    amount: 2000,
-    dataPlan: "",
-    date: new Date().toISOString(),
-    network: "airtel",
-    number: "08123164428",
-  },
-  {
-    amount: 3000,
-    dataPlan: "",
-    date: new Date().toISOString(),
-    network: "mtn",
-    number: "09130404752",
-  },
-  {
-    amount: 4000,
-    dataPlan: "",
-    date: new Date().toISOString(),
-    network: "glo",
-    number: "08032108745",
-  },
+export const AVIALABLE_NETWORKS: IBuyVtuNetworks[] = [
+  "Mtn",
+  "Glo",
+  "Airtel",
+  "9Mobile",
 ];
 
 export const FREQUENTLY_PURCHASE_AIRTIME = [

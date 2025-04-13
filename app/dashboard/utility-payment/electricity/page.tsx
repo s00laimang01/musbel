@@ -158,8 +158,6 @@ const Page = () => {
     enabled: Boolean(electricity && meterNumber?.length === 13),
   });
 
-  console.log(meter);
-
   const purchaseElectricity = async (pin: string, _amount?: number) => {
     try {
       startTransition(true);

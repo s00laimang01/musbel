@@ -463,6 +463,17 @@ export class BuyVTU {
     }
   }
 
+  private getNetworkId(networkId: IBuyVtuNetworks) {
+    const networkIds: Record<IBuyVtuNetworks, 1 | 2 | 3 | 4> = {
+      Mtn: 1,
+      "9Mobile": 2,
+      Glo: 3,
+      Airtel: 4,
+    };
+
+    return networkIds[networkId];
+  }
+
   public set setAccessToken(accessToken: string) {
     this.accessToken = accessToken;
   }
@@ -547,15 +558,8 @@ export class BuyVTU {
         throw new Error("Network must be set before fetching data plans");
       }
 
-      const network: Record<IBuyVtuNetworks, 1 | 2 | 3 | 4> = {
-        Mtn: 1,
-        "9Mobile": 2,
-        Glo: 3,
-        Airtel: 4,
-      };
-
       const resp = await buyVtuApi.get<buyVtuResponse<buyVtuDataPlan[]>>(
-        `/data/plans/${network[this.network]}`,
+        `/data/plans/${this.getNetworkId(this.network!)}`,
         {
           headers: { Authorization: `Bearer ${this.accessToken}` },
         }
@@ -593,8 +597,6 @@ export class BuyVTU {
         }
       );
 
-      console.log({ resp });
-
       this.vendingResponse = resp.data.data;
       this.status = resp.data.success;
       this.message = resp.data?.message ?? "Data purchase successful";
@@ -611,11 +613,7 @@ export class BuyVTU {
     }
   }
 
-  public async buyAirtime(
-    phoneNumber: string,
-    amount: number,
-    networkId: string
-  ) {
+  public async buyAirtime(phoneNumber: string, amount: number) {
     try {
       if (!this.accessToken) {
         throw new Error("Access token not set");
@@ -628,7 +626,7 @@ export class BuyVTU {
           transactionPin: this.transactionPin,
           amount,
           recipient: phoneNumber,
-          networkId,
+          networkId: this.getNetworkId(this.network!),
         },
         { headers: { Authorization: `Bearer ${this.accessToken}` } }
       );
@@ -639,6 +637,8 @@ export class BuyVTU {
 
       return this;
     } catch (error) {
+      //@ts-ignore
+      console.log(error?.response);
       this.status = false;
       this.message =
         error instanceof Error

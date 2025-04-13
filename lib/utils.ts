@@ -13,7 +13,7 @@ import {
   IUserRole,
   IValidateMeterResponse,
   meterType,
-  MeterVerificationResponse,
+  IBuyVtuNetworks,
   paymentMethod,
   PrintRechargeCard,
   recentlyUsedContact,
@@ -37,15 +37,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const getNetworkLogo = (network: availableNetworks) => {
-  const logos: Record<availableNetworks, string> = {
-    mtn: "/mtn-logo.png",
-    glo: "/glo-logo.png",
-    airtel: "/airtel-logo.png",
-    "9mobile": "/9mobile-logo.png",
+export const getNetworkLogo = (network: IBuyVtuNetworks) => {
+  const logos: Record<IBuyVtuNetworks, string> = {
+    Mtn: "/mtn-logo.png",
+    Glo: "/glo-logo.png",
+    Airtel: "/airtel-logo.png",
+    "9Mobile": "/9mobile-logo.png",
   };
 
-  return logos[network.toLowerCase() as availableNetworks];
+  return logos[network];
 };
 
 export const generateDate = () => {
@@ -378,7 +378,7 @@ export const getRecentlyUsedContacts = async (
   const res = await api.get<{
     data: recentlyUsedContact<{
       user: string;
-      network: availableNetworks;
+      network: IBuyVtuNetworks;
       data: string;
       amount: number;
     }>[];

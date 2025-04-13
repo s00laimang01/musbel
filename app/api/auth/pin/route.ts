@@ -33,8 +33,10 @@ export async function POST(request: NextRequest) {
     await User.findOneAndUpdate(
       { "auth.email": session?.user?.email },
       {
-        "auth.transactionPin": pin,
-        hasSetPin: true,
+        $set: {
+          "auth.transactionPin": pin,
+          hasSetPin: true,
+        },
       },
       {
         runValidators: true,

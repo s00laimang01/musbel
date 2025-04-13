@@ -22,7 +22,11 @@ import {
   getNetworkLogo,
   getRecentlyUsedContacts,
 } from "@/lib/utils";
-import type { AirtimeVendingResponse, availableNetworks } from "@/types";
+import type {
+  AirtimeVendingResponse,
+  availableNetworks,
+  IBuyVtuNetworks,
+} from "@/types";
 import EnterPin from "@/components/enter-pin";
 import { useQuery } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
@@ -32,7 +36,7 @@ const Page = () => {
 
   const [amount, setAmount] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [network, setNetwork] = useState<availableNetworks | null>(null);
+  const [network, setNetwork] = useState<IBuyVtuNetworks | null>(null);
   const [isPending, startTransaction] = useState(false);
   const [byPassValidator, setByPassValidator] = useState(false);
 
@@ -62,7 +66,7 @@ const Page = () => {
       }>(`/purchase/airtime/`, {
         pin,
         amount: amountToBuy,
-        network,
+        network: network[0].toUpperCase() + network.slice(1).toLowerCase(),
         phoneNumber,
         byPassValidator,
       });
@@ -85,9 +89,9 @@ const Page = () => {
     setPhoneNumber(value);
   };
 
-  const selectPhoneNumber = (number: string, network?: availableNetworks) => {
+  const selectPhoneNumber = (number: string, network?: IBuyVtuNetworks) => {
     setPhoneNumber(number);
-    setNetwork(network?.toLowerCase() as availableNetworks);
+    setNetwork(network!);
   };
 
   return (
@@ -165,7 +169,13 @@ const Page = () => {
                     }`}
                   >
                     <PhoneNumberBadge
-                      network={p.meta?.network!}
+                      //@ts-ignore
+                      network={
+                        //@ts-ignore
+                        p.meta?.network?.[0].toUpperCase() +
+                        //@ts-ignore
+                        p?.meta?.network.slice(1).toLowerCase()
+                      }
                       number={p.uid!}
                       dataPlan=""
                       amount={p.meta?.amount!}

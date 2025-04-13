@@ -37,6 +37,8 @@ export async function POST(request: Request) {
     //Get the data from the successfully parse data
     const { pin, amount, network, phoneNumber } = validationResult.data;
 
+    console.log({ network });
+
     // Get user session
     const authSession = await getServerSession();
 
@@ -62,6 +64,8 @@ export async function POST(request: Request) {
     const accessToken = await app?.refreshAccessToken(); //This is use to refresh the accessToken use for the buyVTU api requests
 
     buyVtu.setAccessToken = accessToken!; //Set the accessToken to the updated or old accessToken
+
+    buyVtu.setNetwork = network as any;
 
     await app?.systemIsunderMaintainance(); //Check to see if the system is under maintainance
 
@@ -98,7 +102,7 @@ export async function POST(request: Request) {
     //);
 
     //Use the buyAirtime function to purchase airtime.
-    await buyVtu.buyAirtime(phoneNumber, amount, network);
+    await buyVtu.buyAirtime(phoneNumber, amount);
 
     //If the service purchase is not successfull throw and error
     if (!buyVtu.status) {

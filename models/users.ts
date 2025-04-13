@@ -84,6 +84,8 @@ UserSchema.pre("save", async function (next) {
   this.isEmailVerified = !this.isModified("auth.email");
   this.isPhoneVerified = !this.isModified("phoneNumber");
 
+  console.log(this.isModified("auth.transactionPin"));
+
   // This will run when the transactionPin is available and modified
   if (this.auth.transactionPin && this.isModified("auth.transactionPin")) {
     const rawPin = this.auth.transactionPin;
@@ -159,47 +161,45 @@ UserSchema.pre("findOneAndUpdate", async function (next) {
   if (!update) return next();
 
   // Handle email and phone verification flags
-  if (update?.$set?.["auth.email"] !== undefined) {
+  if (update?.$set?.["auth.email"]) {
     update.isEmailVerified = false;
   }
 
-  if (update?.$set?.phoneNumber !== undefined) {
+  if (update?.$set?.phoneNumber) {
     update.isPhoneVerified = false;
   }
 
   //  // Handle transaction PIN updates
-  //  if (update["auth.transactionPin"]) {
-  //    const rawPin = update["auth.transactionPin"];
-  //
-  //    console.log({ rawPin });
-  //
-  //    // Validate PIN before hashing
-  //    if (rawPin.length !== 4) {
-  //      throw new Error("PIN must be 4 digits");
-  //    }
-  //
-  //    //This check to see that the transaction pin should only be a digit
-  //    if (!/^\d{4}$/.test(rawPin)) {
-  //      throw new Error("PIN must contain only digits");
-  //    }
-  //
-  //    //This checks so the transaction pin is not the same
-  //    if (/^(.)\1{3}$/.test(rawPin)) {
-  //      throw new Error("PIN cannot be all the same digits");
-  //    }
-  //
-  //    //Making sure the transaction pin is not sequencial
-  //    if (/^(0123|1234|2345|3456|4567|5678|6789|7890)$/.test(rawPin)) {
-  //      throw new Error("PIN cannot be sequential digits");
-  //    }
-  //
-  //    // Hash the PIN
-  //    const salt = await bcrypt.genSalt(10);
-  //    update["auth.transactionPin"] = await bcrypt.hash(rawPin, salt);
-  //
-  //    // Set hasSetPin flag
-  //    update.hasSetPin = true;
-  //  }
+  if (update?.$set?.["auth.transactionPin"]) {
+    const rawPin = update?.$set?.["auth.transactionPin"];
+
+    // Validate PIN before hashing
+    if (rawPin.length !== 4) {
+      throw new Error("PIN must be 4 digits");
+    }
+
+    //This check to see that the transaction pin should only be a digit
+    if (!/^\d{4}$/.test(rawPin)) {
+      throw new Error("PIN must contain only digits");
+    }
+
+    //This checks so the transaction pin is not the same
+    if (/^(.)\1{3}$/.test(rawPin)) {
+      throw new Error("PIN cannot be all the same digits");
+    }
+
+    //Making sure the transaction pin is not sequencial
+    if (/^(0123|1234|2345|3456|4567|5678|6789|7890)$/.test(rawPin)) {
+      throw new Error("PIN cannot be sequential digits");
+    }
+
+    // Hash the PIN
+    const salt = await bcrypt.genSalt(10);
+    update["auth.transactionPin"] = await bcrypt.hash(rawPin, salt);
+
+    // Set hasSetPin flag
+    update.hasSetPin = true;
+  }
 
   // Handle password updates
   if (update?.$set?.["auth.password"] !== undefined) {
@@ -212,9 +212,9 @@ UserSchema.pre("findOneAndUpdate", async function (next) {
   }
 
   // Handle PIN reset
-  //if (!update?.$set.hasSetPin) {
-  //  update["auth.transactionPin"] = "";
-  //}
+  if (!update?.$set.hasSetPin) {
+    update["auth.transactionPin"] = "";
+  }
 
   // For handling virtual account creation, we need to get the document first
   // since we need the _id and other fields

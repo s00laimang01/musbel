@@ -50,7 +50,7 @@ export type planTypes = "GIFTING" | "SME" | "COOPERATE GIFTING";
 
 export interface recentPurchaseNumbers {
   number: string;
-  network: availableNetworks;
+  network: IBuyVtuNetworks;
   dataPlan: string;
   amount: number;
   date: string;
