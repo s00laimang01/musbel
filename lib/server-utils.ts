@@ -598,8 +598,11 @@ export class BuyVTU {
       );
 
       this.vendingResponse = resp.data.data;
-      this.status = resp.data.success;
-      this.message = resp.data?.message ?? "Data purchase successful";
+      this.status = Boolean(
+        resp.data?.success &&
+          resp.data.data.vendReport[phoneNumber] === "successful"
+      );
+      this.message = !this.status ? "Data vending failed" : resp.data?.message;
 
       return this;
     } catch (error) {
@@ -632,8 +635,13 @@ export class BuyVTU {
       );
 
       this.vendingResponse = resp.data.data;
-      this.status = resp.data?.success;
-      this.message = resp.data?.message ?? "Airtime purchase successful";
+      this.status = Boolean(
+        resp.data?.success &&
+          resp.data.data.vendReport[phoneNumber] === "successful"
+      );
+      this.message = !this.status
+        ? "Airtime vending failed"
+        : resp.data?.message;
 
       return this;
     } catch (error) {
@@ -751,7 +759,7 @@ export class BuyVTU {
       await addToRecentlyUsedContact(
         trxPayload.accountId!,
         trxPayload.type,
-        meta,
+        { ...meta, network: this.network },
         this.session
       );
 
