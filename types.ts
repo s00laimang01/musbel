@@ -46,7 +46,7 @@ export interface HeaderProps {
 export type dataTypes = string;
 
 export type availableNetworks = "mtn" | "glo" | "airtel" | "9mobile";
-export type planTypes = "GIFTING" | "SME" | "COOPERATE GIFTING";
+export type planTypes = "CHEAP" | "SME";
 
 export interface recentPurchaseNumbers {
   number: string;

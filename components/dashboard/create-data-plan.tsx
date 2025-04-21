@@ -65,7 +65,7 @@ export function CreateDataPlanDialog({
       data: dataPlan?.data || "",
       amount: dataPlan?.amount || undefined,
       availability: dataPlan?.availability || "30 Days",
-      type: dataPlan?.type || "GIFTING",
+      type: dataPlan?.type || "SME",
       planId: dataPlan?.planId || undefined,
       isPopular: dataPlan?.isPopular || false,
     },
@@ -170,10 +170,7 @@ export function CreateDataPlanDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="COOPERATE GIFTING">
-                            COOPERATE GIFTING
-                          </SelectItem>
-                          <SelectItem value="GIFTING">GIFTING</SelectItem>
+                          <SelectItem value="CHEAP">CHEAP</SelectItem>
                           <SelectItem value="SME">SME</SelectItem>
                         </SelectContent>
                       </Select>

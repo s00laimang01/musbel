@@ -20,13 +20,13 @@ const DataPlanSchema: mongoose.Schema<dataPlan> = new mongoose.Schema({
   },
   network: {
     type: String,
-    enum: ["mtn", "airtel", "glo", "9mobile"],
+    enum: ["Mtn", "Airtel", "Glo", "9Mobile"],
     required: true,
   },
   type: {
     type: String,
     required: true,
-    enum: ["COOPERATE GIFTING", "GIFTING", "SME"],
+    enum: ["CHEAP", "SME"],
   },
   planId: {
     type: Number,
