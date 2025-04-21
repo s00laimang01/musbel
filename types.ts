@@ -738,3 +738,32 @@ export interface IVendPowerResponse {
   commissionEarned: number;
   token: string;
 }
+
+//"event": "PAYMENT_NOTIFICATION",
+//  "data": {
+//    "type": "RESERVED_ACCOUNT_TRANSACTION",
+//    "reference": "R-WBKQMRXZYU",
+//    "merchant_reference": "6805e8bc1cb5bf768baba38c",
+//    "wiaxy_ref": "100004250421075326131232151998",
+//    "transaction_ref": "100004250421075326131232151998",
+//    "amount": "500",
+//    "created_at": "2025-04-21 08:53:37",
+//    "account": {
+//      "account_number": "5760483856",
+//      "account_name": "Am for even business alias-Abubakar Sadiq",
+//      "bank_name": "9PSB Bank",
+//      "bank_id": "9PSB",
+//      "created_at": "2025-04-21 07:42:14"
+//    },
+//    "payer": {
+//      "account_number": "5760483856",
+//      "account_name": "Am for even business alias-Abubakar Sadiq",
+//      "bank_name": "9PSB Bank",
+//      "bank_id": "9PSB",
+//      "created_at": "2025-04-21 07:42:14"
+//    },
+//    "customer": {
+//      "firstName": "Abubakar",
+//      "lastName": "Sadiq",
+//      "email": "wanchiko20@gmail.com"
+//    }

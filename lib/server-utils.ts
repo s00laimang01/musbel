@@ -375,7 +375,7 @@ export async function processVirtualAccountForUser(user: IUser) {
     firstName,
     lastName,
     phone: newUser.phoneNumber,
-    reference: newUser?._id!,
+    reference: user._id!,
   });
 
   // If the creation is not successful, notify the user about it

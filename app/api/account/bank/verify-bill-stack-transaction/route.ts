@@ -84,7 +84,10 @@ export async function POST(request: NextRequest) {
     }
 
     const account = await Account.findOne({
-      user: payload.data.merchant_reference,
+      $or: [
+        { user: payload.data.merchant_reference },
+        { "accountDetails.accountNumber": payload.data.account.account_number },
+      ],
     });
 
     if (!account) {

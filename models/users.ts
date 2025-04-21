@@ -84,13 +84,10 @@ UserSchema.pre("save", async function (next) {
   this.isEmailVerified = !this.isModified("auth.email");
   this.isPhoneVerified = !this.isModified("phoneNumber");
 
-  console.log(this.isModified("auth.transactionPin"));
-
   // This will run when the transactionPin is available and modified
   if (this.auth.transactionPin && this.isModified("auth.transactionPin")) {
     const rawPin = this.auth.transactionPin;
 
-    console.log({ rawPin, isModified: this.isModified("auth.transactionPin") });
     // Validate PIN before hashing
     if (rawPin.length !== 4) {
       return next(new Error("PIN must be 4 digits"));
