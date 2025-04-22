@@ -1,14 +1,11 @@
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { configs } from "@/lib/constants";
+import { sendEmail } from "@/lib/server-utils";
 import { checkIfUserIsAuthenticated, httpStatusResponse } from "@/lib/utils";
 import { OTP } from "@/models/otp";
 import { User } from "@/models/users";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
-
-// Initialize Resend with API key
-const resend = new Resend("re_eg13VcYG_3i5Q1dZLtFsX3vDK2sNmQs92");
 
 export async function POST(request: Request) {
   try {
@@ -80,33 +77,19 @@ export async function POST(request: Request) {
     });
     await newOtp.save();
 
-    // Send OTP via email using Resend
-    const { error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || "onboarding@resend.dev",
-      to: "suleimaangee@gmail.com",
-      subject: `Email Verification OTP - ${configs.appName}`,
-      text: `Your verification code is: ${otpCode}
-            This code will expire in 15 minutes.`,
-      html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2>Email Verification</h2>
-                    <p>Your verification code is:</p>
-                    <h1 style="background-color: #f0f0f0; padding: 10px; text-align: center; letter-spacing: 5px;">${otpCode}</h1>
-                    <p>This code will expire in 15 minutes.</p>
-                    <small>If you did not request this verification, please ignore this email.</small>
-                </div>
-            `,
-    });
+    const emailTemplate = `<div style="font-family: Arial, sans-serif max-width: 600px; margin: 0 auto;">
+    <h2>Email Verification</h2>
+    <p>Your verification code is:</p>
+    <h1 style="background-color: #f0f0f0; paddingtext-align: center; letter-spacing: 5px;">${otpCode}</h1>
+    <p>This code will expire in 15 minutes.</p>
+    <small>If you did not request this verification,ignore this email.</small>
+    </div>`;
 
-    if (error) {
-      console.error("Email sending error:", error);
-      return NextResponse.json(
-        httpStatusResponse(500, "EMAIL_SENDING_ERROR: " + error.message),
-        {
-          status: 500,
-        }
-      );
-    }
+    await sendEmail(
+      [user.auth.email],
+      emailTemplate,
+      `Email Verification OTP - ${configs.appName}`
+    );
 
     return NextResponse.json(
       httpStatusResponse(200, "OTP sent successfully to your email"),

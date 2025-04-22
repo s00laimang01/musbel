@@ -34,6 +34,8 @@ import {
   validatePhoneNumber as validatePhoneNumberApi,
 } from "./utils";
 import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
+import { createTransport } from "nodemailer";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 export const budPay = (type: "s2s" | "v2" = "v2") => {
   return axios.create({
@@ -413,6 +415,32 @@ export async function processVirtualAccountForUser(user: IUser) {
   await _account.save();
 }
 
+export async function sendEmail(
+  recipients: string[],
+  emailTemplate: string,
+  subject: string,
+  replyTo?: string
+) {
+  let configOptions: SMTPTransport | SMTPTransport.Options | string = {
+    host: "smtp-relay.brevo.com",
+    port: 587,
+    ignoreTLS: true,
+    auth: {
+      user: process.env.HOST_EMAIL,
+      pass: process.env.HOST_EMAIL_PASSWORD,
+    },
+  };
+
+  const transporter = createTransport(configOptions);
+  await transporter.sendMail({
+    from: "kinta@data.com",
+    to: recipients,
+    html: emailTemplate,
+    replyTo,
+    subject: subject,
+  });
+}
+
 //Class to purchase data, airtime, exam token, electricity
 
 export class BuyVTU {
@@ -757,7 +785,7 @@ export class BuyVTU {
 
       // Save the user contact to recently used contact
       await addToRecentlyUsedContact(
-        trxPayload.accountId!,
+        userId,
         trxPayload.type,
         { ...meta, network: this.network },
         this.session

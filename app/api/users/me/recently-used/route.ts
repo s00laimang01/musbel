@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const user = await findUserByEmail(session?.user?.email!);
 
     const recentlyUsedContact = await RecentlyUsedContact.find({
-      "meta.user": user?.id,
+      uid: user?.id,
       type,
     }).limit(limit);
 

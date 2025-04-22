@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, Mail, RefreshCw } from "lucide-react";
 import { api, errorMessage } from "@/lib/utils";
 import { toast } from "sonner";
+import { useAuthentication } from "@/hooks/use-authentication";
 
 const VerifyEmail: FC<{
   children?: React.ReactNode;
@@ -43,7 +44,7 @@ const VerifyEmail: FC<{
   const [error, setError] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [countdown, setCountdown] = useState(0);
-
+  const { user } = useAuthentication();
   // Check if device is mobile
   useEffect(() => {
     const checkIfMobile = () => {
@@ -162,7 +163,7 @@ const VerifyEmail: FC<{
           <p className="text-sm text-muted-foreground">
             We've sent a verification code to
           </p>
-          <p className="font-medium">{email}</p>
+          <p className="font-medium">{user?.auth?.email || email}</p>
         </div>
 
         <div className="w-full flex items-center justify-center">
