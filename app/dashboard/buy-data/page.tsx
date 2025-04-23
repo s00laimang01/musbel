@@ -36,7 +36,7 @@ const Page = () => {
 
   const { isLoading: _isLoading, data: recentlyUsed } = useQuery({
     queryKey: ["recently-used"],
-    queryFn: () => getRecentlyUsedContacts("data"),
+    queryFn: () => getRecentlyUsedContacts("data", 3),
   });
 
   const { data: _data } = data || {};
@@ -99,7 +99,7 @@ const Page = () => {
                     key={idx}
                     onSelect={setPhoneNumber}
                     network={p.meta?.network!}
-                    number={p.uid}
+                    number={p?.meta?.recipients!}
                     dataPlan={p.meta?.data!}
                     amount={0}
                     date={p.lastUsed}

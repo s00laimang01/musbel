@@ -38,7 +38,7 @@ const Page = () => {
 
   const { data: recentlyContact = [] } = useQuery({
     queryKey: ["recently-used"],
-    queryFn: () => getRecentlyUsedContacts("airtime", 4),
+    queryFn: () => getRecentlyUsedContacts("airtime", 3),
     refetchInterval: 5000,
   });
 
