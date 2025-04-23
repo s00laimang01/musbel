@@ -381,6 +381,7 @@ export const getRecentlyUsedContacts = async (
       network: IBuyVtuNetworks;
       data: string;
       amount: number;
+      recipients: string;
     }>[];
   }>(`/users/me/recently-used/?${q}`);
 

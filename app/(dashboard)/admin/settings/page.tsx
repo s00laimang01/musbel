@@ -179,7 +179,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 w-full">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">
@@ -189,7 +189,7 @@ export default function SettingsPage() {
 
       <Tabs
         defaultValue="transactions"
-        className="space-y-4"
+        className="space-y-4 w-full"
         value={activeTab}
         onValueChange={setActiveTab}
       >
@@ -448,13 +448,13 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="system" className="space-y-4">
-          <Card className="rounded-none border-primary/20 py-0">
+        <TabsContent value="system" className="space-y-4 w-full">
+          <Card className="rounded-none w-full border-primary/20 py-0">
             <CardHeader className="bg-primary/5 py-3">
               <CardTitle>System Settings</CardTitle>
               <CardDescription>Configure system-wide settings.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6 pt-6">
+            <CardContent className="space-y-6 w-full pt-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label
@@ -477,7 +477,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 w-full">
                 <Label
                   htmlFor="maintenance-message"
                   className="text-base font-medium"
@@ -497,7 +497,7 @@ export default function SettingsPage() {
                     })
                   }
                   placeholder="Write a message to your users."
-                  className="rounded-none"
+                  className="rounded-none  max-w-[40rem]"
                 />
               </div>
 

@@ -141,8 +141,8 @@ const VerifyEmail: FC<{
           </div>
           <h3 className="mb-2 text-xl font-semibold">Email Verified!</h3>
           <p className="mb-6 text-muted-foreground">
-            Your email address has been successfully verified, A dedicated
-            virtual account will be assigned to you shortly.
+            Your email address has been successfully verified, Thank you for
+            using our service.
           </p>
           <Button
             onClick={() => handleOpenChange(false)}

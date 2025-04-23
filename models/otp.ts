@@ -28,7 +28,7 @@ const OtpSchema: mongoose.Schema<otp> = new mongoose.Schema(
 );
 
 // Create a TTL index for automatic document expiration
-OtpSchema.index({ expirationTime: 1 }, { expireAfterSeconds: 0 });
+//OtpSchema.index({ expirationTime: 1 }, { expireAfterSeconds: 0 });
 
 // Prevent multiple models from being created
 const OTP: mongoose.Model<otp> =

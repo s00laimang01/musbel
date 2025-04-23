@@ -56,7 +56,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const role = app?.defaultUserRole || "user";
+    let role = "user";
+
+    if (app && app?.defaultUserRole === "admin") {
+      role = "admin";
+    } else {
+      role = "user";
+    }
 
     // Create user
     const user = await User.create([

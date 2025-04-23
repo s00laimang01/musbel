@@ -22,11 +22,7 @@ import {
   getNetworkLogo,
   getRecentlyUsedContacts,
 } from "@/lib/utils";
-import type {
-  AirtimeVendingResponse,
-  availableNetworks,
-  IBuyVtuNetworks,
-} from "@/types";
+import type { AirtimeVendingResponse, IBuyVtuNetworks } from "@/types";
 import EnterPin from "@/components/enter-pin";
 import { useQuery } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
@@ -43,6 +39,7 @@ const Page = () => {
   const { data: recentlyContact = [] } = useQuery({
     queryKey: ["recently-used"],
     queryFn: () => getRecentlyUsedContacts("airtime", 4),
+    refetchInterval: 5000,
   });
 
   const buyAirtime = async (a?: number, pin?: string) => {
@@ -161,9 +158,11 @@ const Page = () => {
                 {recentlyContact.map((p, idx) => (
                   <div
                     key={idx}
-                    onClick={() => selectPhoneNumber(p.uid, p.meta?.network)}
+                    onClick={() =>
+                      selectPhoneNumber(p?.meta?.recipients!, p.meta?.network)
+                    }
                     className={`cursor-pointer transition-all duration-200 ${
-                      phoneNumber === p.uid
+                      phoneNumber === p?.meta?.recipients!
                         ? "ring-2 ring-primary"
                         : "hover:border-primary/50"
                     }`}
@@ -176,7 +175,7 @@ const Page = () => {
                         //@ts-ignore
                         p?.meta?.network.slice(1).toLowerCase()
                       }
-                      number={p.uid!}
+                      number={p?.meta?.recipients!}
                       dataPlan=""
                       amount={p.meta?.amount!}
                       date={p.lastUsed}

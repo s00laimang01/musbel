@@ -56,7 +56,7 @@ const UserSchema: mongoose.Schema<IUser> = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user"],
+      enum: ["user", "admin"],
       default: "user",
     },
     isEmailVerified: {
@@ -127,8 +127,6 @@ UserSchema.pre("save", async function (next) {
     const salt = await bcrypt.genSalt(10);
     this.auth.password = await bcrypt.hash(this.auth.password, salt);
   }
-
-  console.log({ isSet: this.hasSetPin });
 
   //if (!this.hasSetPin) {
   //  this.auth.transactionPin = "";

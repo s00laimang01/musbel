@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
     user.isEmailVerified = true;
 
     await Promise.all([
-      user.save({ validateBeforeSave: true }),
+      user.save({ validateModifiedOnly: true }),
       otp.deleteOne(),
     ]);
 
@@ -150,6 +150,7 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    console.log(error);
     return NextResponse.json(
       httpStatusResponse(500, (error as Error).message),
       { status: 500 }
