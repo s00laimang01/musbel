@@ -976,7 +976,7 @@ export class ReferralProcessor {
         status: "success",
         tx_ref: new mongoose.Types.ObjectId().toString(),
         type: "funding",
-        user: this.userId,
+        user: this.referralRecord.referree,
         meta: {
           message: `Referral Bonus`,
         },
