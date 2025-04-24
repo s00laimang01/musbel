@@ -25,6 +25,7 @@ import {
   IVendPowerResponse,
   transaction,
   transactionType,
+  IReferral,
 } from "@/types";
 import axios from "axios";
 import mongoose, { PipelineStage } from "mongoose";
@@ -36,6 +37,7 @@ import {
 import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
 import { createTransport } from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
+import { Referral } from "@/models/referral";
 
 export const budPay = (type: "s2s" | "v2" = "v2") => {
   return axios.create({
@@ -760,6 +762,11 @@ export class BuyVTU {
         throw new Error("Session not started. Call startSession first.");
       }
 
+      const meta = {
+        ...this.vendingResponse,
+        ...this.powerVendResponse,
+      };
+
       const trxPayload: transaction = {
         amount:
           this.vendingResponse?.totalAmount ||
@@ -773,15 +780,11 @@ export class BuyVTU {
         tx_ref: this.ref,
         type,
         user: userId,
+        meta,
       };
 
       const transaction = new Transaction(trxPayload);
       await transaction.save({ session: this.session });
-
-      const meta = {
-        ...this.vendingResponse,
-        ...this.powerVendResponse,
-      };
 
       // Save the user contact to recently used contact
       await addToRecentlyUsedContact(
@@ -822,6 +825,188 @@ export class BuyVTU {
           ? error.message
           : "VALIDATION_FAILED: Invalid input.";
       return this;
+    }
+  }
+}
+
+export class ReferralProcessor {
+  private readonly userId: string;
+  private readonly depositAmount: number;
+  private readonly isEmailVerified: boolean;
+
+  private referralRecord: IReferral | null = null;
+  private isEligibleForReward = false;
+  private result = {
+    success: false,
+    message: "",
+  };
+
+  constructor(userId: string, depositAmount: number, isEmailVerified: boolean) {
+    this.userId = userId;
+    this.depositAmount = depositAmount;
+    this.isEmailVerified = isEmailVerified;
+  }
+
+  /**
+   * Main method to process the entire referral flow
+   */
+  public async processReferral(): Promise<{
+    success: boolean;
+    message: string;
+    processedAmount?: number;
+  }> {
+    try {
+      await this.findReferralRecord();
+
+      if (!this.referralRecord) {
+        return {
+          success: false,
+          message: "User was not referred by anyone",
+        };
+      }
+
+      await this.checkDepositEligibility();
+
+      if (!this.isEligibleForReward) {
+        return this.result;
+      }
+
+      return await this.creditReferrer();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      return {
+        success: false,
+        message: `Referral processing failed: ${errorMessage}`,
+      };
+    }
+  }
+
+  /**
+   * Find if the user was referred by someone
+   */
+  private async findReferralRecord(): Promise<void> {
+    try {
+      this.referralRecord = await Referral.findOne({
+        referree: this.userId,
+        rewardClaimed: false,
+      });
+    } catch (error) {
+      throw new Error(
+        `Failed to find referral record: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  /**
+   * Check if this is one of the user's first deposits (eligible for referral bonus)
+   */
+  private async checkDepositEligibility(): Promise<void> {
+    try {
+      const MAX_ELIGIBLE_TRANSACTIONS = 2; // User's first and second transactions are eligible
+
+      const depositCount = await Transaction.countDocuments({
+        user: this.userId,
+        type: "funding",
+      });
+
+      if (depositCount > MAX_ELIGIBLE_TRANSACTIONS) {
+        this.result = {
+          success: false,
+          message:
+            "User has exceeded the maximum eligible transactions for referral rewards",
+        };
+        this.isEligibleForReward = false;
+        return;
+      }
+
+      this.isEligibleForReward = true;
+    } catch (error) {
+      throw new Error(
+        `Failed to check deposit eligibility: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  /**
+   * Credit the referrer with the reward amount
+   */
+  private async creditReferrer(): Promise<{
+    success: boolean;
+    message: string;
+    processedAmount?: number;
+  }> {
+    try {
+      if (
+        !this.referralRecord ||
+        !this.isEligibleForReward ||
+        !this.isEmailVerified
+      ) {
+        return {
+          success: false,
+          message: "Not eligible for referral reward",
+        };
+      }
+
+      // Find the referrer using the referral code
+      const referrer = await User.findOne({
+        refCode: this.referralRecord.referralCode,
+      });
+
+      if (!referrer) {
+        return {
+          success: false,
+          message: "Referrer not found",
+        };
+      }
+
+      // Calculate reward amount (1% of deposit)
+      const REWARD_PERCENTAGE = 0.01;
+      const rewardAmount = this.depositAmount * REWARD_PERCENTAGE;
+
+      //Create a transaction record
+      const trxPayload: transaction = {
+        amount: rewardAmount,
+        paymentMethod: "ownAccount",
+        accountId: this.userId,
+        status: "success",
+        tx_ref: new mongoose.Types.ObjectId().toString(),
+        type: "funding",
+        user: this.userId,
+        meta: {
+          message: `Referral Bonus`,
+        },
+      };
+
+      const transaction = new Transaction(trxPayload);
+
+      await Promise.all([
+        transaction.save(),
+        User.updateOne(
+          { _id: referrer._id },
+          { $inc: { balance: rewardAmount } }
+        ),
+        Referral.updateOne(
+          { _id: this.referralRecord._id },
+          { rewardClaimed: true }
+        ),
+      ]);
+
+      return {
+        success: true,
+        message: `Successfully credited referrer with reward`,
+        processedAmount: rewardAmount,
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to credit referrer: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 }

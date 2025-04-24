@@ -6,6 +6,7 @@ import { BillStackWebhookPayload, transaction } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { connectToDatabase } from "@/lib/connect-to-db";
+import { ReferralProcessor } from "@/lib/server-utils";
 
 // Your secret key from the Wiaxy dashboard
 
@@ -108,6 +109,17 @@ export async function POST(request: NextRequest) {
 
     const fees = payload.data.amount * 0.01;
     const amountToFund = payload.data.amount - fees;
+
+    try {
+      const referral = new ReferralProcessor(
+        user._id,
+        payload.data.amount,
+        user.isEmailVerified
+      );
+      await referral.processReferral();
+    } catch (error) {
+      console.log(error);
+    }
 
     const trxPayload: transaction = {
       accountId: payload.data.account.account_number,

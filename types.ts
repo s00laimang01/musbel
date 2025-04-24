@@ -32,6 +32,7 @@ export enum PATHS {
   ADMIN_DATA_PLANS = "/admin/data-plans/",
   ADMIN_ELECTRICITY_BILLS = "/admin/electricity-bills/",
   ADMIN_SETTINGS = "/admin/settings/",
+  REFER = "/dashboard/refer/",
 }
 
 // DASHBOARD
@@ -121,6 +122,7 @@ export interface IUser extends Document {
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   status: accountStatus;
+  refCode?: string;
 
   verifyTransactionPin: (pin: string) => Promise<boolean>;
   verifyUserBalance: (amount: number) => Promise<void>;
@@ -737,6 +739,22 @@ export interface IVendPowerResponse {
   vendStatus: "successful";
   commissionEarned: number;
   token: string;
+}
+
+export interface IReferral {
+  _id?: string;
+  referralCode: string;
+  user: string;
+  referree: string;
+  rewardClaimed: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface IReferralResponse extends IReferral {
+  referreeName: string;
+  referreeEmail: string;
+  isEmailVerified: boolean;
 }
 
 //"event": "PAYMENT_NOTIFICATION",

@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/lib/connect-to-db";
 import { httpStatusResponse } from "@/lib/utils";
 import { signUpSchema } from "@/lib/validator.schema";
 import { App } from "@/models/app";
+import { Referral } from "@/models/referral";
 import { findUserByEmail, User } from "@/models/users";
 import { NextResponse } from "next/server";
 
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { fullName, email, password, phoneNumber, country } =
+    const { fullName, email, password, phoneNumber, country, ref } =
       validatedData.data;
 
     // Validate input
@@ -79,6 +80,22 @@ export async function POST(request: Request) {
         role,
       },
     ]);
+
+    try {
+      if (ref) {
+        const u = await User.findOne({ refCode: ref });
+
+        const newReferral = new Referral({
+          referralCode: ref, //Referral code from the referrer
+          user: u?._id.toString(), //Referrer userId
+          referree: user[0]._id.toString(), //userid of the referree
+        });
+
+        await newReferral.save();
+      }
+    } catch (error) {
+      console.log(error);
+    }
 
     // Return success without exposing password
     return NextResponse.json(

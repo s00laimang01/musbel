@@ -75,6 +75,7 @@ export const signUpSchema = z.object({
   password: z.string().min(6),
   country: z.enum(["nigeria"]),
   phoneNumber: z.string().min(10).max(15),
+  ref: z.string().optional(),
 });
 
 /**

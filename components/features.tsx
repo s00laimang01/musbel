@@ -1,46 +1,8 @@
 import type React from "react";
-import { Tag, Download, Zap, PiggyBank } from "lucide-react";
-import { FeatureCardProps, PATHS } from "@/types";
-import { cn } from "@/lib/utils";
+import { Tag, Zap, PiggyBank, UserRoundPlus } from "lucide-react";
+import { PATHS } from "@/types";
 import Link from "next/link";
-
-export function FeatureCard({
-  title,
-  description,
-  icon: Icon,
-  ...props
-}: FeatureCardProps) {
-  return (
-    <div
-      className={cn(
-        "bg-gray-50 hover:bg-gray-100 cursor-pointer overflow-hidden transition-colors rounded-lg p-6 relative group h-full",
-        props.className
-      )}
-    >
-      <Icon size={40} className="text-primary mb-6" />
-      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-gray-950 mb-1">
-        {title}
-      </h3>
-      <p className="text-gray-500 group-hover:text-gray-100 text-sm z-10 relative">
-        {description}
-      </p>
-
-      {/* Background Icon */}
-      <Icon
-        size={150}
-        className="absolute top-2 right-3 opacity-10 group-hover:opacity-70 transition-opacity"
-      />
-
-      {/* Animated background overlay that comes from bottom */}
-      <div
-        className={cn(
-          "absolute w-full h-0 bg-primary/50 left-0 bottom-0 rounded-lg transition-all duration-300 ease-out group-hover:h-full",
-          props.className
-        )}
-      />
-    </div>
-  );
-}
+import { FeatureCard } from "./feature-card";
 
 export default function FeatureCards() {
   return (
@@ -66,13 +28,13 @@ export default function FeatureCards() {
           description="View your available and active accounts"
         />
       </Link>
-      <div className="h-[12rem]">
+      <Link href={PATHS.REFER} className="h-[12rem]">
         <FeatureCard
-          icon={Download}
-          title="Download Data"
-          description="If you ever want to download your data, it's right here!"
+          icon={UserRoundPlus}
+          title="Referrals"
+          description="Start Earning by referring your family and friends to our platform"
         />
-      </div>
+      </Link>
     </div>
   );
 }

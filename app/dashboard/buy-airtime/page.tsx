@@ -39,7 +39,6 @@ const Page = () => {
   const { data: recentlyContact = [] } = useQuery({
     queryKey: ["recently-used"],
     queryFn: () => getRecentlyUsedContacts("airtime", 3),
-    refetchInterval: 5000,
   });
 
   const buyAirtime = async (a?: number, pin?: string) => {

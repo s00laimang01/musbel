@@ -5,6 +5,7 @@ import Header from "@/components/dashboard-header";
 import FeatureCards from "@/components/features";
 import RemindUserToVerifyEmail from "@/components/notify-user-to-verify-email";
 import RecentActivity from "@/components/recent-activities";
+import { RemindUserToRefer } from "@/components/refer-notifications";
 import RemindUserToCreateTransactionPin from "@/components/remind-user-to-create-pin";
 import SystemMessage from "@/components/system-message";
 import TopUpCard from "@/components/top-up-card";
@@ -36,6 +37,7 @@ const Page = () => {
       <RemindUserToVerifyEmail />
       <RemindUserToCreateTransactionPin />
       <SystemMessage />
+      <RemindUserToRefer />
       {/* Desktop Header - hidden on mobile */}
       <div className="hidden md:block">
         <Header

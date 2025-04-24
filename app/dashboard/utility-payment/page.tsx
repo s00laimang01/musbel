@@ -1,7 +1,7 @@
 "use client";
 
 import BalanceCard from "@/components/balance-card";
-import { FeatureCard } from "@/components/features";
+import { FeatureCard } from "@/components/feature-card";
 import RecentActivity from "@/components/recent-activities";
 import { Input } from "@/components/ui/input";
 import { useNavBar } from "@/hooks/use-nav-bar";
@@ -22,10 +22,10 @@ const Page = () => {
         {Utilities.map((utility, idx) => (
           <Link href={utility.path} key={idx}>
             <FeatureCard
-              className="rounded-none hover:text-primary"
               description=""
               icon={utility.icon}
               title={utility.label}
+              className="rounded-none hover:text-primary"
             />
           </Link>
         ))}

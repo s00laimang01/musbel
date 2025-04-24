@@ -76,6 +76,10 @@ const UserSchema: mongoose.Schema<IUser> = new mongoose.Schema(
       enum: ["active", "inactive"],
       default: "active",
     },
+    refCode: {
+      type: String,
+      unique: true,
+    },
   },
   { timestamps: true }
 );
