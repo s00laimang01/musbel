@@ -21,10 +21,11 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { errorMessage } from "@/lib/utils";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function SignUpPage() {
   const r = useRouter();
+  const q = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isPending, startTransition] = useState(false);
   const [form, setForm] = useState({
@@ -48,6 +49,7 @@ export default function SignUpPage() {
       await axios.post("/api/auth/sign-up/", {
         ...form,
         country: "nigeria",
+        ref: q.get("ref"),
       });
 
       toast.success("Account created successfully!");
