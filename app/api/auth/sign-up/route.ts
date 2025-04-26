@@ -78,6 +78,7 @@ export async function POST(request: Request) {
         isEmailVerified: false,
         isPhoneVerified: false,
         role,
+        refCode: phoneNumber,
       },
     ]);
 
@@ -85,13 +86,15 @@ export async function POST(request: Request) {
       if (ref) {
         const u = await User.findOne({ refCode: ref });
 
-        const newReferral = new Referral({
-          referralCode: ref, //Referral code from the referrer
-          user: u?._id.toString(), //Referrer userId
-          referree: user[0]._id.toString(), //userid of the referree
-        });
+        if (!u) return;
 
-        await newReferral.save();
+        await Referral.create([
+          {
+            referralCode: ref, //Referral code from the referrer
+            user: u?._id.toString(), //Referrer userId
+            referree: user[0]._id.toString(), //userid of the referree
+          },
+        ]);
       }
     } catch (error) {
       console.log(error);

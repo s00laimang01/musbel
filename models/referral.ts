@@ -4,7 +4,7 @@ import { IReferral } from "@/types";
 const ReferralSchema = new mongoose.Schema<IReferral>(
   {
     referralCode: { type: String, required: true },
-    referree: { type: String, required: true, unique: true },
+    referree: { type: String, required: true },
     user: { type: String, required: true },
     rewardClaimed: { type: Boolean, default: false },
   },

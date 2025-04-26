@@ -42,6 +42,8 @@ export default function SignUpPage() {
     setForm({ ...form, [name]: value });
   };
 
+  console.log(q.get("ref"));
+
   const signUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
