@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     }
 
     // Find the user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ "auth.email": email });
 
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });

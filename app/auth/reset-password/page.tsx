@@ -10,12 +10,13 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { errorMessage } from "@/lib/utils";
+import axios from "axios";
+import { PATHS } from "@/types";
 
 const ResetPasswordPage = () => {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(searchParams.get("otp") || "");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -37,23 +38,11 @@ const ResetPasswordPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, otp, newPassword }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong");
-      }
+      await axios.post("/api/auth/reset-password", { email, otp, newPassword });
 
       toast.success("Your password has been reset successfully");
 
-      router.push("/login");
+      router.push(PATHS.SIGNIN);
     } catch (error) {
       toast.error("Could not reset your password, please try again");
     } finally {

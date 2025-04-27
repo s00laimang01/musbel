@@ -79,10 +79,16 @@ export default function UserDetailsPage() {
         });
       }
 
+      if (action === "resetPassword") {
+        await api.post(`/admin/users/reset-user-password/`, {
+          email: user?.auth?.email,
+        });
+      }
+
       queryClient.invalidateQueries({ queryKey: ["user", id] });
       // Implementation would go here
       console.log(`Performing ${action} on user ${userId}`);
-      return Promise.resolve();
+      toast.success("Your request is successfully");
     } catch (error) {
       toast.error((error as Error).message);
     }

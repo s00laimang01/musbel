@@ -4,15 +4,42 @@ import PasswordResetToken from "@/models/password-reset-token";
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { User } from "@/models/users";
 import { sendEmail } from "@/lib/server-utils";
+import { httpStatusResponse } from "@/lib/utils";
+import { getServerSession } from "next-auth";
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { email } = await req.json();
+    const { email } = await request.json();
 
     if (!email) {
       return NextResponse.json(
         { message: "Email is required" },
         { status: 400 }
+      );
+    }
+
+    const session = await getServerSession();
+
+    if (!session) {
+      return NextResponse.json(
+        httpStatusResponse(
+          401,
+          "UNAUTHORIZED_REQUEST: you are not allow to make this request."
+        )
+      );
+    }
+
+    const isAdmin = await User.exists({
+      "auth.email": session?.user.email,
+      role: "admin",
+    });
+
+    if (!isAdmin) {
+      return NextResponse.json(
+        httpStatusResponse(
+          401,
+          "UNAUTHORIZED_REQUEST: you are not allow to make this request."
+        )
       );
     }
 
@@ -22,10 +49,10 @@ export async function POST(req: Request) {
 
     if (!user) {
       return NextResponse.json(
-        {
-          message:
-            "If your email exists in our system, you will receive a reset code shortly",
-        },
+        httpStatusResponse(
+          404,
+          "If your email exists in our system, you will receive a reset code shortly"
+        ),
         { status: 200 }
       );
     }
@@ -58,11 +85,9 @@ export async function POST(req: Request) {
       });
     }
 
-    async function sendPasswordResetEmail(
-      email: string,
-      otp: string,
-      userName?: string
-    ) {
+    const resetLink = `https://abanty-data-sme-amber.vercel.app/auth/reset-password?email=${email}&otp=${otp}`;
+
+    async function sendPasswordResetEmail(email: string, userName?: string) {
       try {
         // Generate the email HTML with the OTP
         const emailHtml = `
@@ -99,17 +124,16 @@ export async function POST(req: Request) {
               padding: 20px;
               background-color: #ffffff;
             }
-            .otp-container {
+            .button-container {
               margin: 30px 0;
               text-align: center;
             }
-            .otp {
-              font-size: 32px;
-              font-weight: bold;
-              letter-spacing: 5px;
-              color: #0066cc;
-              padding: 10px 20px;
-              background-color: #f5f5f5;
+            .button {
+              background-color: #0066cc;
+              color: white;
+              padding: 12px 24px;
+              text-decoration: none;
+              font-size: 16px;
               border-radius: 5px;
               display: inline-block;
             }
@@ -135,17 +159,17 @@ export async function POST(req: Request) {
             <div class="content">
               <p>Hello ${userName || "there"},</p>
               
-              <p>We received a request to reset your password. To complete the process, please use the following verification code:</p>
+              <p>We received a request to reset your password. To complete the process, please click the button below:</p>
               
-              <div class="otp-container">
-                <div class="otp">${otp}</div>
+              <div class="button-container">
+                <a href="${resetLink}" class="button">Reset Password</a>
               </div>
               
               <div class="note">
-                <strong>Important:</strong> This code will expire in 10 minutes for security reasons.
+                <strong>Important:</strong> This link will expire in 10 minutes for security reasons.
               </div>
               
-              <p>If you didn't request a password reset, please ignore this email or contact our support team if you believe this is an error.</p>
+              <p>If you didn't request a password reset, you can safely ignore this email or contact our support team if you believe this is an error.</p>
               
               <p>Thank you,<br>The Team</p>
             </div>
@@ -158,29 +182,11 @@ export async function POST(req: Request) {
         </html>
         `;
 
-        //// Text version as fallback
-        //const emailText = `
-        //  Reset Your Password
-        //
-        //  Hello ${userName || "there"},
-        //
-        //  We received a request to reset your password. To complete the process, please use the following verification code:
-        //
-        //  ${otp}
-        //
-        //  Important: This code will expire in 10 minutes for security reasons.
-        //
-        //  If you didn't request a password reset, please ignore this email or contact our support team if you believe this is an error.
-        //
-        //  Thank you,
-        //  The Team
-        //`;
-
         // Send the email
         await sendEmail(
           [email],
           emailHtml,
-          "Reset Your Password",
+          "Reset your Kinta SME password",
           "s00laimang20@gmail.com"
         );
 
@@ -191,24 +197,18 @@ export async function POST(req: Request) {
       }
     }
 
-    await sendPasswordResetEmail(
-      user.auth.email,
-      otp,
-      user.fullName.split(" ")[0]
-    );
+    await sendPasswordResetEmail(user.auth.email, user.fullName.split(" ")[0]);
 
     return NextResponse.json(
-      {
-        message:
-          "If your email exists in our system, you will receive a reset code shortly",
-      },
+      httpStatusResponse(
+        200,
+        "Email will be sent to user if the user exist in our database."
+      ),
       { status: 200 }
     );
-  } catch (error) {
-    console.error("FORGOT_PASSWORD_ERROR", error);
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+  } catch (err) {
+    return NextResponse.json(httpStatusResponse(500, (err as Error).message), {
+      status: 500,
+    });
   }
 }

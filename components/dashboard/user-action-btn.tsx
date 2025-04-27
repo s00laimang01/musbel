@@ -132,6 +132,8 @@ export function UserActionButtons({
         await onAction(currentAction.type, user._id!, formData);
       } else if (currentAction.type === "generateAccount") {
         await onAction("generateAccount", user._id!);
+      } else if (currentAction.type === "resetPassword") {
+        await onAction("resetPassword", user._id!, { email: formData.email });
       } else {
         await onAction(currentAction.type, user._id!);
       }
