@@ -150,7 +150,7 @@ export default function DataPlansPage() {
 
   const deletePlan = async () => {
     try {
-      await api.delete(`/admin/data/?dataId=${dataId}/`);
+      await api.delete(`/admin/data/?dataId=${dataId}`);
       toast("Plan deleted successfully");
 
       queryClient.invalidateQueries({

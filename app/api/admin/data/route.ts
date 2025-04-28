@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { Transaction } from "@/models/transactions";
 import { DataPlan } from "@/models/data-plan";
 import { httpStatusResponse } from "@/lib/utils";
 import { createDataPlanSchema } from "@/lib/validator.schema";
@@ -129,6 +128,8 @@ export async function DELETE(request: NextRequest) {
   try {
     const dataId = request.nextUrl.searchParams.get("dataId");
 
+    console.log({ dataId });
+
     const deletedData = await DataPlan.findByIdAndDelete(dataId);
 
     if (!deletedData) {
@@ -142,6 +143,7 @@ export async function DELETE(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    console.log(error);
     return NextResponse.json(httpStatusResponse(500, "Internal Server Error"), {
       status: 500,
     });
@@ -153,8 +155,6 @@ export async function PATCH(request: NextRequest) {
     const { _id, ...updates } = await request.json();
 
     await connectToDatabase();
-
-    console.log({ _id, ...updates });
 
     const updatedPlan = await DataPlan.findByIdAndUpdate(
       _id,
