@@ -32,6 +32,7 @@ export enum PATHS {
   ADMIN_DATA_PLANS = "/admin/data-plans/",
   ADMIN_ELECTRICITY_BILLS = "/admin/electricity-bills/",
   ADMIN_SETTINGS = "/admin/settings/",
+  ADMIN_REFERRALS = "/admin/referrals",
   REFER = "/dashboard/refer/",
 }
 
@@ -755,6 +756,7 @@ export interface IReferralResponse extends IReferral {
   referreeName: string;
   referreeEmail: string;
   isEmailVerified: boolean;
+  referralCount: number;
 }
 
 //"event": "PAYMENT_NOTIFICATION",

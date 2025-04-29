@@ -11,6 +11,7 @@ import {
   Zap,
   X,
   ChevronRight,
+  Share,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,12 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
       icon: Zap,
       href: PATHS.ADMIN_ELECTRICITY_BILLS,
       active: pathname === PATHS.ADMIN_ELECTRICITY_BILLS,
+    },
+    {
+      label: "Referrals",
+      icon: Share,
+      href: PATHS.ADMIN_REFERRALS,
+      active: pathname === PATHS.ADMIN_REFERRALS,
     },
     {
       label: "Settings",
