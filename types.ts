@@ -68,6 +68,7 @@ export interface dataPlan {
   availability: string;
   isPopular?: boolean;
   planId: number;
+  provider: "buyVTU" | "smePlug";
 }
 
 export interface FeatureCardProps {

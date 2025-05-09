@@ -32,6 +32,11 @@ const DataPlanSchema: mongoose.Schema<dataPlan> = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  provider: {
+    type: String,
+    required: true,
+    enum: ["smePlug", "buyVTU"],
+  },
 });
 
 const DataPlan: mongoose.Model<dataPlan> =
@@ -44,6 +49,7 @@ DataPlanSchema.pre("save", async function (next) {
       network: this.network,
       availability: this.availability,
       data: this.data,
+      provider: this.provider,
     });
 
     if (planExist) {

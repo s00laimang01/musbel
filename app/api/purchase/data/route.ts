@@ -35,8 +35,6 @@ export async function POST(request: Request) {
       byPassValidator = false,
     } = validationResult.data;
 
-    console.log(validationResult.data);
-
     // Get the email of the current authenticated user
     const serverSession = await getServerSession();
     if (!serverSession?.user?.email) {
@@ -85,10 +83,27 @@ export async function POST(request: Request) {
     // Verify user has sufficient balance
     await user.verifyUserBalance(dataPlan.amount);
 
+    //TODO: check network
     buyVtu.setNetwork = dataPlan.network;
 
     // Buy data
-    await buyVtu.buyData(dataPlan.planId + "", phoneNumber);
+    if (dataPlan.provider === "smePlug") {
+      const n: Record<string, any> = {
+        mtn: "1",
+        airtel: "2",
+        "9mobile": "3",
+        glo: "4",
+      };
+
+      await buyVtu.buyDataFromSMEPLUG(
+        n[dataPlan.network.toLowerCase()],
+        dataPlan.planId,
+        phoneNumber,
+        dataPlan.amount
+      );
+    } else {
+      await buyVtu.buyData(dataPlan.planId + "", phoneNumber);
+    }
 
     console.log({ status: buyVtu.status, res: buyVtu.vendingResponse });
 

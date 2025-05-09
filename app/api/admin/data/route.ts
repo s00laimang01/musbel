@@ -5,6 +5,8 @@ import { httpStatusResponse } from "@/lib/utils";
 import { createDataPlanSchema } from "@/lib/validator.schema";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/connect-to-db";
+import { getServerSession } from "next-auth";
+import { User } from "@/models/users";
 
 export async function GET(request: NextRequest) {
   try {
@@ -75,6 +77,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession();
+
+    const user = await User.findOne({ "auth.email": session?.user?.email });
+
+    if (!user || user.role !== "admin") {
+      return NextResponse.json(httpStatusResponse(401, "Unauthorized"), {
+        status: 401,
+      });
+    }
+
     // Connect to MongoDB if not already connected
     await connectToDatabase();
 

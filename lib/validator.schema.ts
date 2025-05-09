@@ -4,13 +4,14 @@ import { z } from "zod";
 
 // Schema for validating POST request body
 export const createDataPlanSchema = z.object({
-  network: z.enum(["mtn", "airtel", "glo", "9mobile"]),
+  network: z.enum(["Mtn", "Airtel", "Glo", "9Mobile"]),
   data: z.string().min(1),
   amount: z.number().positive(),
   availability: z.string().min(1),
   type: z.enum(["COOPERATE GIFTING", "GIFTING", "SME"]),
   planId: z.number().positive(),
   isPopular: z.boolean().default(false),
+  provider: z.enum(["smePlug", "buyVTU"]),
 });
 
 // Form schema with validation
@@ -29,6 +30,9 @@ export const formSchema = z.object({
   }),
   planId: z.coerce.number().positive("Plan ID must be positive"),
   isPopular: z.boolean().default(false),
+  provider: z.enum(["smePlug", "buyVTU"], {
+    required_error: "Please select a provider",
+  }),
 });
 
 /**

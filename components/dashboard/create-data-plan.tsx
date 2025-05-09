@@ -68,6 +68,7 @@ export function CreateDataPlanDialog({
       type: dataPlan?.type || "SME",
       planId: dataPlan?.planId || undefined,
       isPopular: dataPlan?.isPopular || false,
+      provider: dataPlan?.provider || "buyVTU",
     },
   });
 
@@ -270,26 +271,49 @@ export function CreateDataPlanDialog({
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="isPopular"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 border p-4 rounded-none">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Featured Plan</FormLabel>
-                      <FormDescription>
-                        Mark this plan as popular to feature it prominently
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
+              <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mt-4">
+                <FormField
+                  control={form.control}
+                  name="isPopular"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 border p-4 rounded-none">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Featured Plan</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="provider"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Provider</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="rounded-none">
+                            <SelectValue placeholder="Select provider" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="buyVTU">BUY VTU</SelectItem>
+                          <SelectItem value="smePlug">SME PLUG</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </ScrollArea>
 
             <DialogFooter>

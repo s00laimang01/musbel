@@ -827,6 +827,65 @@ export class BuyVTU {
       return this;
     }
   }
+
+  public async buyDataFromSMEPLUG(
+    networkId: number,
+    planId: number,
+    phoneNumber: string,
+    amount = 0
+  ) {
+    try {
+      interface IRes {
+        status: boolean;
+        data: {
+          current_status: string;
+          reference: string;
+          msg: string;
+        };
+      }
+
+      const payload = {
+        network_id: networkId,
+        plan_id: planId,
+        phone: phoneNumber,
+        customer_reference: this.ref,
+      };
+
+      const res = await axios.post<IRes>(
+        `https://smeplug.ng/api/v1/data/purchase`,
+        payload,
+        { headers: { Authorization: `Bearer ${process.env.SME_PLUG_API_KEY}` } }
+      );
+
+      this.vendingResponse = {
+        recipientCount: 1,
+        recipients: phoneNumber,
+        cost: amount,
+        totalAmount: amount,
+        vendReport: {
+          [phoneNumber]: res.data.data.current_status ? "successful" : "failed",
+        },
+        vendStatus: null,
+        commissionEarned: 0,
+      };
+
+      this.status = Boolean(
+        res.data.status &&
+          this.vendingResponse.vendReport[phoneNumber] === "successful"
+      );
+      this.message = !this.status ? "Data vending failed" : res.data.data.msg;
+
+      return this;
+    } catch (error) {
+      console.error("Data purchase error:", error);
+      this.status = false;
+      this.message =
+        error instanceof Error && error.message
+          ? error.message
+          : "DATA_PURCHASE_FAILED: unable to process your request.";
+      return this;
+    }
+  }
 }
 
 export class ReferralProcessor {
