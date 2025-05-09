@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     await connectToDatabase();
 
-    const popularPlans = await DataPlan.find({ isPopular: true }).limit(3);
+    const popularPlans = await DataPlan.find({ isPopular: true }).limit(5);
 
     // Build filter for all data plans
     const filter: any = {};
