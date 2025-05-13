@@ -1,5 +1,6 @@
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { configs } from "@/lib/constants";
+import { sendEmail } from "@/lib/server-utils";
 import { buyExam, httpStatusResponse } from "@/lib/utils";
 import { examPurchaseSchema } from "@/lib/validator.schema";
 import { App } from "@/models/app";
@@ -10,9 +11,6 @@ import type { transaction } from "@/types";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export async function POST(request: Request) {
   const session = await mongoose.startSession();
@@ -127,12 +125,9 @@ export async function POST(request: Request) {
     await session.commitTransaction();
     session.endSession();
 
-    const { error } = await resend.emails.send({
-      from: configs.appName,
-      to: user.auth.email,
-      subject: "Your Exam Access Token",
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+    await sendEmail(
+      [user.auth.email],
+      ` <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #333;">Your Exam Access Token</h1>
           <p>Hello ${user.fullName.split(" ")[0] || "there"},</p>
           <p>Thank you for your purchase. Below is your exam access token:</p>
@@ -144,13 +139,9 @@ export async function POST(request: Request) {
           <p>Please keep this token secure. You'll need it to access your exam.</p>
           <p>If you have any questions, please contact our support team.</p>
           <p>Best regards,<br>The Exam Team</p>
-        </div>
-      `,
-    });
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+        </div>`,
+      "Your Exam Access Token"
+    );
 
     return NextResponse.json(
       httpStatusResponse(200, "Exam purchased successfully", {
