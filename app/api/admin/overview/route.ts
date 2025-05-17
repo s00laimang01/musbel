@@ -13,6 +13,7 @@ export async function GET() {
       {
         $match: {
           status: "success",
+          type: "funding",
         },
       },
       {
