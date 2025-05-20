@@ -60,6 +60,7 @@ export default function TransactionsPage() {
     limit: 10,
     sortBy: "createdAt",
     sortOrder: -1,
+    today: false,
   });
 
   const [searchInput, setSearchInput] = useState("");
@@ -101,11 +102,15 @@ export default function TransactionsPage() {
   };
 
   // Handle status filter
-  const handleStatusFilter = (status: transactionStatus | undefined) => {
+  const handleStatusFilter = (
+    status: transactionStatus | undefined,
+    today = false
+  ) => {
     setRequestParams((prev) => ({
       ...prev,
       status,
-      page: 1, // Reset to first page when filtering
+      page: 1,
+      today,
     }));
   };
 
@@ -429,6 +434,13 @@ export default function TransactionsPage() {
               {requestParams.sortBy === "createdAt" &&
                 (requestParams.sortOrder === 1 ? "↑" : "↓")}
             </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                handleStatusFilter(undefined, !requestParams.today)
+              }
+            >
+              Today
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -440,9 +452,9 @@ export default function TransactionsPage() {
             className="rounded-none flex items-center gap-1"
           >
             Search: {requestParams.search}
-            <button onClick={clearSearch} className="ml-1">
+            <div onClick={clearSearch} className="ml-1">
               <X className="h-3 w-3" />
-            </button>
+            </div>
           </Badge>
         </div>
       )}

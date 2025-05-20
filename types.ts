@@ -656,6 +656,7 @@ export interface transactionRequestProps {
   sortBy?: string;
   sortOrder?: -1 | 1;
   search?: string;
+  today?: boolean;
 }
 
 export interface transactionsWithUserDetails extends transaction {

@@ -230,16 +230,46 @@ export async function getTransactionsWithUserDetails(
     page = 1,
     sortBy = "createdAt",
     sortOrder = -1,
+    today = false,
   } = options;
 
   // Build the match stage for the pipeline
   const match: Record<string, any> = { ...filters };
 
+  // Fix: Move the search condition to match instead of filters
   if (filters.search) {
-    filters.$or = [{ _id: { $regex: filters.search, $options: "i" } }];
+    match.$or = [{ _id: { $regex: filters.search, $options: "i" } }];
+    delete match.search; // Remove the search field from match criteria
   }
 
-  if (startDate || endDate) {
+  // Fix: Handle date filtering properly, especially the 'today' option
+  if (today) {
+    // If today is true, set date range to the current day
+    const now = new Date();
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0
+    );
+    const endOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59,
+      999
+    );
+
+    match.createdAt = {
+      $gte: startOfDay,
+      $lte: endOfDay,
+    };
+  } else if (startDate || endDate) {
+    // Traditional date range filtering
     match.createdAt = {};
     if (startDate) match.createdAt.$gte = new Date(startDate);
     if (endDate) match.createdAt.$lte = new Date(endDate);
@@ -269,7 +299,7 @@ export async function getTransactionsWithUserDetails(
         },
       },
       { $unwind: { path: "$userDetails", preserveNullAndEmptyArrays: true } },
-      { $sort: { [sortBy]: sortOrder } }, // Add $sort stage here
+      { $sort: { [sortBy]: sortOrder } },
       { $skip: (page - 1) * limit },
       { $limit: limit },
     ];

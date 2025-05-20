@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { Transaction } from "@/models/transactions";
 import { formatCurrency, httpStatusResponse } from "@/lib/utils";
@@ -8,6 +7,25 @@ import { User } from "@/models/users";
 export async function GET() {
   try {
     await connectToDatabase();
+
+    const now = new Date();
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0
+    );
+    const endOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59,
+      999
+    );
 
     const totalTransactions = await Transaction.aggregate([
       {
@@ -26,9 +44,22 @@ export async function GET() {
 
     const users = await User.countDocuments({});
 
-    const pendingPayments = await Transaction.countDocuments({
-      status: "pending",
-    });
+    const todaysPayment = await Transaction.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfDay,
+            $lte: endOfDay,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$amount" },
+        },
+      },
+    ]);
 
     const totalDataPurchase = await Transaction.countDocuments({
       type: "data",
@@ -43,7 +74,8 @@ export async function GET() {
       httpStatusResponse(200, undefined, {
         totalTransactions: formatCurrency(_totalTransactions),
         users,
-        pendingPayments,
+        todaysPayment:
+          formatCurrency(todaysPayment[0]?.totalAmount) || formatCurrency(0),
         totalDataPurchase,
       })
     );

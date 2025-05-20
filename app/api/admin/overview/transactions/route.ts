@@ -12,8 +12,9 @@ export async function GET(request: NextRequest) {
     const search = q.get("search") || undefined;
     const sortBy = q.get("sortBy") || undefined;
     const sortOrder = Number(q.get("sortOrder")) || -1;
+    const today = Boolean(q.get("today") === "true") || undefined;
 
-    console.log({ sortOrder, sortBy });
+    console.log({ sortOrder, sortBy, today });
 
     const transactions = await getTransactionsWithUserDetails(
       {
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
         status,
         page,
         sortBy,
+        today,
       },
       { search }
     );
