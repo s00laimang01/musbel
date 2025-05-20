@@ -887,6 +887,8 @@ export class BuyVTU {
         { headers: { Authorization: `Bearer ${process.env.SME_PLUG_API_KEY}` } }
       );
 
+      console.log({ res });
+
       this.vendingResponse = {
         recipientCount: 1,
         recipients: phoneNumber,
@@ -907,7 +909,7 @@ export class BuyVTU {
 
       return this;
     } catch (error) {
-      console.error("Data purchase error:", error);
+      console.error("Data purchase error:");
       this.status = false;
       this.message =
         error instanceof Error && error.message

@@ -105,8 +105,6 @@ export async function POST(request: Request) {
       await buyVtu.buyData(dataPlan.planId + "", phoneNumber);
     }
 
-    console.log({ status: buyVtu.status, res: buyVtu.vendingResponse });
-
     if (!buyVtu.status) {
       throw new Error(buyVtu.message || "Failed to purchase data");
     }
