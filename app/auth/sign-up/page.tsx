@@ -42,8 +42,6 @@ export default function SignUpPage() {
     setForm({ ...form, [name]: value });
   };
 
-  console.log(q.get("ref"));
-
   const signUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
@@ -51,7 +49,7 @@ export default function SignUpPage() {
       await axios.post("/api/auth/sign-up/", {
         ...form,
         country: "nigeria",
-        ref: q.get("ref"),
+        ref: q.get("ref") || "",
       });
 
       toast.success("Account created successfully!");
