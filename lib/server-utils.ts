@@ -26,6 +26,7 @@ import {
   transaction,
   transactionType,
   IReferral,
+  DataVendingResponse,
 } from "@/types";
 import axios from "axios";
 import mongoose, { PipelineStage } from "mongoose";
@@ -666,7 +667,7 @@ export class BuyVTU {
 
       return this;
     } catch (error) {
-      console.error("Data purchase error:", error);
+      console.error(error);
       this.status = false;
       this.message =
         error instanceof Error && error.message
@@ -906,6 +907,58 @@ export class BuyVTU {
           this.vendingResponse.vendReport[phoneNumber] === "successful"
       );
       this.message = !this.status ? "Data vending failed" : res.data.data.msg;
+
+      return this;
+    } catch (error) {
+      console.error("Data purchase error:");
+      this.status = false;
+      this.message =
+        error instanceof Error && error.message
+          ? error.message
+          : "DATA_PURCHASE_FAILED: unable to process your request.";
+      return this;
+    }
+  }
+
+  public async buyDataFromA4BData(
+    network: string,
+    data_plan: string,
+    phoneNumber: string
+  ) {
+    try {
+      const payload = {
+        network,
+        data_plan,
+        phone: phoneNumber,
+        "request-id": this.ref,
+      };
+
+      const res = await axios.post<DataVendingResponse>(
+        `https://a4bdata.com/api/data`,
+        payload,
+        { headers: { Authorization: `Token ${process.env.SME_PLUG_API_KEY}` } }
+      );
+
+      console.log({ res });
+
+      this.vendingResponse = {
+        recipientCount: 1,
+        recipients: phoneNumber,
+        cost: Number(res.data?.amount),
+        totalAmount: Number(res.data?.amount),
+        vendReport: {
+          [phoneNumber]:
+            res.data.status === "success" ? "successful" : "failed",
+        },
+        vendStatus: null,
+        commissionEarned: 0,
+      };
+
+      this.status = Boolean(
+        res.data.status &&
+          this.vendingResponse.vendReport[phoneNumber] === "successful"
+      );
+      this.message = !this.status ? "Data vending failed" : res.data.message;
 
       return this;
     } catch (error) {

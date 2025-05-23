@@ -86,23 +86,51 @@ export async function POST(request: Request) {
     //TODO: check network
     buyVtu.setNetwork = dataPlan.network;
 
-    // Buy data
-    if (dataPlan.provider === "smePlug") {
-      const n: Record<string, any> = {
-        mtn: "1",
-        airtel: "2",
-        "9mobile": "3",
-        glo: "4",
-      };
+    if (dataPlan.planId === 1000) {
+      const alternatesSMEPlans = ["32", "1"];
 
-      await buyVtu.buyDataFromSMEPLUG(
-        n[dataPlan.network.toLowerCase()],
-        dataPlan.planId,
-        phoneNumber,
-        dataPlan.amount
-      );
+      const MAX_RETRY = 2; // Increased max retries to 2
+      let retry = 0;
+
+      while (retry < MAX_RETRY) {
+        // Fixed comparison operator
+        console.log({ retry, MAX_RETRY });
+        try {
+          if (retry === 0) {
+            await buyVtu.buyData(alternatesSMEPlans[0] as string, phoneNumber);
+            break; // Exit loop on success
+          }
+
+          if (retry === 1) {
+            await buyVtu.buyDataFromA4BData("1", "1", phoneNumber);
+            break; // Exit loop on success
+          }
+        } catch (error) {
+          retry++;
+          if (retry >= MAX_RETRY) {
+            throw new Error("Data vending failed after all retries");
+          }
+        }
+      }
     } else {
-      await buyVtu.buyData(dataPlan.planId + "", phoneNumber);
+      // Buy data
+      if (dataPlan.provider === "smePlug") {
+        const n: Record<string, any> = {
+          mtn: "1",
+          airtel: "2",
+          "9mobile": "3",
+          glo: "4",
+        };
+
+        await buyVtu.buyDataFromSMEPLUG(
+          n[dataPlan.network.toLowerCase()],
+          dataPlan.planId,
+          phoneNumber,
+          dataPlan.amount
+        );
+      } else {
+        await buyVtu.buyData(dataPlan.planId + "", phoneNumber);
+      }
     }
 
     if (!buyVtu.status) {
