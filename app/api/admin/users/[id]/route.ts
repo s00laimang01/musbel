@@ -63,40 +63,31 @@ export async function PATCH(
         });
       }
 
-      if (updates.balance < user.balance) {
-        return NextResponse.json(
-          httpStatusResponse(400, "BALANCE_IS_LESS_THAN_CURRENT_BALANCE"),
-          {
-            status: 400,
-          }
-        );
-      }
+      const updateAmount = updates.balance - user.balance;
 
-      if (user.balance !== updates.balance) {
-        const amountToCredit = updates.balance - user.balance;
+      const isDebit = updateAmount < user.balance;
 
-        const tx_ref = new mongoose.Types.ObjectId().toString();
+      const tx_ref = new mongoose.Types.ObjectId().toString();
 
-        // Create a transaction for this
-        const trxPayload: transaction = {
-          accountId: tx_ref,
-          amount: amountToCredit,
-          meta: {
-            manualFunding: "true",
-          },
-          note: `Your account has been credited with ${formatCurrency(
-            amountToCredit
-          )}`,
-          paymentMethod: "dedicatedAccount",
-          status: "success",
-          tx_ref,
-          type: "funding",
-          user: user.id,
-        };
+      // Create a transaction for this
+      const trxPayload: transaction = {
+        accountId: tx_ref,
+        amount: updateAmount,
+        meta: {
+          manualFunding: "true",
+        },
+        note: `Your account has been ${
+          isDebit ? "debitted" : "credited"
+        } with ${formatCurrency(updateAmount)}`,
+        paymentMethod: "dedicatedAccount",
+        status: "success",
+        tx_ref,
+        type: "funding",
+        user: user.id,
+      };
 
-        const transaction = new Transaction(trxPayload);
-        await transaction.save({});
-      }
+      const transaction = new Transaction(trxPayload);
+      await transaction.save({});
     }
 
     const user = await User.findByIdAndUpdate(id, { $set: updates });
