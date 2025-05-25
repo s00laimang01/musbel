@@ -16,4 +16,4 @@ Disallow: /api/
 Disallow: /(dashboard)/admin/
 Disallow: /dashboard/admin/
 
-Sitemap: https://abanty-data-sme-amber.vercel.app/sitemap.xml
+Sitemap: https://kinta-sme.com/sitemap.xml
