@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Allow: /auth/sign-in
+Allow: /auth/sign-up
+Allow: /auth/forget-password
+Allow: /dashboard/buy-airtime
+Allow: /dashboard/buy-data
+Allow: /dashboard/data-plans
+Allow: /dashboard/transactions
+Allow: /dashboard/utility-payment
+Allow: /dashboard/wallet
+Allow: /dashboard/refer
+Allow: /dashboard/settings
+
+Disallow: /api/
+Disallow: /(dashboard)/admin/
+Disallow: /dashboard/admin/
+
+Sitemap: https://abanty-data-sme-amber.vercel.app/sitemap.xml
