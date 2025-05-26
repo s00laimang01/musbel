@@ -551,10 +551,10 @@ export class BuyVTU {
     return this;
   }
 
-  // Fixed session management - don't end session after committing
+  // Fixed session management - properly handle committed vs active transactions
   public async endSession() {
     if (this.session) {
-      // Only abort if transaction is active
+      // Only abort if transaction is still active (not committed)
       if (this.session.inTransaction()) {
         await this.session.abortTransaction();
       }
@@ -567,8 +567,14 @@ export class BuyVTU {
   public async commitSession() {
     if (this.session && this.session.inTransaction()) {
       await this.session.commitTransaction();
-      // Don't end session here, let caller control that
-      // The caller should call endSession separately if needed
+    }
+    return this;
+  }
+
+  // Add method to abort transaction explicitly
+  public async abortSession() {
+    if (this.session && this.session.inTransaction()) {
+      await this.session.abortTransaction();
     }
     return this;
   }
@@ -936,10 +942,12 @@ export class BuyVTU {
       const res = await axios.post<DataVendingResponse>(
         `https://a4bdata.com/api/data`,
         payload,
-        { headers: { Authorization: `Token ${process.env.SME_PLUG_API_KEY}` } }
+        {
+          headers: {
+            Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}`,
+          },
+        }
       );
-
-      console.log({ res });
 
       this.vendingResponse = {
         recipientCount: 1,
