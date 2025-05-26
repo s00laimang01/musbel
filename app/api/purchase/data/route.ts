@@ -110,7 +110,6 @@ export async function POST(request: Request) {
 
           retry++;
         } catch (error) {
-          console.log(error.response);
           purchaseError =
             error instanceof Error ? error : new Error("Unknown error");
           retry++;
