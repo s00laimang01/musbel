@@ -47,6 +47,7 @@ export async function GET() {
     const todaysPayment = await Transaction.aggregate([
       {
         $match: {
+          type: "funding",
           createdAt: {
             $gte: startOfDay,
             $lte: endOfDay,
