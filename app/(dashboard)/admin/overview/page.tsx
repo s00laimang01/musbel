@@ -28,7 +28,7 @@ export default function DashboardPage() {
       await api.get<{
         data: {
           todaysPayment: number;
-          totalDataPurchase: number;
+          totalUsersBalance: number;
           totalTransactions: string;
           users: number;
         };
