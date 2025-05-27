@@ -64,11 +64,6 @@ export async function GET() {
 
     const totalUserBalance = await User.aggregate([
       {
-        $match: {
-          balance: {
-            $gt: 0,
-          },
-        },
         $group: {
           _id: null,
           totalAmount: { $sum: "$balance" },
@@ -86,7 +81,9 @@ export async function GET() {
         users,
         todaysPayment:
           formatCurrency(todaysPayment[0]?.totalAmount) || formatCurrency(0),
-        totalUsersBalance: totalUserBalance?.[0]?.totalAmount || 0,
+        totalUsersBalance: formatCurrency(
+          totalUserBalance?.[0]?.totalAmount || 0
+        ),
       })
     );
   } catch (error) {
