@@ -51,12 +51,12 @@ export async function POST(request: NextRequest) {
 
     const payload = (await request.json()) as BillStackWebhookPayload;
 
-    if (payload.event !== "PAYMENT_NOTIFICATION") {
-      return NextResponse.json(
-        httpStatusResponse(429, "INVALID_EVENT_TYPE: please contact admin"),
-        { status: 429 }
-      );
-    }
+    //if (payload.event !== "PAYMENT_NOTIFICATION") {
+    //  return NextResponse.json(
+    //    httpStatusResponse(429, "INVALID_EVENT_TYPE: please contact admin"),
+    //    { status: 429 }
+    //  );
+    //}
 
     if (payload.data.type !== "RESERVED_ACCOUNT_TRANSACTION") {
       return NextResponse.json(
@@ -117,9 +117,7 @@ export async function POST(request: NextRequest) {
         user.isEmailVerified
       );
       await referral.processReferral();
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
 
     const trxPayload: transaction = {
       accountId: payload.data.account.account_number,
