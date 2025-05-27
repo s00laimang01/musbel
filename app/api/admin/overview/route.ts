@@ -62,10 +62,19 @@ export async function GET() {
       },
     ]);
 
-    const totalDataPurchase = await Transaction.countDocuments({
-      type: "data",
-      status: "success",
-    });
+    const totalUserBalance = await User.aggregate([
+      {
+        $match: {
+          balance: {
+            $gt: 0,
+          },
+        },
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$balance" },
+        },
+      },
+    ]);
 
     const _totalTransactions =
       totalTransactions.length > 0 ? totalTransactions[0].total : 0;
@@ -77,7 +86,7 @@ export async function GET() {
         users,
         todaysPayment:
           formatCurrency(todaysPayment[0]?.totalAmount) || formatCurrency(0),
-        totalDataPurchase,
+        totalUserBalance: totalUserBalance?.[0]?.totalAmount || 0,
       })
     );
   } catch (error) {
