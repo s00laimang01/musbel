@@ -107,7 +107,7 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {overviewData?.data.totalDataPurchase}
+                      {overviewData?.data.totalUsersBalance}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       <span className="text-emerald-500 flex items-center gap-1">
