@@ -13,6 +13,7 @@ const PUBLIC_ROUTES = [
   "/api/account/bank/verify-bill-stack-transaction",
   "/auth/reset-password",
   "/api/auth/reset-password",
+  "/sitemap.xml",
 ];
 
 export async function middleware(request: NextRequest) {

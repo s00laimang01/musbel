@@ -1,19 +1,26 @@
 User-agent: *
 Allow: /
+
+# Block authenticated dashboard areas
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /auth/forget-password
+
+Allow: /auth/sign-in
+Allow: /auth/sign-up  
+Allow: /auth/forget-password
+Allow: /api/auth/
+Allow: /api/auth/sign-up
+Allow: /api/account/bank/verify-transaction
+Allow: /api/account/bank/verify-bill-stack-transaction
+Allow: /auth/reset-password
+Allow: /api/auth/reset-password
 Allow: /auth/sign-in
 Allow: /auth/sign-up
-Allow: /auth/forget-password
-Allow: /dashboard/buy-airtime
-Allow: /dashboard/buy-data
-Allow: /dashboard/data-plans
-Allow: /dashboard/transactions
-Allow: /dashboard/utility-payment
-Allow: /dashboard/wallet
-Allow: /dashboard/refer
-Allow: /dashboard/settings
+Allow: /sitemap.xml
 
-Disallow: /api/
-Disallow: /(dashboard)/admin/
-Disallow: /dashboard/admin/
+Sitemap: https://www.kinta-sme.com/sitemap.xml
 
-Sitemap: https://kinta-sme.com/sitemap.xml
+Crawl-delay: 1
