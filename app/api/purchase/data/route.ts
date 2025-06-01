@@ -86,6 +86,13 @@ export async function POST(request: Request) {
     //TODO: check network
     buyVtu.setNetwork = dataPlan.network;
 
+    // Only debit user and create transaction if data purchase was successful
+    // Update user balance with session
+    await user.updateOne(
+      { $inc: { balance: -dataPlan.amount } },
+      { session: buyVtu.session }
+    );
+
     // Try to purchase data from different providers
     let dataPurchaseSuccess = false;
     let purchaseError: Error | null = null;
@@ -143,19 +150,14 @@ export async function POST(request: Request) {
       }
     }
 
+    buyVtu.amount = dataPlan?.amount;
+
     // Check if data purchase was successful
     if (!dataPurchaseSuccess || !buyVtu.status) {
       throw new Error(
         buyVtu.message || purchaseError?.message || "Failed to purchase data"
       );
     }
-
-    // Only debit user and create transaction if data purchase was successful
-    // Update user balance with session
-    await user.updateOne(
-      { $inc: { balance: -dataPlan.amount } },
-      { session: buyVtu.session }
-    );
 
     // Create transaction record
     await buyVtu.createTransaction("data", user.id);

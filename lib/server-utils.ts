@@ -492,6 +492,7 @@ export class BuyVTU {
   status: boolean;
   message: string | null;
   validatePhoneNumber?: boolean;
+  amount?: number;
 
   constructor(
     accessToken?: string,
@@ -508,6 +509,7 @@ export class BuyVTU {
     this.status = false;
     this.message = null;
     this.validatePhoneNumber = phoneNumberValidatorPayload?.validatePhoneNumber;
+    this.amount = 0;
 
     //If we want to validate the user phone number first before moving on
     if (this.validatePhoneNumber) {
@@ -806,6 +808,7 @@ export class BuyVTU {
 
       const trxPayload: transaction = {
         amount:
+          this.amount ||
           this.vendingResponse?.totalAmount ||
           this.powerVendResponse?.cost ||
           0,
