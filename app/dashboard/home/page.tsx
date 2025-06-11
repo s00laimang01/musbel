@@ -3,6 +3,7 @@
 import ActionButtons from "@/components/action-buttons";
 import Header from "@/components/dashboard-header";
 import FeatureCards from "@/components/features";
+import AppInstallDialog from "@/components/notify-user-about-app";
 import RemindUserToVerifyEmail from "@/components/notify-user-to-verify-email";
 import RecentActivity from "@/components/recent-activities";
 import { RemindUserToRefer } from "@/components/refer-notifications";
@@ -38,6 +39,7 @@ const Page = () => {
       <RemindUserToCreateTransactionPin />
       <SystemMessage />
       <RemindUserToRefer />
+      <AppInstallDialog />
       {/* Desktop Header - hidden on mobile */}
       <div className="hidden md:block">
         <Header
