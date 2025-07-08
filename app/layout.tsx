@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   applicationName: configs.appName,
   keywords:
     "data bundles, airtime topup, electricity bills, exam results, MTN data, Airtel data, Glo data, 9mobile data, utility payments, cheap data, bulk data, data subscription, airtime recharge, bill payments, WAEC result checker, NECO result checker, JAMB result checker, prepaid meter, postpaid meter, EKEDC, IKEDC, AEDC, PHEDC, mobile data, internet data plans, VTU services, utility bill payments, online recharge, data reseller, SME data plans, corporate data plans, instant recharge, automated payments, digital wallet, mobile wallet, online transactions, secure payments",
-  authors: [{ name: "KINTA SME", url: "https://www.kinta-sme.comom" }],
+  authors: [{ name: "KINTA SME", url: "https://www.kinta-sme.com" }],
   creator: "KINTA SME",
   publisher: "KINTA SME",
   formatDetection: {

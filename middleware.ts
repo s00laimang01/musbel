@@ -70,7 +70,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // For regular routes, redirect to sign-in
-    return NextResponse.redirect(new URL("/auth/sign-in", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Check for admin routes - restrict to admin users only
