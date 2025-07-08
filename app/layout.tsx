@@ -10,9 +10,7 @@ export const metadata: Metadata = {
   applicationName: configs.appName,
   keywords:
     "data bundles, airtime topup, electricity bills, exam results, MTN data, Airtel data, Glo data, 9mobile data, utility payments, cheap data, bulk data, data subscription, airtime recharge, bill payments, WAEC result checker, NECO result checker, JAMB result checker, prepaid meter, postpaid meter, EKEDC, IKEDC, AEDC, PHEDC, mobile data, internet data plans, VTU services, utility bill payments, online recharge, data reseller, SME data plans, corporate data plans, instant recharge, automated payments, digital wallet, mobile wallet, online transactions, secure payments",
-  authors: [
-    { name: "KINTA SME", url: "https://abanty-data-sme-amber.vercel.app" },
-  ],
+  authors: [{ name: "KINTA SME", url: "https://www.kinta-sme.comom" }],
   creator: "KINTA SME",
   publisher: "KINTA SME",
   formatDetection: {
@@ -20,12 +18,12 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://abanty-data-sme-amber.vercel.app"),
+  metadataBase: new URL("https://www.kinta-sme.com"),
   openGraph: {
     title: `${configs.appName} - Buy Data, Airtime & Pay Bills`,
     description:
       "Buy data bundles, airtime, pay electricity bills and check exam results at the best prices. Fast delivery and 24/7 customer support.",
-    url: "https://abanty-data-sme-amber.vercel.app",
+    url: "https://www.kinta-sme.com",
     siteName: configs.appName,
     images: ["/og-image.jpg"],
     locale: "en_US",

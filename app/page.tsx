@@ -7,13 +7,12 @@ export default function Home() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: configs.appName,
-    url: "https://abanty-data-sme-amber.vercel.app",
+    url: "https://www.kinta-sme.com",
     description:
       "Your one-stop platform for data bundles, airtime recharge, and utility bill payments. Buy data plans, recharge airtime, pay electricity bills, and manage digital services efficiently.",
     potentialAction: {
       "@type": "SearchAction",
-      target:
-        "https://abanty-data-sme-amber.vercel.app/search?q={search_term_string}",
+      target: "https://www.kinta-sme.com?q={search_term_string}",
       "query-input": "required name=search_term_string",
     },
   };
@@ -201,7 +200,7 @@ export default function Home() {
           <div className="mt-2">
             Powered by{" "}
             <a
-              href="https://abanty-data-sme-amber.vercel.app"
+              href="https://www.kinta-sme.com"
               className="underline"
               target="_blank"
               rel="noopener noreferrer"
