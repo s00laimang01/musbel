@@ -14,6 +14,7 @@ const PUBLIC_ROUTES = [
   "/auth/reset-password",
   "/api/auth/reset-password",
   "/sitemap.xml",
+  "/",
 ];
 
 export async function middleware(request: NextRequest) {
