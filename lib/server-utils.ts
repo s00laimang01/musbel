@@ -806,6 +806,8 @@ export class BuyVTU {
         ...this.powerVendResponse,
       };
 
+      //console.log(this.vendingResponse);
+
       const trxPayload: transaction = {
         amount:
           this.amount ||
@@ -814,7 +816,7 @@ export class BuyVTU {
           0,
         paymentMethod: "ownAccount",
         accountId:
-          this.vendingResponse?.recipients ??
+          this.vendingResponse?.recipients ||
           this.powerVendResponse?.recipients,
         status: this.status ? "success" : "failed",
         tx_ref: this.ref,
@@ -932,7 +934,8 @@ export class BuyVTU {
   public async buyDataFromA4BData(
     network: string,
     data_plan: string,
-    phoneNumber: string
+    phoneNumber: string,
+    bypass: boolean = false
   ) {
     try {
       const payload = {
@@ -940,7 +943,10 @@ export class BuyVTU {
         data_plan,
         phone: phoneNumber,
         "request-id": this.ref,
+        bypass,
       };
+
+      console.log({ payload });
 
       const res = await axios.post<DataVendingResponse>(
         `https://a4bdata.com/api/data`,
@@ -969,11 +975,13 @@ export class BuyVTU {
         res.data.status &&
           this.vendingResponse.vendReport[phoneNumber] === "successful"
       );
-      this.message = !this.status ? "Data vending failed" : res.data.message;
+      this.message = !this.status
+        ? "Data vending failed"
+        : `Your data purchase was successful and you will credited shortly`;
 
       return this;
-    } catch (error) {
-      console.error("Data purchase error:");
+    } catch (error: any) {
+      console.error(error.response.data);
       this.status = false;
       this.message =
         error instanceof Error && error.message

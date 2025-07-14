@@ -111,7 +111,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (dataPlan.provider === "buyVTU" || dataPlan.network !== "Mtn") {
+    if (dataPlan.network !== "Mtn" || dataPlan.provider === "buyVTU") {
       const networdId: Record<IBuyVtuNetworks, string> = {
         Mtn: "1",
         Airtel: "2",
@@ -122,7 +122,8 @@ export async function POST(request: Request) {
       await buyVtu.buyDataFromA4BData(
         networdId[dataPlan.network],
         String(dataPlan.planId),
-        phoneNumber
+        phoneNumber,
+        validationResult.data.byPassValidator
       );
     }
 
