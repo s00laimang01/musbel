@@ -8,6 +8,7 @@ import { dataRequestSchema } from "@/lib/validator.schema";
 import { App } from "@/models/app";
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { BuyVTU } from "@/lib/server-utils";
+import { IBuyVtuNetworks } from "@/types";
 
 export async function POST(request: Request) {
   const buyVtu = new BuyVTU();
@@ -93,71 +94,39 @@ export async function POST(request: Request) {
       { session: buyVtu.session }
     );
 
-    // Try to purchase data from different providers
-    let dataPurchaseSuccess = false;
-    let purchaseError: Error | null = null;
+    if (dataPlan.network === "Mtn" || dataPlan.provider === "smePlug") {
+      //use abanty data sme
+      const n: Record<string, any> = {
+        mtn: "1",
+        airtel: "2",
+        "9mobile": "3",
+        glo: "4",
+      };
 
-    if (dataPlan.planId === 1000) {
-      const alternatesSMEPlans = ["32", "1"];
-      const MAX_RETRY = 2;
-      let retry = 0;
+      await buyVtu.buyDataFromSMEPLUG(
+        n[dataPlan.network.toLowerCase()],
+        dataPlan.planId,
+        phoneNumber,
+        dataPlan.amount
+      );
+    }
 
-      while (retry < MAX_RETRY && !dataPurchaseSuccess) {
-        try {
-          if (retry === 0) {
-            await buyVtu.buyData(alternatesSMEPlans[0] as string, phoneNumber);
-          } else if (retry === 1) {
-            await buyVtu.buyDataFromA4BData("1", "1", phoneNumber);
-          }
+    if (dataPlan.provider === "buyVTU" || dataPlan.network !== "Mtn") {
+      const networdId: Record<IBuyVtuNetworks, string> = {
+        Mtn: "1",
+        Airtel: "2",
+        Glo: "3",
+        "9Mobile": "4",
+      };
 
-          if (buyVtu.status) {
-            dataPurchaseSuccess = true;
-            break;
-          }
-
-          retry++;
-        } catch (error) {
-          purchaseError =
-            error instanceof Error ? error : new Error("Unknown error");
-          retry++;
-        }
-      }
-    } else {
-      try {
-        // Buy data
-        if (dataPlan.provider === "smePlug") {
-          const n: Record<string, any> = {
-            mtn: "1",
-            airtel: "2",
-            "9mobile": "3",
-            glo: "4",
-          };
-
-          await buyVtu.buyDataFromSMEPLUG(
-            n[dataPlan.network.toLowerCase()],
-            dataPlan.planId,
-            phoneNumber,
-            dataPlan.amount
-          );
-        } else {
-          await buyVtu.buyData(dataPlan.planId + "", phoneNumber);
-        }
-
-        dataPurchaseSuccess = buyVtu.status;
-      } catch (error) {
-        purchaseError =
-          error instanceof Error ? error : new Error("Unknown error");
-      }
+      await buyVtu.buyDataFromA4BData(
+        networdId[dataPlan.network],
+        String(dataPlan.planId),
+        phoneNumber
+      );
     }
 
     buyVtu.amount = dataPlan?.amount;
-
-    // Check if data purchase was successful
-    if (!dataPurchaseSuccess || !buyVtu.status) {
-      throw new Error(
-        buyVtu.message || purchaseError?.message || "Failed to purchase data"
-      );
-    }
 
     // Create transaction record
     await buyVtu.createTransaction("data", user.id);
