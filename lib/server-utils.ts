@@ -40,6 +40,7 @@ import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
 import { createTransport } from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { Referral } from "@/models/referral";
+import { number } from "zod";
 
 export const budPay = (type: "s2s" | "v2" = "v2") => {
   return axios.create({
@@ -853,12 +854,12 @@ export class BuyVTU {
         throw new Error("Session not started. Call startSession first.");
       }
 
+      if (!this.status) return;
+
       const meta = {
         ...this.vendingResponse,
         ...this.powerVendResponse,
       };
-
-      //console.log(this.vendingResponse);
 
       const trxPayload: transaction = {
         amount:
@@ -926,7 +927,7 @@ export class BuyVTU {
     networkId: number,
     planId: number,
     phoneNumber: string,
-    amount = 0
+    amount: number
   ) {
     try {
       interface IRes {
@@ -950,8 +951,6 @@ export class BuyVTU {
         payload,
         { headers: { Authorization: `Bearer ${process.env.SME_PLUG_API_KEY}` } }
       );
-
-      console.log({ res });
 
       this.vendingResponse = {
         recipientCount: 1,

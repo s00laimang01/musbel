@@ -102,6 +102,12 @@ export async function POST(request: Request) {
 
     await user.verifyUserBalance(amount); //Check if the user have the balance to buy the service.
 
+    // Update user balance with session
+    await user.updateOne(
+      { $inc: { balance: -amount } },
+      { session: buyVtu.session }
+    );
+
     //Use the buyAirtime function to purchase airtime.
     await buyVtu.buyAirtimeFromA4bData({
       amount,
@@ -118,12 +124,6 @@ export async function POST(request: Request) {
 
     // Create transaction record
     await buyVtu.createTransaction("airtime", user.id);
-
-    // Update user balance with session
-    await user.updateOne(
-      { $inc: { balance: -amount } },
-      { session: buyVtu.session }
-    );
 
     // Commit the transaction if everything succeeded
     await buyVtu.commitSession();

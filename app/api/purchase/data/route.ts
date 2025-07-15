@@ -87,7 +87,6 @@ export async function POST(request: Request) {
     //TODO: check network
     buyVtu.setNetwork = dataPlan.network;
 
-    // Only debit user and create transaction if data purchase was successful
     // Update user balance with session
     await user.updateOne(
       { $inc: { balance: -dataPlan.amount } },
