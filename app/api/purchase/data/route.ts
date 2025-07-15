@@ -123,7 +123,7 @@ export async function POST(request: Request) {
         networdId[dataPlan.network],
         String(dataPlan.planId),
         phoneNumber,
-        validationResult.data.byPassValidator
+        byPassValidator
       );
     }
 

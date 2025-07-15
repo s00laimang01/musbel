@@ -27,6 +27,7 @@ import {
   transactionType,
   IReferral,
   DataVendingResponse,
+  AirtimeVendingResponse,
 } from "@/types";
 import axios from "axios";
 import mongoose, { PipelineStage } from "mongoose";
@@ -714,6 +715,57 @@ export class BuyVTU {
 
       return this;
     } catch (error) {
+      this.status = false;
+
+      this.message =
+        //@ts-ignore
+        error.response?.data?.data?.errorDesc ||
+        "AIRTIME_PURCHASE_FAILED: unable to process your request.";
+      return this;
+    }
+  }
+
+  public async buyAirtimeFromA4bData(payload: {
+    network: string;
+    phone: string;
+    amount: number;
+    "request-id": string;
+    bypass?: boolean;
+  }) {
+    try {
+      const { data, status } = await axios.post<AirtimeVendingResponse>(
+        `https://a4bdata.com/api/topup/`,
+        { ...payload, plan_type: "VTU" },
+        {
+          headers: {
+            Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}`,
+          },
+        }
+      );
+
+      this.vendingResponse = {
+        commissionEarned: data.discount,
+        cost: data.amount,
+        recipientCount: 1,
+        recipients: data.phone_number,
+        totalAmount: data.amount,
+        vendReport: {
+          [data.phone_number]: "successful",
+        },
+        vendStatus: null,
+      };
+      this.status = Boolean(
+        status === 200 &&
+          this.vendingResponse.vendReport?.[data.phone_number] === "successful"
+      );
+      this.message = !this.status
+        ? "Airtime vending failed"
+        : "Airtime purchase successful, you will be creditted soon";
+
+      return this;
+    } catch (error: any) {
+      console.log(error.response);
+
       this.status = false;
 
       this.message =
