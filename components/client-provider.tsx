@@ -18,15 +18,19 @@ import { useQuery } from "@tanstack/react-query";
 import { useUserStore } from "@/stores/user.store";
 import { getUser, sendWhatsAppMessage } from "@/lib/utils";
 import Image from "next/image";
+import { error } from "console";
+import { useRouter } from "next/navigation";
+import { PATHS } from "@/types";
 
 const ClientProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const { status } = useSession();
   const { setUser } = useUserStore();
+  const r = useRouter();
 
   // Use React Query to fetch user data
-  const { isLoading, data } = useQuery({
+  const { isLoading, data, error } = useQuery({
     queryKey: ["user", status],
     queryFn: () => getUser(),
     enabled: status === "authenticated",
@@ -41,6 +45,12 @@ const ClientProvider: FC<{ children: ReactNode }> = ({ children }) => {
       setUser(data);
     }
   }, [data, status]);
+
+  useEffect(() => {
+    if (error && status === "unauthenticated") {
+      r.push(PATHS.SIGNIN);
+    }
+  }, [error, status]);
 
   // Show loading state while checking authentication or fetching data
   if (status === "loading" || isLoading) {
