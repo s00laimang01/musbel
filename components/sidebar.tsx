@@ -18,6 +18,7 @@ import Link from "next/link";
 import { PATHS } from "@/types";
 import { useUserStore } from "@/stores/user.store";
 import { signOut } from "next-auth/react";
+import Cookies from "js-cookie";
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -153,6 +154,7 @@ export function Sidebar({
             isActive={isPathMathching("")}
             onClick={async () => {
               await signOut();
+              Cookies.remove("isAuthenticated");
               location.href = PATHS.SIGNIN;
             }}
           />
