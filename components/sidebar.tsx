@@ -60,8 +60,6 @@ export function Sidebar({
 }) {
   const { user } = useUserStore();
 
-  console.log(user?.auth);
-
   return (
     <aside className={cn("h-full w-lg p-6", className)}>
       <Link
@@ -154,7 +152,8 @@ export function Sidebar({
             label="Logout"
             isActive={isPathMathching("")}
             onClick={async () => {
-              await signOut({ redirect: true });
+              await signOut();
+              location.href = PATHS.SIGNIN;
             }}
           />
         </ul>

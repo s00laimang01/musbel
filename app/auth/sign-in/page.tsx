@@ -13,13 +13,14 @@ import Text from "@/components/text";
 import { PATHS } from "@/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Cookies from "js-cookie";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Page() {
   const n = useRouter();
   const q = useSearchParams();
+  const { status } = useSession();
   const [showPassword, setShowPassword] = useState(false);
   const [isPending, startTransition] = useState(false);
   const [auth, setAuth] = useState({
@@ -67,13 +68,18 @@ export default function Page() {
   };
 
   useEffect(() => {
+    if (status === "authenticated") {
+      n.push(PATHS.HOME);
+      return;
+    }
+
     const email = q.get("email") || Cookies.get("email") || "";
     const password = Cookies.get("password") || "";
 
     if (email || password) {
       setAuth({ ...auth, email, password, rememberLogins: true });
     }
-  }, []);
+  }, [status]);
 
   return (
     <main>
