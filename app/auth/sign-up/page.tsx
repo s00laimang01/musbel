@@ -19,7 +19,7 @@ import { PATHS } from "@/types";
 import { PrivacyFooter } from "@/components/privacy-footer";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { errorMessage } from "@/lib/utils";
+import { apiResponse, errorMessage } from "@/lib/utils";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -37,9 +37,44 @@ export default function SignUpPage() {
   });
 
   // Handle input change
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
+
+    if (name === "email" || name === "phoneNumber") {
+      if (name === "email") {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+          return;
+        }
+      }
+
+      if (name === "phoneNumber") {
+        const phoneNumberRegex = /^\+?\d{1,15}$/;
+        if (!phoneNumberRegex.test(value)) {
+          return;
+        }
+      }
+
+      try {
+        startTransition(true);
+
+        const res = await axios.get<apiResponse<{ userExist: boolean }>>(
+          `/api/auth/verify-identifier?type=${name}&identifier=${value}`
+        );
+
+        if (res.data.data.userExist) {
+          toast.error(
+            name === "email"
+              ? "User with this email already exist"
+              : "User with this phone number already exist"
+          );
+          return;
+        }
+      } finally {
+        startTransition(false);
+      }
+    }
   };
 
   const signUp = async (e: React.FormEvent<HTMLFormElement>) => {
