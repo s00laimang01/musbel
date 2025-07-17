@@ -63,9 +63,6 @@ export default function Page() {
     } finally {
       startTransition(false);
     }
-
-    n.push(PATHS.HOME);
-    Cookies.set("isAuthenticated", "true");
   };
 
   useEffect(() => {
