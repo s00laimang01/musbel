@@ -107,7 +107,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const fees = payload.data.amount * 0.01;
+    const fees = payload.data.amount * 0.0; //Remove fees from 0.01 --> 0.00
+
     const amountToFund = payload.data.amount - fees;
 
     try {
