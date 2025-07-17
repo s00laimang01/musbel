@@ -42,9 +42,8 @@ export async function POST(request: Request) {
     await app?.isAccountCreationStopped();
 
     // Check if user already exists
-    const existingUser = await findUserByEmail(email, {
-      includePassword: true,
-      throwOn404: false,
+    const existingUser = await User.findOne({
+      $or: [{ "auth.email": email }, { phoneNumber }],
     });
 
     if (existingUser) {
