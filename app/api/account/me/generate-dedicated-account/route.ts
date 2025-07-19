@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
           400,
           "Missing required fields: userId and signature"
         ),
-        { status: 400 }
+        { status: 400, statusText: "Error from the request body" }
       );
     }
 
@@ -50,7 +50,9 @@ export async function POST(request: NextRequest) {
     // User validation
     const user = await User.findById(requestUserId);
     if (!user) {
-      return NextResponse.json(httpStatusResponse(404, "User not found"));
+      return NextResponse.json(httpStatusResponse(404, "User not found"), {
+        status: 404,
+      });
     }
 
     // Validate user has required fields
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
           400,
           "User missing required information (fullName or email)"
         ),
-        { status: 400 }
+        { status: 400, statusText: "Error from the user data retrieved" }
       );
     }
 
