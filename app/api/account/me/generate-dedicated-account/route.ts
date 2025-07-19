@@ -24,15 +24,17 @@ export async function POST(request: NextRequest) {
 
     const { userId: requestUserId = null, signature = null } = body;
 
-    if (!requestUserId || !signature) {
-      return NextResponse.json(
-        httpStatusResponse(
-          400,
-          "Missing required fields: userId and signature"
-        ),
-        { status: 400, statusText: "Error from the request body" }
-      );
-    }
+    console.log({ requestUserId, signature });
+
+    //if (!requestUserId || !signature) {
+    //  return NextResponse.json(
+    //    httpStatusResponse(
+    //      400,
+    //      "Missing required fields: userId and signature"
+    //    ),
+    //    { status: 400, statusText: "Error from the request body" }
+    //  );
+    //}
 
     // Signature validation
     //if (signature.trim() !== configs["X-RAPIDAPI-KEY"]?.trim()) {
