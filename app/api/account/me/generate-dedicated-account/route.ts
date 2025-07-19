@@ -22,20 +22,29 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     if (!body || typeof body !== "object") {
-      return NextResponse.json(httpStatusResponse(400, "Invalid request body"));
+      return NextResponse.json(
+        httpStatusResponse(400, "Invalid request body"),
+        { status: 400 }
+      );
     }
 
     const { userId: requestUserId, signature } = body;
 
     if (!requestUserId || !signature) {
       return NextResponse.json(
-        httpStatusResponse(400, "Missing required fields: userId and signature")
+        httpStatusResponse(
+          400,
+          "Missing required fields: userId and signature"
+        ),
+        { status: 400 }
       );
     }
 
     // Signature validation
     if (signature !== configs["X-RAPIDAPI-KEY"]) {
-      return NextResponse.json(httpStatusResponse(401, "Invalid signature"));
+      return NextResponse.json(httpStatusResponse(401, "Invalid signature"), {
+        status: 401,
+      });
     }
 
     // User validation
@@ -50,7 +59,8 @@ export async function POST(request: NextRequest) {
         httpStatusResponse(
           400,
           "User missing required information (fullName or email)"
-        )
+        ),
+        { status: 400 }
       );
     }
 
@@ -87,7 +97,8 @@ export async function POST(request: NextRequest) {
       httpStatusResponse(
         500,
         error instanceof Error ? error.message : "Internal server error"
-      )
+      ),
+      { status: 500 }
     );
   }
 }
