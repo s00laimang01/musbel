@@ -149,10 +149,7 @@ async function createAccountWithFallback(user: any, client: Client) {
       const bank = banks[i];
       const accountDetails = await processVirtualAccountForUser(user, bank);
 
-      if (
-        accountDetails &&
-        accountDetails.accountDetails.bankCode !== PREFERRED_BANK
-      ) {
+      if (accountDetails.accountDetails.bankCode !== PREFERRED_BANK) {
         await scheduleRetry(client, user._id.toString());
       }
 

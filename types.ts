@@ -502,6 +502,7 @@ export interface createDedicatedVirtualAccountResponse {
       email: string;
     };
   };
+  err?: any;
 }
 
 // BUDPAY WEBHOOK PROPS

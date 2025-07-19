@@ -40,7 +40,6 @@ import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
 import { createTransport } from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { Referral } from "@/models/referral";
-import { number } from "zod";
 
 export const budPay = (type: "s2s" | "v2" = "v2") => {
   return axios.create({
@@ -80,7 +79,7 @@ export const createDedicatedVirtualAccount = async (
   try {
     const response = await axios.post<createDedicatedVirtualAccountResponse>(
       `https://api.billstack.co/v2/thirdparty/generateVirtualAccount/`,
-      payload,
+      { ...payload, reference: payload.reference.toString() },
       {
         headers: {
           Authorization: `Bearer ${process.env.BILL_STACK_SECRET_KEY}`,
@@ -90,10 +89,11 @@ export const createDedicatedVirtualAccount = async (
 
     return response.data;
   } catch (error: any) {
-    console.log(error.response.data);
+    console.log({ error });
     return {
       status: false,
       message: (error as Error).message,
+      err: error?.response?.data,
     } as createDedicatedVirtualAccountResponse;
   }
 };
@@ -414,12 +414,16 @@ export async function processVirtualAccountForUser(
   const newUser = user; //Assign this as newUser for clarity
   const [firstName, lastName] = newUser?.fullName?.split(" "); //Split the user full name into firstName and lastName
 
+  if (!lastName) {
+    await sendEmail([newUser.auth.email], "", "Missing Last Name");
+  }
+
   // Create a virtual account for the user
   const account = await createDedicatedVirtualAccount({
     bank: dedicatedAccountToOpenForUsers,
     email: newUser?.auth?.email,
     firstName,
-    lastName,
+    lastName: lastName || firstName,
     phone: newUser.phoneNumber,
     reference: user._id!,
   });
