@@ -45,6 +45,9 @@ export async function POST(request: NextRequest) {
 
     // User validation
     const user = await User.findById(requestUserId);
+
+    console.log(user?.toJSON());
+
     if (!user) {
       return NextResponse.json(httpStatusResponse(404, "User not found"), {
         status: 404,
@@ -68,6 +71,8 @@ export async function POST(request: NextRequest) {
     const existingAccount = await Account.findOne({
       user: user._id.toString(),
     });
+
+    console.log(existingAccount?.toJSON());
 
     // If user already has the preferred bank account, return success
     if (existingAccount?.accountDetails?.bankCode === PREFERRED_BANK) {
