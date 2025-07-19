@@ -55,16 +55,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Validate user has required fields
-    if (!user.fullName || !user.auth?.email) {
-      return NextResponse.json(
-        httpStatusResponse(
-          400,
-          "User missing required information (fullName or email)"
-        ),
-        { status: 400, statusText: "Error from the user data retrieved" }
-      );
-    }
+    //// Validate user has required fields
+    //if (!user.fullName || !user.auth?.email) {
+    //  return NextResponse.json(
+    //    httpStatusResponse(
+    //      400,
+    //      "User missing required information (fullName or email)"
+    //    ),
+    //    { status: 400, statusText: "Error from the user data retrieved" }
+    //  );
+    //}
 
     userId = user._id.toString();
 
