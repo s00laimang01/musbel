@@ -9,7 +9,7 @@ import { availableBanks } from "@/types";
 import { connectToDatabase } from "@/lib/connect-to-db";
 
 // Constants
-const RETRY_DELAY_HOURS = 3;
+const RETRY_DELAY_HOURS = 1;
 const RETRY_DELAY_SECONDS = RETRY_DELAY_HOURS * 60 * 60;
 const MAX_RETRIES = 3;
 const PREFERRED_BANK = "PALMPAY";
@@ -127,7 +127,8 @@ async function createPalmPayAccount(user: any, client: Client) {
     await scheduleRetry(client, user._id.toString());
 
     return NextResponse.json(
-      httpStatusResponse(500, "Unable to create PalmPay account")
+      httpStatusResponse(500, "Unable to create PalmPay account"),
+      { status: 500 }
     );
   }
 }
@@ -175,7 +176,8 @@ async function createAccountWithFallback(user: any, client: Client) {
     httpStatusResponse(
       500,
       lastError?.message || "Unable to create account with any provider"
-    )
+    ),
+    { status: 500 }
   );
 }
 
