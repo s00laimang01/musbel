@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@upstash/qstash";
 import { configs } from "@/lib/constants";
 import { availableBanks } from "@/types";
+import { connectToDatabase } from "@/lib/connect-to-db";
 
 // Constants
 const RETRY_DELAY_HOURS = 3;
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     //  });
     //}
 
-    console.log({ requestUserId, signature });
+    await connectToDatabase();
 
     // User validation
     const user = await User.findById(requestUserId);
