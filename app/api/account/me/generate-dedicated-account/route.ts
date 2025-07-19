@@ -22,14 +22,7 @@ export async function POST(request: NextRequest) {
     // Input validation
     const body = await request.json();
 
-    if (!body || typeof body !== "object") {
-      return NextResponse.json(
-        httpStatusResponse(400, "Invalid request body"),
-        { status: 400 }
-      );
-    }
-
-    const { userId: requestUserId, signature } = body;
+    const { userId: requestUserId = null, signature = null } = body;
 
     if (!requestUserId || !signature) {
       return NextResponse.json(
