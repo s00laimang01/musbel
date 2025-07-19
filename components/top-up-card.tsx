@@ -14,7 +14,6 @@ import VerifyEmail from "./verify-email";
 import { useSession } from "next-auth/react";
 import { Skeleton } from "./ui/skeleton";
 import { useUserStore } from "@/stores/user.store";
-import { configs } from "@/lib/constants";
 
 const TopUpCard = () => {
   const { data: session } = useSession();

@@ -89,8 +89,8 @@ export const createDedicatedVirtualAccount = async (
     );
 
     return response.data;
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
+    console.log(error.response.data);
     return {
       status: false,
       message: (error as Error).message,
