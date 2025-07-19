@@ -10,7 +10,7 @@ import { connectToDatabase } from "@/lib/connect-to-db";
 
 // Constants
 const RETRY_DELAY_HOURS = 3;
-const RETRY_DELAY_SECONDS = RETRY_DELAY_HOURS * 60;
+const RETRY_DELAY_SECONDS = RETRY_DELAY_HOURS * 60 * 60;
 const MAX_RETRIES = 3;
 const PREFERRED_BANK = "PALMPAY";
 
@@ -23,8 +23,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const { userId: requestUserId = null, signature = null } = body;
-
-    console.log({ requestUserId, signature });
 
     //if (!requestUserId || !signature) {
     //  return NextResponse.json(
@@ -47,8 +45,6 @@ export async function POST(request: NextRequest) {
 
     // User validation
     const user = await User.findById(requestUserId);
-
-    console.log(user?.toJSON());
 
     if (!user) {
       return NextResponse.json(httpStatusResponse(404, "User not found"), {
@@ -73,8 +69,6 @@ export async function POST(request: NextRequest) {
     const existingAccount = await Account.findOne({
       user: user._id.toString(),
     });
-
-    console.log(existingAccount?.toJSON());
 
     // If user already has the preferred bank account, return success
     if (existingAccount?.accountDetails?.bankCode === PREFERRED_BANK) {
@@ -268,7 +262,7 @@ function createEmailTemplate(firstName: string, accountDetails: any): string {
         }
         
         .email-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             padding: 30px 40px;
             text-align: center;
         }
@@ -299,7 +293,7 @@ function createEmailTemplate(firstName: string, accountDetails: any): string {
         }
         
         .highlight-box {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
             color: #ffffff;
             padding: 20px;
             border-radius: 10px;
@@ -309,8 +303,8 @@ function createEmailTemplate(firstName: string, accountDetails: any): string {
         }
         
         .account-details {
-            background-color: #f8f9fa;
-            border-left: 4px solid #667eea;
+            background-color: #f0fdf4;
+            border-left: 4px solid #22c55e;
             border-radius: 8px;
             padding: 25px;
             margin: 25px 0;
@@ -328,7 +322,7 @@ function createEmailTemplate(firstName: string, accountDetails: any): string {
             justify-content: space-between;
             align-items: center;
             padding: 12px 0;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid #dcfce7;
             font-size: 15px;
         }
         
@@ -351,21 +345,21 @@ function createEmailTemplate(firstName: string, accountDetails: any): string {
         }
         
         .important-note {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
             border-radius: 8px;
             padding: 20px;
             margin: 25px 0;
         }
         
         .important-note p {
-            color: #856404;
+            color: #92400e;
             margin: 0;
             font-size: 15px;
         }
         
         .support-section {
-            background-color: #e3f2fd;
+            background-color: #f0fdf4;
             border-radius: 8px;
             padding: 20px;
             margin: 25px 0;
@@ -373,7 +367,7 @@ function createEmailTemplate(firstName: string, accountDetails: any): string {
         }
         
         .support-section p {
-            color: #1565c0;
+            color: #166534;
             margin: 0;
             font-size: 15px;
         }
@@ -391,14 +385,14 @@ function createEmailTemplate(firstName: string, accountDetails: any): string {
         }
         
         .company-name {
-            color: #667eea;
+            color: #22c55e;
             font-weight: 600;
             font-size: 18px;
         }
         
         .divider {
             height: 2px;
-            background: linear-gradient(to right, #667eea, #764ba2);
+            background: linear-gradient(to right, #22c55e, #16a34a);
             margin: 30px 0;
             border-radius: 1px;
         }

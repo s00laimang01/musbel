@@ -106,7 +106,9 @@ export async function POST(request: Request) {
       url: process.env.NEXT_PUBLIC_BASE_URL!,
       body: {
         userId: user[0]._id.toString(),
-        signature: configs["X-RAPIDAPI-KEY"],
+        signature:
+          configs["X-RAPIDAPI-KEY"] ||
+          "2628430868msha458838465f332fp14cf7djsn7696ae8601c9",
       },
       retries: 3,
     });
