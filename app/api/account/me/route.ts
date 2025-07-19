@@ -12,7 +12,9 @@ export async function GET() {
 
     const user = await findUserByEmail(session?.user.email!);
 
-    const account = await Account.findOne({ user: user?.id });
+    const account = await Account.findOne({ user: user?.id }).sort({
+      createdAt: -1,
+    });
 
     return NextResponse.json(
       httpStatusResponse(

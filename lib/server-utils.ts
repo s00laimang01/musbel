@@ -377,7 +377,11 @@ export async function getTransactionByIdWithUserDetails(id: string) {
   }
 }
 
-export async function processVirtualAccountForUser(user: IUser) {
+export async function processVirtualAccountForUser(
+  user: IUser,
+  preferableBank: availableBanks = "PALMPAY",
+  saveAccountDetails: boolean = true
+) {
   const appConfigs = await App.findOne({});
 
   let dedicatedAccountToOpenForUsers: availableBanks;
@@ -385,21 +389,26 @@ export async function processVirtualAccountForUser(user: IUser) {
   await connectToDatabase();
 
   // Check if the account to create for users is not random then assign the available one else generate randomly
-  if (
-    appConfigs?.bankAccountToCreateForUsers &&
-    appConfigs?.bankAccountToCreateForUsers !== "random"
-  ) {
-    dedicatedAccountToOpenForUsers = appConfigs?.bankAccountToCreateForUsers;
-  } else {
-    const banks: availableBanks[] = [
-      "9PSB",
-      "BANKLY",
-      "PALMPAY",
-      "PROVIDUS",
-      "SAFEHAVEN",
-    ];
 
-    dedicatedAccountToOpenForUsers = banks[2];
+  if (!preferableBank) {
+    if (
+      appConfigs?.bankAccountToCreateForUsers &&
+      appConfigs?.bankAccountToCreateForUsers !== "random"
+    ) {
+      dedicatedAccountToOpenForUsers = appConfigs?.bankAccountToCreateForUsers;
+    } else {
+      const banks: availableBanks[] = [
+        "9PSB",
+        "BANKLY",
+        "PALMPAY",
+        "PROVIDUS",
+        "SAFEHAVEN",
+      ];
+
+      dedicatedAccountToOpenForUsers = banks[2];
+    }
+  } else {
+    dedicatedAccountToOpenForUsers = preferableBank;
   }
 
   const newUser = user; //Assign this as newUser for clarity
@@ -448,6 +457,8 @@ export async function processVirtualAccountForUser(user: IUser) {
 
   // Save the virtual account the user create
   await _account.save();
+
+  return virtualAccountPayload;
 }
 
 export async function sendEmail(

@@ -3,8 +3,10 @@ import { httpStatusResponse } from "@/lib/utils";
 import { signUpSchema } from "@/lib/validator.schema";
 import { App } from "@/models/app";
 import { Referral } from "@/models/referral";
-import { findUserByEmail, User } from "@/models/users";
+import { User } from "@/models/users";
 import { NextResponse } from "next/server";
+import { Client as QClient } from "@upstash/qstash";
+import { configs } from "@/lib/constants";
 
 /**
  * This is a public function use to create an account with this platform
@@ -14,6 +16,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
+    const qClient = new QClient({ token: process.env.QSTASH_TOKEN || "" });
     const requestBody = await request.json();
     const validatedData = signUpSchema.safeParse(requestBody); //Safely parsing the request body to match what i expect
 
@@ -98,6 +101,15 @@ export async function POST(request: Request) {
     } catch (error) {
       console.log(error);
     }
+
+    await qClient.publishJSON({
+      url: process.env.NEXT_PUBLIC_BASE_URL!,
+      body: {
+        userId: user[0]._id.toString(),
+        signature: configs["X-RAPIDAPI-KEY"],
+      },
+      retries: 3,
+    });
 
     // Return success without exposing password
     return NextResponse.json(

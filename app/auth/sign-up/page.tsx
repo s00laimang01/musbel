@@ -40,41 +40,6 @@ export default function SignUpPage() {
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
-
-    if (name === "email" || name === "phoneNumber") {
-      if (name === "email") {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) {
-          return;
-        }
-      }
-
-      if (name === "phoneNumber") {
-        const phoneNumberRegex = /^\+?\d{1,15}$/;
-        if (!phoneNumberRegex.test(value)) {
-          return;
-        }
-      }
-
-      try {
-        startTransition(true);
-
-        const res = await axios.get<apiResponse<{ userExist: boolean }>>(
-          `/api/auth/verify-identifier?type=${name}&identifier=${value}`
-        );
-
-        if (res.data.data.userExist) {
-          toast.error(
-            name === "email"
-              ? "User with this email already exist"
-              : "User with this phone number already exist"
-          );
-          return;
-        }
-      } finally {
-        startTransition(false);
-      }
-    }
   };
 
   const signUp = async (e: React.FormEvent<HTMLFormElement>) => {

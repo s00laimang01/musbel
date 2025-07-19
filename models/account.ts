@@ -16,9 +16,9 @@ const AccountSchema: mongoose.Schema<dedicatedAccountNumber> =
         bankCode: { type: String },
         expirationDate: { type: String },
       },
-      user: { type: String, ref: "user", index: true, unique: true },
+      user: { type: String, ref: "user", index: true },
       hasDedicatedAccountNumber: { type: Boolean, default: false }, // Fixed type definition
-      order_ref: { type: String, required: true, unique: true },
+      order_ref: { type: String, required: true },
     },
     { timestamps: true }
   );

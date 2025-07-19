@@ -15,6 +15,7 @@ const PUBLIC_ROUTES = [
   "/api/auth/reset-password",
   "/sitemap.xml",
   "/",
+  "/api/account/me/generate-dedicated-account",
 ];
 
 export async function middleware(request: NextRequest) {

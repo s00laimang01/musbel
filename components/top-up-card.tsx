@@ -1,16 +1,24 @@
 import React from "react";
 import { Card, CardContent, CardTitle } from "./ui/card";
 import Text from "./text";
-import { api, errorMessage, getDedicatedAccount } from "@/lib/utils";
+import {
+  api,
+  errorMessage,
+  getDedicatedAccount,
+  sendWhatsAppMessage,
+} from "@/lib/utils";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "./ui/button";
 import VerifyEmail from "./verify-email";
 import { useSession } from "next-auth/react";
 import { Skeleton } from "./ui/skeleton";
+import { useUserStore } from "@/stores/user.store";
+import { configs } from "@/lib/constants";
 
 const TopUpCard = () => {
   const { data: session } = useSession();
+  const { user } = useUserStore();
 
   const { isLoading, data: __data } = useQuery({
     queryKey: ["get-dedicated-account"],
@@ -48,7 +56,7 @@ const TopUpCard = () => {
       <CardContent className="space-y-3">
         <Text className="font-semibold text-white/80">
           {account?.accountDetails.bankName.toUpperCase() ||
-            "USER ACCOUNT NOT VERIFIED"}
+            "ACCOUNT CREATION IN PROGRESS"}
         </Text>
         <div className="w-full flex items-center justify-between">
           <CardTitle className="text-4xl font-bold text-white">
@@ -63,7 +71,7 @@ const TopUpCard = () => {
             >
               Copy
             </Button>
-          ) : (
+          ) : !user?.isEmailVerified ? (
             <VerifyEmail email={session?.user.email!}>
               <Button
                 onClick={sendVerificationCode}
@@ -72,10 +80,23 @@ const TopUpCard = () => {
                 VERIFY EMAIL
               </Button>
             </VerifyEmail>
+          ) : (
+            <Button
+              onClick={() =>
+                sendWhatsAppMessage(
+                  "2347040666904",
+                  `I want to fund my account, my userId is ${user._id?.toString()}`
+                )
+              }
+              className="rounded-sm bg-white/20 hover:bg-white/30"
+            >
+              MANUAL FUNDING
+            </Button>
           )}
         </div>
         <Text className="text-white/80">
-          {account?.accountDetails.accountName || "EMAIL NOT YET VERIFIED"}
+          {account?.accountDetails.accountName ||
+            "WE WILL SEND YOU AN EMAIL WHEN YOUR ACCOUNT IS READY"}
         </Text>
       </CardContent>
     </Card>

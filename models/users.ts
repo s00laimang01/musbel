@@ -116,12 +116,12 @@ UserSchema.pre("save", async function (next) {
   }
 
   // This will only run if this is the first time the user is creating their account.
-  if (this.isNew) {
-    // Check if user does not need to verify their account before assigning an account to them
-    if (!(await accountRequiresVerificationBeforeVirtualAccountActivation())) {
-      await processVirtualAccountForUser(this);
-    }
-  }
+  //if (this.isNew) {
+  //  // Check if user does not need to verify their account before assigning an account to them
+  //  if (!(await accountRequiresVerificationBeforeVirtualAccountActivation())) {
+  //    await processVirtualAccountForUser(this);
+  //  }
+  //}
 
   // Hash password if modified
   if (this.isModified("auth.password")) {
@@ -136,19 +136,19 @@ UserSchema.pre("save", async function (next) {
   //  this.auth.transactionPin = "";
   //}
 
-  const verificationRequired =
-    await accountRequiresVerificationBeforeVirtualAccountActivation();
-
-  if (this.isEmailVerified && verificationRequired) {
-    const userHasVirtualAccount = await Account.findOne({
-      hasDedicatedAccountNumber: true,
-      user: this._id,
-    });
-
-    if (userHasVirtualAccount) return next();
-
-    await processVirtualAccountForUser(this);
-  }
+  //  const verificationRequired =
+  //    await accountRequiresVerificationBeforeVirtualAccountActivation();
+  //
+  //  if (this.isEmailVerified && verificationRequired) {
+  //    const userHasVirtualAccount = await Account.findOne({
+  //      hasDedicatedAccountNumber: true,
+  //      user: this._id,
+  //    });
+  //
+  //    if (userHasVirtualAccount) return next();
+  //
+  //    await processVirtualAccountForUser(this);
+  //  }
 
   next();
 });
@@ -217,26 +217,26 @@ UserSchema.pre("findOneAndUpdate", async function (next) {
 
   // For handling virtual account creation, we need to get the document first
   // since we need the _id and other fields
-  if (update["isEmailVerified"]) {
-    // Get the document that's being updated
-    const docToUpdate = await this.model.findOne(this.getQuery());
-
-    if (docToUpdate) {
-      const verificationRequired =
-        await accountRequiresVerificationBeforeVirtualAccountActivation();
-
-      if (verificationRequired) {
-        const userHasVirtualAccount = await Account.findOne({
-          hasDedicatedAccountNumber: true,
-          user: docToUpdate._id,
-        });
-
-        if (!userHasVirtualAccount) {
-          await processVirtualAccountForUser(docToUpdate);
-        }
-      }
-    }
-  }
+  //  if (update["isEmailVerified"]) {
+  //    // Get the document that's being updated
+  //    const docToUpdate = await this.model.findOne(this.getQuery());
+  //
+  //    if (docToUpdate) {
+  //      const verificationRequired =
+  //        await accountRequiresVerificationBeforeVirtualAccountActivation();
+  //
+  //      if (verificationRequired) {
+  //        const userHasVirtualAccount = await Account.findOne({
+  //          hasDedicatedAccountNumber: true,
+  //          user: docToUpdate._id,
+  //        });
+  //
+  //        if (!userHasVirtualAccount) {
+  //          await processVirtualAccountForUser(docToUpdate);
+  //        }
+  //      }
+  //    }
+  //  }
 });
 
 UserSchema.methods.verifyTransactionPin = async function (pin: string) {

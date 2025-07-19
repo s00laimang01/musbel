@@ -136,7 +136,7 @@ export interface IUser extends Document {
 export interface accountDetailsTypes {
   accountNumber: string;
   accountName: string;
-  bankName: string;
+  bankName: availableBanks;
   bankCode: string;
   accountRef: string;
   expirationDate: string;
@@ -485,7 +485,7 @@ export type availableBanks =
 export interface generatedBankAccount {
   account_number: string;
   account_name: string;
-  bank_name: string;
+  bank_name: availableBanks;
   bank_id: availableBanks;
   created_at: string;
 }
