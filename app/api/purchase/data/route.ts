@@ -9,6 +9,7 @@ import { App } from "@/models/app";
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { BuyVTU } from "@/lib/server-utils";
 import { IBuyVtuNetworks } from "@/types";
+import { format } from "date-fns";
 
 export async function POST(request: Request) {
   const buyVtu = new BuyVTU();
@@ -132,7 +133,7 @@ export async function POST(request: Request) {
     await buyVtu.createTransaction("data", user.id, {
       ...dataPlan?.toJSON(),
       payerName: user.fullName,
-      completionTime: new Date().toISOString(),
+      completionTime: format(new Date(), "PPP"),
       customerPhone: phoneNumber,
       applicableCountry: "NG",
     });

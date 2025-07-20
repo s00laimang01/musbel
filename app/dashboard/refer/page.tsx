@@ -34,7 +34,7 @@ const Page = () => {
       ).data.data,
   });
 
-  const LINK = `https://abanty-data-sme-amber.vercel.app/auth/sign-up/?ref=${user?.phoneNumber}`;
+  const LINK = `https://kinta-sme.com/auth/sign-up/?ref=${user?.phoneNumber}`;
 
   const copyLink = (text = "") => {
     navigator.clipboard.writeText(text).then(() => {

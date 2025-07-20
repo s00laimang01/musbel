@@ -264,7 +264,8 @@ function TransactionReceipt(
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Payment Item</span>
                 <span className="text-slate-950 text-right">
-                  {transaction.meta?.data || "Unknown"}
+                  {`${transaction.meta?.data} - ${transaction.meta?.availability}` ||
+                    "Unknown"}
                 </span>
               </div>
               {transaction.meta.completionTime && (
