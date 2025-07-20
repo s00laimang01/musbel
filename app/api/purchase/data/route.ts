@@ -131,6 +131,10 @@ export async function POST(request: Request) {
     // Create transaction record
     await buyVtu.createTransaction("data", user.id, {
       ...dataPlan?.toJSON(),
+      payerName: user.fullName,
+      completionTime: new Date().toISOString(),
+      customerPhone: phoneNumber,
+      applicableCountry: "NG",
     });
 
     // Check if transaction creation was successful

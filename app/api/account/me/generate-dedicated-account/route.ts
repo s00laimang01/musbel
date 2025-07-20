@@ -4,7 +4,7 @@ import { Account } from "@/models/account";
 import { User } from "@/models/users";
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@upstash/qstash";
-import { configs } from "@/lib/constants";
+import { AllQStashKeys, configs } from "@/lib/constants";
 import { availableBanks } from "@/types";
 import { connectToDatabase } from "@/lib/connect-to-db";
 
@@ -15,7 +15,6 @@ const MAX_RETRIES = 3;
 const PREFERRED_BANK = "PALMPAY";
 
 export async function POST(request: NextRequest) {
-  const client = new Client({ token: process.env.QSTASH_TOKEN || "" });
   let userId: string = "";
 
   try {
@@ -79,17 +78,17 @@ export async function POST(request: NextRequest) {
 
     // If user has an account but not PalmPay, try to create PalmPay account
     if (existingAccount) {
-      return await createPalmPayAccount(user, client);
+      return await createPalmPayAccount(user);
     }
 
     // User has no account, try creating one with available banks
-    return await createAccountWithFallback(user, client);
+    return await createAccountWithFallback(user);
   } catch (error) {
     console.error("Error in generate-dedicated-account:", error);
 
     // Schedule retry only if we have a valid userId
     if (userId) {
-      await scheduleRetry(client, userId);
+      await scheduleRetry(userId);
     }
 
     return NextResponse.json(
@@ -102,7 +101,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function createPalmPayAccount(user: any, client: Client) {
+async function createPalmPayAccount(user: any) {
   try {
     const accountDetails = await processVirtualAccountForUser(
       user,
@@ -124,7 +123,7 @@ async function createPalmPayAccount(user: any, client: Client) {
     console.error("Error creating PalmPay account:", error);
 
     // Schedule retry
-    await scheduleRetry(client, user._id.toString());
+    await scheduleRetry(user._id.toString());
 
     return NextResponse.json(
       httpStatusResponse(500, "Unable to create PalmPay account"),
@@ -133,7 +132,7 @@ async function createPalmPayAccount(user: any, client: Client) {
   }
 }
 
-async function createAccountWithFallback(user: any, client: Client) {
+async function createAccountWithFallback(user: any) {
   const banks: availableBanks[] = [
     "PALMPAY", // Prefer PalmPay first
     "9PSB",
@@ -150,7 +149,7 @@ async function createAccountWithFallback(user: any, client: Client) {
       const accountDetails = await processVirtualAccountForUser(user, bank);
 
       if (accountDetails.accountDetails.bankCode !== PREFERRED_BANK) {
-        await scheduleRetry(client, user._id.toString());
+        await scheduleRetry(user._id.toString());
       }
 
       await sendAccountCreationEmail(user, accountDetails);
@@ -167,7 +166,7 @@ async function createAccountWithFallback(user: any, client: Client) {
   }
 
   // All banks failed, schedule retry
-  await scheduleRetry(client, user._id.toString());
+  await scheduleRetry(user._id.toString());
 
   return NextResponse.json(
     httpStatusResponse(
@@ -203,7 +202,7 @@ async function sendAccountCreationEmail(user: any, accountDetails: any) {
   }
 }
 
-async function scheduleRetry(client: Client, userId: string) {
+async function scheduleRetry(userId: string) {
   try {
     if (!process.env.NEXT_PUBLIC_BASE_URL) {
       console.error(
@@ -212,15 +211,28 @@ async function scheduleRetry(client: Client, userId: string) {
       return;
     }
 
-    await client.publishJSON({
-      url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
-      body: {
-        userId,
-        signature: configs["X-RAPIDAPI-KEY"],
-      },
-      delay: RETRY_DELAY_SECONDS,
-      retries: MAX_RETRIES,
-    });
+    let retry = 0;
+
+    while (retry < AllQStashKeys.length) {
+      try {
+        const qStashKey = AllQStashKeys[retry];
+
+        const client = new Client({ token: qStashKey || "" });
+        await client.publishJSON({
+          url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+          body: {
+            userId,
+            signature: configs["X-RAPIDAPI-KEY"],
+          },
+          delay: RETRY_DELAY_SECONDS,
+          retries: MAX_RETRIES,
+        });
+
+        break;
+      } catch (error) {
+        retry++;
+      }
+    }
   } catch (error) {
     console.error("Error scheduling retry:", error);
   }

@@ -57,7 +57,7 @@ export default function UserDetailsPage() {
   const saveUserChanges = async (data: any) => {
     try {
       await api.patch(`/admin/users/${user?._id}/`, data);
-      toast("User Info Has Been Updated");
+      toast.success("User Info Has Been Updated");
     } catch (error) {
       toast.error(errorMessage(error).message);
     }
@@ -69,12 +69,14 @@ export default function UserDetailsPage() {
     data?: any
   ) => {
     try {
+      console.log({ action, userId });
+
       if (action === "edit") {
         await saveUserChanges(data);
       }
 
       if (action === "generateAccount") {
-        await api.post(`/admin/users/generate-virtual-account/`, {
+        await api.post(`/account/me/generate-dedicated-account/`, {
           userId: user?._id,
         });
       }
@@ -86,8 +88,6 @@ export default function UserDetailsPage() {
       }
 
       queryClient.invalidateQueries({ queryKey: ["user", id] });
-      // Implementation would go here
-      console.log(`Performing ${action} on user ${userId}`);
       toast.success("Your request is successfully");
     } catch (error) {
       toast.error((error as Error).message);

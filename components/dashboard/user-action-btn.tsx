@@ -675,8 +675,7 @@ export function UserActionButtons({
                     disabled={
                       !!isLoading ||
                       (currentAction?.type === "edit" && !isFormModified) ||
-                      (currentAction.type === "generateAccount" &&
-                        !userAccount?.hasDedicatedAccountNumber)
+                      userAccount?.hasDedicatedAccountNumber
                     }
                   >
                     {isLoading ? (

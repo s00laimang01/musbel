@@ -3,7 +3,6 @@ import {
   meterType,
   PATHS,
   planTypes,
-  recentPurchaseNumbers,
   IBuyVtuNetworks,
 } from "@/types";
 import z from "zod";
@@ -21,7 +20,24 @@ export const configs = {
   FLW_SECRET_HASH: process.env["FLW_SECRET_HASH"],
   RESEND_API_KEY: process.env["RESEND_API_KEY"],
   BUDPAY_SECRET_KEY: process.env["BUDPAY_SECRET_KEY"],
+  QSTASHKEY1: process.env["QSTASHKEY1"],
+  QSTASHKEY2: process.env["QSTASHKEY2"],
+  QSTASHKEY3: process.env["QSTASHKEY3"],
+  QSTASHKEY4: process.env["QSTASHKEY4"],
+  QSTASHKEY5: process.env["QSTASHKEY5"],
+  QSTASHKEY6: process.env["QSTASHKEY6"],
+  QSTASHKEY7: process.env["QSTASH_TOKEN"],
 };
+
+export const AllQStashKeys = [
+  configs.QSTASHKEY1,
+  configs.QSTASHKEY2,
+  configs.QSTASHKEY3,
+  configs.QSTASHKEY4,
+  configs.QSTASHKEY5,
+  configs.QSTASHKEY6,
+  configs.QSTASHKEY7,
+];
 
 // FORM SCHEMAS
 export const signUpSchema = z.object({

@@ -1,42 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { format } from "date-fns";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  CreditCard,
-  FileText,
-  Landmark,
-  Smartphone,
-  Wallet,
-  Wifi,
-  BookOpen,
-} from "lucide-react";
+import { useState, useRef } from "react";
+import { ArrowLeft, Download } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetClose,
   SheetContent,
-  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
-import { api, cn } from "@/lib/utils";
-import type {
-  paymentMethod,
-  transaction,
-  transactionStatus,
-  transactionType,
-} from "@/types";
+import { api } from "@/lib/utils";
+import type { transaction } from "@/types";
 import { useRouter } from "next/navigation";
 import { ScrollArea } from "./scroll-area";
+import TransactionReceipt, {
+  TransactionReceiptSkeleton,
+} from "./transaction-receipt";
+import html2canvas from "html2canvas";
 
 interface TransactionDetailsSheetProps {
   tx_ref: string;
@@ -48,7 +32,9 @@ export function TransactionDetailsSheet({
   open,
 }: TransactionDetailsSheetProps) {
   const [isOpen, setIsOpen] = useState(open || false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const r = useRouter();
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   const { isLoading, data } = useQuery({
     queryKey: ["transaction", tx_ref],
@@ -70,254 +56,86 @@ export function TransactionDetailsSheet({
     }
   };
 
-  const getStatusIcon = (status: transactionStatus) => {
-    switch (status) {
-      case "success":
-        return <CheckCircle2 className="h-5 w-5 text-primary" />;
-      case "failed":
-        return <AlertCircle className="h-5 w-5 text-destructive" />;
-      case "pending":
-        return <Clock className="h-5 w-5 text-primary" />;
+  const downloadReceipt = async () => {
+    if (!receiptRef.current) return;
+
+    setIsDownloading(true);
+
+    try {
+      // Create canvas from the receipt element
+      const canvas = await html2canvas(receiptRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2, // Higher quality
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        width: receiptRef.current.scrollWidth,
+        height: receiptRef.current.scrollHeight,
+      });
+
+      // Convert canvas to blob
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return;
+
+          // Create download link
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `receipt-${tx_ref}-${Date.now()}.png`;
+
+          // Trigger download
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Clean up
+          URL.revokeObjectURL(url);
+        },
+        "image/png",
+        1.0
+      );
+    } catch (error) {
+      console.error("Error downloading receipt:", error);
+    } finally {
+      setIsDownloading(false);
     }
-  };
-
-  const getStatusColor = (status: transactionStatus) => {
-    switch (status) {
-      case "success":
-        return "bg-primary/20 text-primary dark:bg-primary/30 dark:text-primary-foreground";
-      case "failed":
-        return "bg-destructive/20 text-destructive dark:bg-destructive/30 dark:text-destructive-foreground";
-      case "pending":
-        return "bg-primary/20 text-primary dark:bg-primary/30 dark:text-primary-foreground";
-    }
-  };
-
-  const getTypeIcon = (type: transactionType) => {
-    switch (type) {
-      case "funding":
-        return <Wallet className="h-5 w-5" />;
-      case "airtime":
-        return <Smartphone className="h-5 w-5" />;
-      case "data":
-        return <Wifi className="h-5 w-5" />;
-      case "bill":
-        return <FileText className="h-5 w-5" />;
-      case "recharge-card":
-        return <CreditCard className="h-5 w-5" />;
-      case "exam":
-        return <BookOpen className="h-5 w-5" />;
-    }
-  };
-
-  const getTypeLabel = (type: transactionType) => {
-    switch (type) {
-      case "funding":
-        return "Wallet Funding";
-      case "airtime":
-        return "Airtime Purchase";
-      case "data":
-        return "Data Purchase";
-      case "bill":
-        return "Bill Payment";
-      case "recharge-card":
-        return "Recharge Card";
-      case "exam":
-        return "Exam Payment";
-    }
-  };
-
-  const getPaymentMethodIcon = (method: paymentMethod) => {
-    switch (method) {
-      case "dedicatedAccount":
-        return <Landmark className="h-5 w-5" />;
-      case "virtualAccount":
-        return <CreditCard className="h-5 w-5" />;
-      case "ownAccount":
-        return <Wallet className="h-5 w-5" />;
-    }
-  };
-
-  const getPaymentMethodLabel = (method: paymentMethod) => {
-    switch (method) {
-      case "dedicatedAccount":
-        return "Dedicated Account";
-      case "virtualAccount":
-        return "Virtual Account";
-      case "ownAccount":
-        return "Own Account";
-    }
-  };
-
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-    }).format(amount);
-  };
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "N/A";
-    return format(new Date(dateString), "PPP 'at' p");
   };
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-      <SheetContent className="md:max-w-md p-4 w-[90%]">
+      <SheetContent className="md:max-w-lg p-2 w-full space-y-3 bg-gray-200">
         <ScrollArea>
-          <SheetHeader className="p-0">
-            <SheetTitle>Transaction Details</SheetTitle>
-            <SheetDescription>
-              Complete information about this transaction
-            </SheetDescription>
+          <SheetHeader className="p-0 mb-4 flex flex-row gap-2 items-center py-4 border-b border-gray-800">
+            {/* Header */}
+            <Button
+              className="rounded-full"
+              size="icon"
+              variant="ghost"
+              onClick={() => handleOpenChange(false)}
+            >
+              {" "}
+              <ArrowLeft />
+            </Button>
+            <SheetTitle className="text-lg font-medium">
+              Transaction receipt
+            </SheetTitle>
           </SheetHeader>
-          {isLoading ? (
-            <div className="py-6 space-y-6">
-              <div className="flex flex-col items-center justify-center space-y-2">
-                <div className="p-3 rounded-full bg-muted animate-pulse w-12 h-12"></div>
-                <div className="h-6 bg-muted animate-pulse rounded w-32"></div>
-                <div className="h-5 bg-muted animate-pulse rounded w-24"></div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center"
-                  >
-                    <div className="h-4 bg-muted animate-pulse rounded w-24"></div>
-                    <div className="h-4 bg-muted animate-pulse rounded w-32"></div>
-                  </div>
-                ))}
-
-                <div className="flex flex-col gap-1">
-                  <div className="h-4 bg-muted animate-pulse rounded w-20"></div>
-                  <div className="h-20 bg-muted/50 animate-pulse rounded w-full"></div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="py-6 space-y-6">
-              <div className="flex flex-col items-center justify-center space-y-2">
-                <div className="p-3 rounded-full bg-primary/10 text-primary">
-                  {transaction?.type && getTypeIcon(transaction.type)}
-                </div>
-                <h3 className="text-xl font-semibold">
-                  {transaction?.amount
-                    ? formatAmount(transaction.amount)
-                    : "N/A"}
-                </h3>
-                {transaction?.status && (
-                  <Badge
-                    className={cn(
-                      getStatusColor(transaction.status),
-                      "rounded-none"
-                    )}
-                  >
-                    <span className="flex items-center gap-1">
-                      {getStatusIcon(transaction.status)}
-                      <span className="capitalize">{transaction.status}</span>
-                    </span>
-                  </Badge>
-                )}
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Transaction Type
-                  </span>
-                  <span className="flex items-center gap-1.5 font-medium">
-                    {transaction?.type && getTypeIcon(transaction.type)}
-                    {transaction?.type && getTypeLabel(transaction.type)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Payment Method
-                  </span>
-                  <span className="flex items-center gap-1.5 font-medium">
-                    {transaction?.paymentMethod &&
-                      getPaymentMethodIcon(transaction.paymentMethod)}
-                    {transaction?.paymentMethod &&
-                      getPaymentMethodLabel(transaction.paymentMethod)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Reference
-                  </span>
-                  <span className="font-mono text-sm font-medium">
-                    {transaction?.tx_ref}
-                  </span>
-                </div>
-
-                {transaction?.accountId && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">
-                      Account ID
-                    </span>
-                    <span className="font-mono text-sm font-medium">
-                      {transaction.accountId}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">User</span>
-                  <span className="font-medium">{transaction?.user}</span>
-                </div>
-
-                {transaction?.note && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm text-muted-foreground">Note</span>
-                    <p className="text-sm p-3 bg-primary/5 rounded-none">
-                      {transaction.note}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Created</span>
-                  <span className="text-sm">
-                    {formatDate(transaction?.createdAt)}
-                  </span>
-                </div>
-
-                {transaction?.updatedAt &&
-                  transaction.updatedAt !== transaction.createdAt && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        Last Updated
-                      </span>
-                      <span className="text-sm">
-                        {formatDate(transaction.updatedAt)}
-                      </span>
-                    </div>
-                  )}
-
-                {transaction?.meta &&
-                  Object.keys(transaction.meta).length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        Additional Details
-                      </span>
-                      <div className="bg-primary/5 p-3 rounded-none">
-                        <pre className="text-xs overflow-auto whitespace-pre-wrap">
-                          {JSON.stringify(transaction.meta, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
-              </div>
-            </div>
-          )}
-          <SheetFooter className="p-0">
+          <div ref={receiptRef}>
+            {isLoading ? (
+              <TransactionReceiptSkeleton />
+            ) : (
+              <TransactionReceipt {...transaction!} />
+            )}
+          </div>
+          <SheetFooter className="py-4">
+            <Button
+              className="rounded-none"
+              onClick={downloadReceipt}
+              disabled={isLoading || isDownloading}
+            >
+              <Download className="mr-2 h-4 w-4" /> Download
+            </Button>
             <SheetClose asChild>
               <Button variant="outline" className="w-full rounded-none">
                 Close

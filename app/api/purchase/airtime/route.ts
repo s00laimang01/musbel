@@ -123,7 +123,11 @@ export async function POST(request: Request) {
     }
 
     // Create transaction record
-    await buyVtu.createTransaction("airtime", user.id);
+    await buyVtu.createTransaction("airtime", user.id, {
+      network,
+      payerNumber: user.phoneNumber,
+      payerName: user.fullName,
+    });
 
     // Commit the transaction if everything succeeded
     await buyVtu.commitSession();
