@@ -129,7 +129,9 @@ export async function POST(request: Request) {
     buyVtu.amount = dataPlan?.amount;
 
     // Create transaction record
-    await buyVtu.createTransaction("data", user.id);
+    await buyVtu.createTransaction("data", user.id, {
+      ...dataPlan?.toJSON(),
+    });
 
     // Check if transaction creation was successful
     if (!buyVtu.status) {

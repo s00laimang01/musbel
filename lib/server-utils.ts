@@ -863,7 +863,11 @@ export class BuyVTU {
     }
   }
 
-  public async createTransaction(type: transactionType, userId: string) {
+  public async createTransaction(
+    type: transactionType,
+    userId: string,
+    options?: Record<string, any>
+  ) {
     try {
       if (!this.session) {
         throw new Error("Session not started. Call startSession first.");
@@ -874,6 +878,7 @@ export class BuyVTU {
       const meta = {
         ...this.vendingResponse,
         ...this.powerVendResponse,
+        ...options,
       };
 
       const trxPayload: transaction = {
