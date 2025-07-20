@@ -2,7 +2,7 @@
 
 import { useNavBar } from "@/hooks/use-nav-bar";
 import React, { FC, ReactNode, useEffect, useState } from "react";
-import { Code, Plus } from "lucide-react";
+import { Code } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import { signOut } from "next-auth/react";
 import { PATHS } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
 import CreateOrUpdatePin from "@/components/create-or-update";
+import Cookies from "js-cookie";
 
 const ChangeEmailAddress: FC<{ children: ReactNode }> = ({ children }) => {
   const [email, setEmail] = useState("");
@@ -36,6 +37,8 @@ const ChangeEmailAddress: FC<{ children: ReactNode }> = ({ children }) => {
     try {
       startTransition(true);
       await api.patch("/users/me/", { "auth.email": email });
+
+      Cookies.remove("isAuthenticated");
 
       // Logout the user to login with new email.
       await signOut({
@@ -150,6 +153,8 @@ const Page = () => {
       startTransition(true);
       await api.delete("/users/me/delete/");
       toast.success("Account deleted successfully");
+
+      Cookies.remove("isAuthenticated");
 
       await signOut({
         redirect: true,

@@ -599,17 +599,20 @@ export function UserActionButtons({
                     </p>
                   </div>
                   <Button
-                    disabled={userAccount?.hasDedicatedAccountNumber}
+                    disabled={
+                      userAccount?.hasDedicatedAccountNumber || !!isLoading
+                    }
                     variant="default"
                     size="sm"
                     className="rounded-none bg-primary text-primary-foreground"
                     onClick={() => {
-                      setCurrentAction({
-                        type: "generateAccount",
-                        title: "Generate Account",
-                        description:
-                          "Generate a dedicated virtual account for this user.",
-                      });
+                      handleAction();
+                      //setCurrentAction({
+                      //  type: "generateAccount",
+                      //  title: "Generate Account",
+                      //  description:
+                      //    "Generate a dedicated virtual account for this user.",
+                      //});
                     }}
                   >
                     <Plus className="h-4 w-4 mr-2" />

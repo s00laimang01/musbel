@@ -23,22 +23,22 @@ export async function POST(request: NextRequest) {
 
     const { userId: requestUserId = null, signature = null } = body;
 
-    //if (!requestUserId || !signature) {
-    //  return NextResponse.json(
-    //    httpStatusResponse(
-    //      400,
-    //      "Missing required fields: userId and signature"
-    //    ),
-    //    { status: 400, statusText: "Error from the request body" }
-    //  );
-    //}
+    if (!requestUserId || !signature) {
+      return NextResponse.json(
+        httpStatusResponse(
+          400,
+          "Missing required fields: userId and signature"
+        ),
+        { status: 400, statusText: "Error from the request body" }
+      );
+    }
 
     // Signature validation
-    //if (signature.trim() !== configs["X-RAPIDAPI-KEY"]?.trim()) {
-    //  return NextResponse.json(httpStatusResponse(401, "Invalid signature"), {
-    //    status: 401,
-    //  });
-    //}
+    if (signature.trim() !== configs["X-RAPIDAPI-KEY"]?.trim()) {
+      return NextResponse.json(httpStatusResponse(401, "Invalid signature"), {
+        status: 401,
+      });
+    }
 
     await connectToDatabase();
 

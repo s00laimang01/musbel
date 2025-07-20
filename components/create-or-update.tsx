@@ -69,6 +69,7 @@ const CreateOrUpdatePin: FC<CreateOrUpdatePinProps> = ({
 
   const createTransactionPin = async (pin: string) => {
     try {
+      setLoading(true);
       const res = await api.post<{ message: string }>(`/auth/pin/`, {
         pin,
         confirmPin,
@@ -77,11 +78,14 @@ const CreateOrUpdatePin: FC<CreateOrUpdatePinProps> = ({
       toast(res.data.message);
     } catch (error) {
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const changeTransactionPin = async () => {
     try {
+      setLoading(true);
       const res = await api.patch<{ message: string }>(`/auth/pin/update/`, {
         newPin,
         oldPin: currentPin,
@@ -90,6 +94,8 @@ const CreateOrUpdatePin: FC<CreateOrUpdatePinProps> = ({
       toast(res.data.message);
     } catch (error) {
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 

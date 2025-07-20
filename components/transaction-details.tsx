@@ -104,7 +104,7 @@ export function TransactionDetailsSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-      <SheetContent className="md:max-w-lg p-2 w-full space-y-3 bg-gray-200">
+      <SheetContent className="md:max-w-lg p-2 w-full space-y-3 bg-gray-100">
         <ScrollArea>
           <SheetHeader className="p-0 mb-4 flex flex-row gap-2 items-center py-4 border-b border-gray-800">
             {/* Header */}
@@ -118,16 +118,15 @@ export function TransactionDetailsSheet({
               <ArrowLeft />
             </Button>
             <SheetTitle className="text-lg font-medium">
-              Transaction receipt
+              TRANSACTION RECEIPT
             </SheetTitle>
           </SheetHeader>
-          <div ref={receiptRef}>
-            {isLoading ? (
-              <TransactionReceiptSkeleton />
-            ) : (
-              <TransactionReceipt {...transaction!} />
-            )}
-          </div>
+
+          {isLoading ? (
+            <TransactionReceiptSkeleton />
+          ) : (
+            <TransactionReceipt {...transaction!} ref={receiptRef} />
+          )}
           <SheetFooter className="py-4">
             <Button
               className="rounded-none"

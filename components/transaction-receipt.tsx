@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { configs } from "@/lib/constants";
 import { Skeleton } from "./ui/skeleton";
+import React from "react";
 
 export function TransactionReceiptSkeleton() {
   return (
@@ -54,7 +55,10 @@ export function TransactionReceiptSkeleton() {
   );
 }
 
-export default function TransactionReceipt(transaction: transaction) {
+function TransactionReceipt(
+  transaction: transaction,
+  ref: React.ForwardedRef<HTMLDivElement>
+) {
   const { data: session } = useSession();
 
   const formatDate = (dateString?: string) => {
@@ -96,7 +100,10 @@ export default function TransactionReceipt(transaction: transaction) {
   };
 
   return (
-    <Card className="w-full rounded-none bg-white text-slate-900 border-gray-700 overflow-hidden py-0">
+    <Card
+      ref={ref}
+      className="w-full rounded-none bg-white text-slate-900 border-gray-700 overflow-hidden py-0"
+    >
       <CardContent className="p-0 rounded-none">
         {/* Header */}
         <div className="p-6 text-center border-b border-gray-700 relative">
@@ -333,3 +340,9 @@ export default function TransactionReceipt(transaction: transaction) {
     </Card>
   );
 }
+
+TransactionReceipt.displayName = "TransactionReceipt";
+
+export default React.forwardRef<HTMLDivElement, transaction>(
+  TransactionReceipt
+);

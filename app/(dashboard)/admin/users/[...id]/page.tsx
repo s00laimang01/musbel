@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useParams } from "next/navigation";
 import { UserActionButtons } from "@/components/dashboard/user-action-btn";
 import { toast } from "sonner";
+import { configs } from "@/lib/constants";
 
 async function getUser(id: string) {
   const res = await api.get<{
@@ -69,15 +70,14 @@ export default function UserDetailsPage() {
     data?: any
   ) => {
     try {
-      console.log({ action, userId });
-
       if (action === "edit") {
         await saveUserChanges(data);
       }
 
       if (action === "generateAccount") {
         await api.post(`/account/me/generate-dedicated-account/`, {
-          userId: user?._id,
+          userId: userId,
+          signature: configs["X-RAPIDAPI-KEY"],
         });
       }
 
