@@ -10,10 +10,10 @@ import React from "react";
 
 export function TransactionReceiptSkeleton() {
   return (
-    <Card className="w-full rounded-none bg-accent-foreground text-slate-950 border-gray-700 overflow-hidden py-0">
+    <Card className="w-full rounded-none bg-white text-slate-900 border-gray-700 overflow-hidden py-0">
       <CardContent className="p-0 rounded-none">
         {/* Header */}
-        <div className="bg-gray-800 p-6 text-center border-b border-gray-700 relative">
+        <div className="p-6 text-center border-b border-gray-700 relative">
           <div className="flex justify-center mb-4">
             <div className="text-primary font-bold text-xl flex items-center gap-2">
               <Avatar>
@@ -44,7 +44,7 @@ export function TransactionReceiptSkeleton() {
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-800 p-6 text-center space-y-2 border-t border-gray-700">
+        <div className="p-6 text-center space-y-2 border-t border-gray-700">
           <Skeleton className="h-4 w-48 mx-auto" />
           <Skeleton className="h-4 w-40 mx-auto" />
           <Skeleton className="h-4 w-44 mx-auto" />

@@ -41,7 +41,7 @@ export function TransactionDetailsSheet({
     queryFn: async () =>
       (
         await api.get<{ data: transaction }>(
-          `/transactions/get-transaction/?tx_ref=${tx_ref}&useExpirationDate=false`
+          `/transactions/get-transaction?tx_ref=${tx_ref}&useExpirationDate=false`
         )
       ).data,
     enabled: isOpen,
