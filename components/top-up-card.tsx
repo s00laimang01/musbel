@@ -53,9 +53,10 @@ const TopUpCard = () => {
   return (
     <Card className="bg-primary/80 rounded-sm mt-4">
       <CardContent className="space-y-3">
-        <Text className="font-semibold text-white/80">
-          {account?.accountDetails.bankName.toUpperCase() ||
-            "ACCOUNT CREATION IN PROGRESS"}
+        <Text className="font-semibold text-white">
+          {account?.accountDetails.bankName.toUpperCase()
+            ? `Bank Name: ${account?.accountDetails.bankName.toUpperCase()}`
+            : "ACCOUNT CREATION IN PROGRESS"}
         </Text>
         <div className="w-full flex items-center justify-between">
           <CardTitle className="text-4xl font-bold text-white">
