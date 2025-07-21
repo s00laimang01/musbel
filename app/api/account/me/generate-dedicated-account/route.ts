@@ -33,8 +33,6 @@ export async function POST(request: NextRequest) {
 
     const { userId: requestUserId = null, signature = null } = body;
 
-    console.log({ requestUserId, signature });
-
     if (!requestUserId || !signature) {
       return NextResponse.json(
         httpStatusResponse(

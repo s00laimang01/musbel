@@ -428,8 +428,6 @@ export async function processVirtualAccountForUser(
     reference: user._id!,
   });
 
-  console.log({ account });
-
   // If the creation is not successful, notify the user about it
   if (!account.status) {
     throw new Error(
