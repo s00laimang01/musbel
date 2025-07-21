@@ -431,7 +431,8 @@ export async function processVirtualAccountForUser(
   // If the creation is not successful, notify the user about it
   if (!account.status) {
     throw new Error(
-      "Unable to create a dedicated account for you, please try again later"
+      account?.message ||
+        "Unable to create a dedicated account for you, please try again later"
     );
   }
 

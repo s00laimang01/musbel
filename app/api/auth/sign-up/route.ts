@@ -6,13 +6,23 @@ import { Referral } from "@/models/referral";
 import { User } from "@/models/users";
 import { NextResponse } from "next/server";
 import { Client as QClient } from "@upstash/qstash";
-import { AllQStashKeys, configs } from "@/lib/constants";
+import { configs } from "@/lib/constants";
 
 /**
  * This is a public function use to create an account with this platform
  * @param request
  * @returns This will return either a success or an error
  */
+
+const AllQStashKeys = [
+  process.env["QSTASHKEY1"],
+  process.env["QSTASHKEY2"],
+  process.env["QSTASHKEY3"],
+  process.env["QSTASHKEY4"],
+  process.env["QSTASHKEY5"],
+  process.env["QSTASHKEY6"],
+  process.env["QSTASH_TOKEN"],
+];
 
 export async function POST(request: Request) {
   try {

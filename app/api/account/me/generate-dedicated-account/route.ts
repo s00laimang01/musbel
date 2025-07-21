@@ -4,7 +4,7 @@ import { Account } from "@/models/account";
 import { User } from "@/models/users";
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@upstash/qstash";
-import { AllQStashKeys, configs } from "@/lib/constants";
+import { configs } from "@/lib/constants";
 import { availableBanks } from "@/types";
 import { connectToDatabase } from "@/lib/connect-to-db";
 
@@ -14,8 +14,20 @@ const RETRY_DELAY_SECONDS = RETRY_DELAY_HOURS * 60 * 60;
 const MAX_RETRIES = 3;
 const PREFERRED_BANK = "PALMPAY";
 
+const AllQStashKeys = [
+  process.env["QSTASHKEY1"],
+  process.env["QSTASHKEY2"],
+  process.env["QSTASHKEY3"],
+  process.env["QSTASHKEY4"],
+  process.env["QSTASHKEY5"],
+  process.env["QSTASHKEY6"],
+  process.env["QSTASH_TOKEN"],
+];
+
 export async function POST(request: NextRequest) {
   let userId: string = "";
+
+  console.log({ AllQStashKeys });
 
   try {
     // Input validation
