@@ -27,8 +27,6 @@ const AllQStashKeys = [
 export async function POST(request: NextRequest) {
   let userId: string = "";
 
-  console.log({ AllQStashKeys });
-
   try {
     // Input validation
     const body = await request.json();
@@ -119,6 +117,8 @@ async function createPalmPayAccount(user: any) {
       user,
       PREFERRED_BANK
     );
+
+    console.log({ accountDetails });
 
     // Validate account creation response
     if (!accountDetails?.accountDetails) {
