@@ -78,7 +78,24 @@ export const signUpSchema = z.object({
   fullName: z.string().min(1, "Full name is required").max(60),
   password: z.string().min(6),
   country: z.enum(["nigeria"]),
-  phoneNumber: z.string().min(10).max(15),
+  phoneNumber: z
+    .string()
+    .min(11)
+    .max(11)
+    .refine(
+      (phoneNumber) => {
+        const allowedPhoneNumberPrefix = ["080", "081", "070", "090", "091"];
+
+        const firstThreeDigit = phoneNumber.slice(0, 3);
+
+        if (!allowedPhoneNumberPrefix.includes(firstThreeDigit)) {
+          return false;
+        }
+
+        return true;
+      },
+      { message: "Invalid Phone Number" }
+    ),
   ref: z.string().optional().default(""),
 });
 
