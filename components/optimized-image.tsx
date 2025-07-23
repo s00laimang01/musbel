@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { detectBrowserCompatibility } from "@/lib/utils";
 import {
   useNetworkCondition,
-  getImageQuality,
   getImageSize,
 } from "@/hooks/use-network-condition";
 
