@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import "./polyfills";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { configs } from "@/lib/constants";
+import { BrowserCompatibilityProvider } from "@/components/browser-compatibility-provider";
+// Performance monitoring is imported dynamically in a client component to avoid SSR issues
 
 export const metadata: Metadata = {
   title: `${configs.appName} - Buy Data, Airtime & Pay Bills`,
@@ -61,7 +64,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`antialiased`}>
         <Toaster position="top-center" richColors />
-        {children}
+        <BrowserCompatibilityProvider>
+          {children}
+        </BrowserCompatibilityProvider>
+        <div id="browser-compatibility-container" />
       </body>
     </html>
   );

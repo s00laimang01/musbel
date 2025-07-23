@@ -868,3 +868,35 @@ export const updateSectionSettings = async (
     return res.data;
   } catch (error) {}
 };
+
+/**
+ * Utility function to detect browser compatibility issues
+ * @returns Object containing compatibility information
+ */
+export const detectBrowserCompatibility = () => {
+  if (typeof window === 'undefined') return { isCompatible: true };
+  
+  const missingFeatures: string[] = [];
+  
+  // Check for essential modern browser features
+  if (!window.Promise) missingFeatures.push('Promise');
+  if (!window.fetch) missingFeatures.push('fetch');
+  if (!window.IntersectionObserver) missingFeatures.push('IntersectionObserver');
+  if (!window.requestAnimationFrame) missingFeatures.push('requestAnimationFrame');
+  if (!window.localStorage) missingFeatures.push('localStorage');
+  
+  // Check for CSS features
+  const testEl = document.createElement('div');
+  if (testEl.style.flex === undefined) missingFeatures.push('flexbox');
+  if (testEl.style.gridArea === undefined) missingFeatures.push('grid');
+  
+  return {
+    isCompatible: missingFeatures.length === 0,
+    missingFeatures,
+    isOldBrowser: missingFeatures.length > 2, // Consider it an old browser if missing multiple features
+    browserInfo: {
+      userAgent: window.navigator.userAgent,
+      vendor: window.navigator.vendor
+    }
+  };
+};
