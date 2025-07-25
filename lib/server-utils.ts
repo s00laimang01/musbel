@@ -1018,8 +1018,6 @@ export class BuyVTU {
         bypass,
       };
 
-      console.log({ payload });
-
       const res = await axios.post<DataVendingResponse>(
         `https://a4bdata.com/api/data`,
         payload,
@@ -1029,6 +1027,8 @@ export class BuyVTU {
           },
         }
       );
+
+      console.log(res.data);
 
       this.vendingResponse = {
         recipientCount: 1,
