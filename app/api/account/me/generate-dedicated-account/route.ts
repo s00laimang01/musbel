@@ -21,9 +21,6 @@ const AllQStashKeys = [
   process.env["QSTASHKEY4"],
   process.env["QSTASHKEY5"],
   process.env["QSTASHKEY6"],
-  process.env["QSTASHKEY7"],
-  process.env["QSTASHKEY8"],
-  process.env["QSTASHKEY9"],
   process.env["QSTASH_TOKEN"],
 ];
 
@@ -120,6 +117,8 @@ async function createPalmPayAccount(user: any) {
       user,
       PREFERRED_BANK
     );
+
+    console.log({ accountDetails });
 
     // Validate account creation response
     if (!accountDetails?.accountDetails) {
