@@ -1,6 +1,7 @@
 "use client";
 
 import ClientProvider from "@/components/client-provider";
+import { OptimizationProvider } from "@/components/optimization-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "next-auth/react";
 import type { ReactNode } from "react";
@@ -10,7 +11,9 @@ const Layout = ({ children }: { children: ReactNode }) => {
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
-        <ClientProvider>{children}</ClientProvider>
+        <OptimizationProvider>
+          <ClientProvider>{children}</ClientProvider>
+        </OptimizationProvider>
       </QueryClientProvider>
     </SessionProvider>
   );

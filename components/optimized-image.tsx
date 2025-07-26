@@ -2,7 +2,7 @@
 
 import Image, { ImageProps } from "next/image";
 import { useState, useEffect } from "react";
-import { detectBrowserCompatibility } from "@/lib/utils";
+import { useBrowserCompatibility } from "./browser-compatibility-provider";
 import {
   useNetworkCondition,
   getImageSize,
@@ -46,11 +46,12 @@ export function OptimizedImage({
   // Get network condition
   const { condition: networkCondition } = useNetworkCondition();
 
+  // Get browser compatibility from context
+  const { isOldBrowser: isOld } = useBrowserCompatibility();
+  
   useEffect(() => {
-    // Check browser compatibility
-    const compatibility = detectBrowserCompatibility();
-    const isOld = compatibility.isOldBrowser;
-    setIsOldBrowser(isOld!);
+    // Set browser compatibility state
+    setIsOldBrowser(isOld);
 
     // Determine appropriate image source based on browser and network
     let newSrc = src;

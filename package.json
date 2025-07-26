@@ -67,15 +67,19 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
+    "cssnano": "^6.1.2",
+    "postcss-preset-env": "^9.6.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
   "browserslist": [
-    ">0.2%",
+    ">0.5%",
+    "last 2 versions",
+    "Firefox ESR",
     "not dead",
-    "not op_mini all",
-    "ie >= 11",
-    "android >= 4.4",
-    "ios >= 8"
+    "not IE 11",
+    "maintained node versions",
+    "android >= 5",
+    "ios >= 10"
   ]
 }
