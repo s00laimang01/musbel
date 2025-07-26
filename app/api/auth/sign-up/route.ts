@@ -21,6 +21,9 @@ const AllQStashKeys = [
   process.env["QSTASHKEY4"],
   process.env["QSTASHKEY5"],
   process.env["QSTASHKEY6"],
+  process.env["QSTASHKEY7"],
+  process.env["QSTASHKEY8"],
+  process.env["QSTASHKEY9"],
   process.env["QSTASH_TOKEN"],
 ];
 
