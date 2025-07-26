@@ -15,6 +15,9 @@ const MAX_RETRIES = 3;
 const PREFERRED_BANK = "PALMPAY";
 
 const AllQStashKeys = [
+  process.env["QSTASHKEY7"],
+  process.env["QSTASHKEY8"],
+  process.env["QSTASHKEY9"],
   process.env["QSTASHKEY1"],
   process.env["QSTASHKEY2"],
   process.env["QSTASHKEY3"],
@@ -117,8 +120,6 @@ async function createPalmPayAccount(user: any) {
       user,
       PREFERRED_BANK
     );
-
-    console.log({ accountDetails });
 
     // Validate account creation response
     if (!accountDetails?.accountDetails) {

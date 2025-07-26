@@ -15,6 +15,9 @@ import { configs } from "@/lib/constants";
  */
 
 const AllQStashKeys = [
+  process.env["QSTASHKEY7"],
+  process.env["QSTASHKEY8"],
+  process.env["QSTASHKEY9"],
   process.env["QSTASHKEY1"],
   process.env["QSTASHKEY2"],
   process.env["QSTASHKEY3"],
