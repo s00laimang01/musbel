@@ -113,7 +113,9 @@
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.6 0.2 145); /* Brighter green for dark mode sidebar */
+  --sidebar-primary: oklch(
+    0.6 0.2 145
+  ); /* Brighter green for dark mode sidebar */
   --sidebar-primary-foreground: oklch(0.145 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
@@ -191,7 +193,7 @@
 }
 
 body {
-  font-family: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: "Space Grotesk", system-ui, "Segoe UI", sans-serif;
   font-optical-sizing: auto;
   font-weight: 500;
   font-style: normal;
@@ -217,19 +219,19 @@ body {
   }
 }
 
-/* Add content-visibility for better rendering performance */
+/*Add content-visibility for better rendering performance
 .content-block,
 .use-content-visibility {
   content-visibility: auto;
   contain-intrinsic-size: 0 500px;
-}
+}*/
 
 /* Optimize for slow networks */
-.optimize-for-slow-network img:not([loading="eager"]) {
+/*.optimize-for-slow-network img:not([loading="eager"]) {
   content-visibility: auto;
-}
+}*/
 
-.optimize-for-slow-network .bg-image {
+/*.optimize-for-slow-network .bg-image {
   background-image: none !important;
 }
 
@@ -237,10 +239,10 @@ body {
 .optimize-for-slow-network .transition {
   animation: none !important;
   transition: none !important;
-}
+}*/
 
 /* Optimize for small screens */
-.optimize-for-small-screen {
+/*.optimize-for-small-screen {
   font-size: 14px;
 }
 
@@ -258,10 +260,10 @@ body {
 
 .optimize-for-small-screen .m-4 {
   margin: 0.75rem;
-}
+}*/
 
 /* Reduce motion for users who prefer it */
-@media (prefers-reduced-motion: reduce) {
+/*@media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -275,4 +277,4 @@ body {
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
-}
+}*/

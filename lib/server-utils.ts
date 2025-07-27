@@ -89,7 +89,7 @@ export const createDedicatedVirtualAccount = async (
 
     return response.data;
   } catch (error: any) {
-    console.log({ error });
+    console.log({ error: "We have an error" });
     return {
       status: false,
       message: (error as Error).message,
@@ -379,8 +379,7 @@ export async function getTransactionByIdWithUserDetails(id: string) {
 
 export async function processVirtualAccountForUser(
   user: IUser,
-  preferableBank: availableBanks = "PALMPAY",
-  saveAccountDetails: boolean = true
+  preferableBank: availableBanks = "PALMPAY"
 ) {
   const appConfigs = await App.findOne({});
 
@@ -427,6 +426,8 @@ export async function processVirtualAccountForUser(
     phone: newUser.phoneNumber,
     reference: user._id!,
   });
+
+  console.log({ account });
 
   // If the creation is not successful, notify the user about it
   if (!account.status) {

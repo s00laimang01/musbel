@@ -161,6 +161,8 @@ async function createAccountWithFallback(user: any) {
       const bank = banks[i];
       const accountDetails = await processVirtualAccountForUser(user, bank);
 
+      console.log({ accountDetails });
+
       if (accountDetails.accountDetails.bankCode !== PREFERRED_BANK) {
         await scheduleRetry(user._id.toString());
       }
@@ -243,6 +245,7 @@ async function scheduleRetry(userId: string) {
 
         break;
       } catch (error) {
+        console.log({ qStashError: !!error });
         retry++;
       }
     }
