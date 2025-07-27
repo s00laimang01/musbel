@@ -66,7 +66,7 @@ export function CreateDataPlanDialog({
       amount: dataPlan?.amount || undefined,
       availability: dataPlan?.availability || "30 Days",
       type: dataPlan?.type || "SME",
-      planId: dataPlan?.planId || undefined,
+      planId: dataPlan?.planId as string,
       isPopular: dataPlan?.isPopular || false,
       provider: dataPlan?.provider || "buyVTU",
     },

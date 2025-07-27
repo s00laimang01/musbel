@@ -28,7 +28,7 @@ export const formSchema = z.object({
   type: z.enum(["CHEAP", "SME"], {
     required_error: "Please select a plan type",
   }),
-  planId: z.coerce.number().positive("Plan ID must be positive"),
+  planId: z.any(),
   isPopular: z.boolean().default(false),
   provider: z.enum(["smePlug", "buyVTU"], {
     required_error: "Please select a provider",
