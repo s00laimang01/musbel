@@ -53,6 +53,12 @@ export async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
+  if (pathname === "/api/account/me/generate-dedicated-account/") {
+    return new NextResponse(JSON.stringify("Too Many Request"), {
+      status: 400,
+    });
+  }
+
   // Handle unauthenticated users trying to access protected pages
   if (!isPublicPath && !token) {
     // For API routes, return a proper 401 response
