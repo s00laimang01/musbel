@@ -1,12 +1,10 @@
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { configs } from "@/lib/constants";
+import { sendEmail } from "@/lib/server-utils";
 import { httpStatusResponse } from "@/lib/utils";
 import { Transaction } from "@/models/transactions";
 import { User } from "@/models/users";
-import { Client } from "@upstash/qstash";
 import { NextRequest, NextResponse } from "next/server";
-
-const allQstashKeys: string[] = [];
 
 export async function POST(request: NextRequest) {
   const { userId, tx_ref, oldBalance, expectedNewBalance, signature } =
@@ -57,27 +55,10 @@ export async function POST(request: NextRequest) {
       httpStatusResponse(200, "User balance updated successfuly")
     );
   } catch (error) {
-    let retry = 0;
-
-    while (retry < allQstashKeys.length) {
-      try {
-        const qstashKey = allQstashKeys[retry];
-        const qClient = new Client({ token: qstashKey });
-        await qClient.publishJSON({
-          url: "https://www.kinta-sme.com/api/account/anti-fraud/balance-checker",
-          body: {
-            userId,
-            tx_ref,
-            oldBalance,
-            expectedNewBalance,
-            signature,
-          },
-          retries: 3,
-        });
-        break;
-      } catch (error) {
-        retry++;
-      }
-    }
+    await sendEmail(
+      ["suleimaangee@gmail.com"],
+      `Unable to verify user ${userId} balance`,
+      "Unable to verify balance"
+    );
   }
 }

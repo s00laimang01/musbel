@@ -10,25 +10,10 @@ import { connectToDatabase } from "@/lib/connect-to-db";
 
 // Constants
 const RETRY_DELAY_HOURS = 1;
-const RETRY_DELAY_SECONDS = RETRY_DELAY_HOURS * 60 * 60;
-const MAX_RETRIES = 3;
 const PREFERRED_BANK = "PALMPAY";
 
-const AllQStashKeys = [
-  process.env["QSTASHKEY7"],
-  process.env["QSTASHKEY8"],
-  process.env["QSTASHKEY9"],
-  process.env["QSTASHKEY1"],
-  process.env["QSTASHKEY2"],
-  process.env["QSTASHKEY3"],
-  process.env["QSTASHKEY4"],
-  process.env["QSTASHKEY5"],
-  process.env["QSTASHKEY6"],
-  process.env["QSTASH_TOKEN"],
-];
-
 export async function POST(request: NextRequest) {
-  let userId: string = "";
+  //let userId: string = "";
 
   try {
     // Input validation
@@ -64,19 +49,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    //// Validate user has required fields
-    //if (!user.fullName || !user.auth?.email) {
-    //  return NextResponse.json(
-    //    httpStatusResponse(
-    //      400,
-    //      "User missing required information (fullName or email)"
-    //    ),
-    //    { status: 400, statusText: "Error from the user data retrieved" }
-    //  );
-    //}
-
-    userId = user._id.toString();
-
     // Check existing account
     const existingAccount = await Account.findOne({
       user: user._id.toString(),
@@ -98,11 +70,6 @@ export async function POST(request: NextRequest) {
     return await createAccountWithFallback(user);
   } catch (error) {
     console.error("Error in generate-dedicated-account:", error);
-
-    // Schedule retry only if we have a valid userId
-    if (userId) {
-      await scheduleRetry(userId);
-    }
 
     return NextResponse.json(
       httpStatusResponse(
@@ -135,9 +102,6 @@ async function createPalmPayAccount(user: any) {
   } catch (error) {
     console.error("Error creating PalmPay account:", error);
 
-    // Schedule retry
-    await scheduleRetry(user._id.toString());
-
     return NextResponse.json(
       httpStatusResponse(500, "Unable to create PalmPay account"),
       { status: 500 }
@@ -163,10 +127,6 @@ async function createAccountWithFallback(user: any) {
 
       console.log({ accountDetails });
 
-      if (accountDetails.accountDetails.bankCode !== PREFERRED_BANK) {
-        await scheduleRetry(user._id.toString());
-      }
-
       await sendAccountCreationEmail(user, accountDetails);
 
       return NextResponse.json(
@@ -179,9 +139,6 @@ async function createAccountWithFallback(user: any) {
       continue;
     }
   }
-
-  // All banks failed, schedule retry
-  await scheduleRetry(user._id.toString());
 
   return NextResponse.json(
     httpStatusResponse(
@@ -214,43 +171,6 @@ async function sendAccountCreationEmail(user: any, accountDetails: any) {
   } catch (error) {
     console.error("Error sending account creation email:", error);
     // Don't throw - email failure shouldn't fail the account creation
-  }
-}
-
-async function scheduleRetry(userId: string) {
-  try {
-    if (!process.env.NEXT_PUBLIC_BASE_URL) {
-      console.error(
-        "NEXT_PUBLIC_BASE_URL not configured, cannot schedule retry"
-      );
-      return;
-    }
-
-    let retry = 0;
-
-    while (retry < AllQStashKeys.length) {
-      try {
-        const qStashKey = AllQStashKeys[retry];
-
-        const client = new Client({ token: qStashKey || "" });
-        await client.publishJSON({
-          url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
-          body: {
-            userId,
-            signature: configs["X-RAPIDAPI-KEY"],
-          },
-          delay: RETRY_DELAY_SECONDS,
-          retries: MAX_RETRIES,
-        });
-
-        break;
-      } catch (error) {
-        console.log({ qStashError: !!error });
-        retry++;
-      }
-    }
-  } catch (error) {
-    console.error("Error scheduling retry:", error);
   }
 }
 
