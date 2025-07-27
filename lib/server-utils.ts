@@ -28,6 +28,7 @@ import {
   IReferral,
   DataVendingResponse,
   AirtimeVendingResponse,
+  VtuPassDataResponse,
 } from "@/types";
 import axios from "axios";
 import mongoose, { PipelineStage } from "mongoose";
@@ -46,6 +47,10 @@ export const budPay = (type: "s2s" | "v2" = "v2") => {
     baseURL: `https://api.budpay.com/api/${type}`,
   });
 };
+
+export const vtuPassApi = axios.create({
+  baseURL: `https://sandbox.vtpass.com/api`,
+});
 
 export const createOneTimeVirtualAccount = async (
   payload: createOneTimeVirtualAccountProps
@@ -1055,6 +1060,105 @@ export class BuyVTU {
       return this;
     } catch (error: any) {
       console.error(error.response.data);
+      this.status = false;
+      this.message =
+        error instanceof Error && error.message
+          ? error.message
+          : "DATA_PURCHASE_FAILED: unable to process your request.";
+      return this;
+    }
+  }
+
+  public createRequestIdForVtuPass(suffix = "") {
+    const now = new Date();
+
+    // Convert to Africa/Lagos timezone (GMT+1 or GMT+1 with DST)
+    //const options = {
+    //  timeZone: 'Africa/Lagos',
+    //  year: 'numeric',
+    //  month: '2-digit',
+    //  day: '2-digit',
+    //  hour: '2-digit',
+    //  minute: '2-digit',
+    //  hour12: false,
+    //};
+
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Africa/Lagos",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(now);
+
+    const dateParts: Record<string, any> = {};
+    for (const part of parts) {
+      if (part.type !== "literal") {
+        dateParts[part.type] = part.value;
+      }
+    }
+
+    // Format: YYYYMMDDHHII
+    const formattedDate =
+      dateParts.year +
+      dateParts.month +
+      dateParts.day +
+      dateParts.hour +
+      dateParts.minute;
+
+    // Ensure at least 12 characters
+    const randomSuffix = suffix || Math.random().toString(36).substring(2, 14);
+    const requestId = formattedDate + randomSuffix;
+
+    return requestId;
+  }
+
+  public async buyDataFromVtuPass(_payload: {
+    phone: number | string;
+    request_id?: string;
+    serviceID: "airtel-data" | "glo-data" | "etisalat-data";
+    variation_code: string;
+  }) {
+    try {
+      const payload = {
+        ..._payload,
+        request_id: _payload.request_id || this.createRequestIdForVtuPass(),
+        billersCode: "08036367979",
+        amount: this.amount,
+      };
+
+      const res = await vtuPassApi.post<VtuPassDataResponse>("/pay", payload, {
+        headers: {
+          "api-key": process.env.VTU_PASS_API_KEY,
+          "secret-key": process.env.VTU_PASS_SECRET_KEY,
+        },
+      });
+
+      console.log(res);
+
+      this.vendingResponse = {
+        recipientCount: 1,
+        recipients: String(payload.phone),
+        cost: Number(res.data?.amount),
+        totalAmount: Number(res.data?.amount),
+        vendReport: {
+          [payload.phone]: res.data.code === "000" ? "successful" : "failed",
+        },
+        vendStatus: null,
+        commissionEarned: 0,
+      };
+
+      this.status = res.data.code === "000";
+      this.message = !this.status
+        ? "Data vending failed"
+        : `Your data purchase was successful and you will credited shortly`;
+
+      return this;
+    } catch (error: any) {
+      console.log(error);
       this.status = false;
       this.message =
         error instanceof Error && error.message

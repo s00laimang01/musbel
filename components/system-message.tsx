@@ -20,7 +20,6 @@ const SystemMessage = () => {
     queryKey: ["system-message"],
     queryFn: async () =>
       (await api.get<{ data: systemMessage }>(`/users/message/`)).data.data,
-    refetchInterval: 60 * 100,
   });
 
   useEffect(() => {

@@ -10,6 +10,21 @@ import { connectToDatabase } from "@/lib/connect-to-db";
 import { BuyVTU } from "@/lib/server-utils";
 import { IBuyVtuNetworks } from "@/types";
 import { format } from "date-fns";
+import { Client } from "@upstash/qstash";
+import { configs } from "@/lib/constants";
+
+const AllQStashKeys = [
+  process.env["QSTASHKEY7"],
+  process.env["QSTASHKEY8"],
+  process.env["QSTASHKEY9"],
+  process.env["QSTASHKEY1"],
+  process.env["QSTASHKEY2"],
+  process.env["QSTASHKEY3"],
+  process.env["QSTASHKEY4"],
+  process.env["QSTASHKEY5"],
+  process.env["QSTASHKEY6"],
+  process.env["QSTASH_TOKEN"],
+];
 
 export async function POST(request: Request) {
   const buyVtu = new BuyVTU();
@@ -83,7 +98,7 @@ export async function POST(request: Request) {
     await app?.checkTransactionLimit(dataPlan.amount);
 
     // Verify user has sufficient balance
-    await user.verifyUserBalance(dataPlan.amount);
+    //await user.verifyUserBalance(dataPlan.amount);
 
     //TODO: check network
     buyVtu.setNetwork = dataPlan.network;
@@ -105,7 +120,7 @@ export async function POST(request: Request) {
 
       await buyVtu.buyDataFromSMEPLUG(
         n[dataPlan.network.toLowerCase()],
-        dataPlan.planId,
+        dataPlan.planId as number,
         phoneNumber,
         dataPlan.amount
       );
@@ -114,17 +129,19 @@ export async function POST(request: Request) {
     if (dataPlan.network !== "Mtn" || dataPlan.provider === "buyVTU") {
       const networdId: Record<IBuyVtuNetworks, string> = {
         Mtn: "1",
-        Airtel: "2",
-        Glo: "3",
-        "9Mobile": "4",
+        Airtel: "airtel-data",
+        Glo: "glo-data",
+        "9Mobile": "etisalat-data",
       };
 
-      await buyVtu.buyDataFromA4BData(
-        networdId[dataPlan.network],
-        String(dataPlan.planId),
-        phoneNumber,
-        byPassValidator
-      );
+      console.log({ dataPlan: dataPlan.toJSON() });
+
+      await buyVtu.buyDataFromVtuPass({
+        phone: phoneNumber,
+        request_id: buyVtu.createRequestIdForVtuPass(),
+        serviceID: networdId[dataPlan?.network!] as "airtel-data",
+        variation_code: dataPlan?.planId + "",
+      });
     }
 
     buyVtu.amount = dataPlan?.amount;
@@ -146,6 +163,29 @@ export async function POST(request: Request) {
     // Commit the transaction (this makes all changes permanent)
     await buyVtu.commitSession();
     isTransactionCommitted = true;
+
+    let retry = 0;
+
+    while (retry < AllQStashKeys.length) {
+      try {
+        const qstashKey = AllQStashKeys[retry];
+        const qClient = new Client({ token: qstashKey });
+        await qClient.publishJSON({
+          url: "https://www.kinta-sme.com/api/account/anti-fraud/balance-checker",
+          body: {
+            userId: user._id,
+            tx_ref: buyVtu.ref,
+            oldBalance: user.balance,
+            expectedNewBalance: user.balance - dataPlan.amount,
+            signature: configs["X-RAPIDAPI-KEY"],
+          },
+          retries: 3,
+        });
+        break;
+      } catch (error) {
+        retry++;
+      }
+    }
 
     return NextResponse.json(
       httpStatusResponse(

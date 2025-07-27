@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getUser } from "@/lib/utils";
 
-export const useAuthentication = (key?: any, retry?: number) => {
+export const useAuthentication = (key?: any, retry = 1000) => {
   //
 
   const {
@@ -12,7 +12,9 @@ export const useAuthentication = (key?: any, retry?: number) => {
   } = useQuery({
     queryKey: ["user", key],
     queryFn: () => getUser(),
-    refetchInterval: retry,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
   });
 
   return {

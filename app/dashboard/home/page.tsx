@@ -26,7 +26,9 @@ const Page = () => {
   const { isLoading, data } = useQuery({
     queryKey: ["transactions", "last"],
     queryFn: () => api.get<{ data: transaction }>(`/transactions/last/`),
-    refetchInterval: 1000 * 5,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: transaction } = data?.data || {};

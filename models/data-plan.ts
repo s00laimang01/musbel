@@ -29,7 +29,7 @@ const DataPlanSchema: mongoose.Schema<dataPlan> = new mongoose.Schema({
     enum: ["CHEAP", "SME"],
   },
   planId: {
-    type: Number,
+    type: mongoose.Schema.Types.Mixed,
     required: true,
   },
   provider: {

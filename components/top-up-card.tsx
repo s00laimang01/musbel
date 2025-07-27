@@ -22,7 +22,9 @@ const TopUpCard = () => {
   const { isLoading, data: __data } = useQuery({
     queryKey: ["get-dedicated-account"],
     queryFn: getDedicatedAccount,
-    refetchInterval: 5000,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: account } = __data || {};
