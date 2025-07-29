@@ -998,8 +998,8 @@ export class BuyVTU {
       this.message = !this.status ? "Data vending failed" : res.data.data.msg;
 
       return this;
-    } catch (error) {
-      console.error("Data purchase error:");
+    } catch (error: any) {
+      console.log(error.response);
       this.status = false;
       this.message =
         error instanceof Error && error.message
@@ -1136,8 +1136,6 @@ export class BuyVTU {
           "secret-key": process.env.VTU_PASS_SECRET_KEY,
         },
       });
-
-      console.log(res);
 
       this.vendingResponse = {
         recipientCount: 1,

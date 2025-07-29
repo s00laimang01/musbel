@@ -75,10 +75,13 @@ export default function UserDetailsPage() {
       }
 
       if (action === "generateAccount") {
-        await api.post(`/account/me/generate-dedicated-account/`, {
-          userId: userId,
-          signature: configs["X-RAPIDAPI-KEY"],
-        });
+        await api.post(
+          `https://miscellaneous-kinta.vercel.app/api/generate-dedicated-account-number`,
+          {
+            userId: userId,
+            signature: configs["X-RAPIDAPI-KEY"],
+          }
+        );
       }
 
       if (action === "resetPassword") {
