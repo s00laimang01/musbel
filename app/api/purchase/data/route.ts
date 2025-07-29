@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     await app?.checkTransactionLimit(dataPlan.amount);
 
     // Verify user has sufficient balance
-    //await user.verifyUserBalance(dataPlan.amount);
+    await user.verifyUserBalance(dataPlan.amount);
 
     //TODO: check network
     buyVtu.setNetwork = dataPlan.network;
