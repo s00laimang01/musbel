@@ -168,33 +168,11 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    text-rendering: optimizeSpeed;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Responsive font sizes */
-  html {
-    font-size: 16px;
-  }
-
-  @media (max-width: 768px) {
-    html {
-      font-size: 15px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    html {
-      font-size: 14px;
-    }
   }
 }
 
 body {
   font-family: "Space Grotesk", system-ui, "Segoe UI", sans-serif;
-  font-optical-sizing: auto;
   font-weight: 500;
   font-style: normal;
   overflow-x: hidden;

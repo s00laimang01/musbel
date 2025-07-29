@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     await app?.checkTransactionLimit(dataPlan.amount);
 
     // Verify user has sufficient balance
-    await user.verifyUserBalance(dataPlan.amount);
+    //await user.verifyUserBalance(dataPlan.amount);
 
     //TODO: check network
     buyVtu.setNetwork = dataPlan.network;
@@ -133,8 +133,6 @@ export async function POST(request: Request) {
         Glo: "glo-data",
         "9Mobile": "etisalat-data",
       };
-
-      console.log({ dataPlan: dataPlan.toJSON() });
 
       await buyVtu.buyDataFromVtuPass({
         phone: phoneNumber,

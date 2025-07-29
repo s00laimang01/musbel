@@ -1072,17 +1072,6 @@ export class BuyVTU {
   public createRequestIdForVtuPass(suffix = "") {
     const now = new Date();
 
-    // Convert to Africa/Lagos timezone (GMT+1 or GMT+1 with DST)
-    //const options = {
-    //  timeZone: 'Africa/Lagos',
-    //  year: 'numeric',
-    //  month: '2-digit',
-    //  day: '2-digit',
-    //  hour: '2-digit',
-    //  minute: '2-digit',
-    //  hour12: false,
-    //};
-
     const formatter = new Intl.DateTimeFormat("en-GB", {
       timeZone: "Africa/Lagos",
       year: "numeric",
@@ -1100,8 +1089,6 @@ export class BuyVTU {
         dateParts[part.type] = part.value;
       }
     }
-
-    // Format: YYYYMMDDHHII
     const formattedDate =
       dateParts.year +
       dateParts.month +
@@ -1109,7 +1096,6 @@ export class BuyVTU {
       dateParts.hour +
       dateParts.minute;
 
-    // Ensure at least 12 characters
     const randomSuffix = suffix || Math.random().toString(36).substring(2, 14);
     const requestId = formattedDate + randomSuffix;
 
@@ -1126,9 +1112,11 @@ export class BuyVTU {
       const payload = {
         ..._payload,
         request_id: _payload.request_id || this.createRequestIdForVtuPass(),
-        billersCode: "08036367979",
-        amount: this.amount,
+        //billersCode: "08036367979",
+        //amount: this.amount,
       };
+
+      console.log({ payload });
 
       const res = await vtuPassApi.post<VtuPassDataResponse>("/pay", payload, {
         headers: {
@@ -1136,6 +1124,8 @@ export class BuyVTU {
           "secret-key": process.env.VTU_PASS_SECRET_KEY,
         },
       });
+
+      console.log({ respose: res.data });
 
       this.vendingResponse = {
         recipientCount: 1,
