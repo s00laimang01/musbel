@@ -58,11 +58,7 @@ export async function POST(req: Request) {
       });
     }
 
-    async function sendPasswordResetEmail(
-      email: string,
-      otp: string,
-      userName?: string
-    ) {
+    async function sendPasswordResetEmail(otp: string, userName?: string) {
       try {
         // Generate the email HTML with the OTP
         const emailHtml = `
@@ -177,12 +173,7 @@ export async function POST(req: Request) {
         //`;
 
         // Send the email
-        await sendEmail(
-          [email],
-          emailHtml,
-          "Reset Your Password",
-          "s00laimang20@gmail.com"
-        );
+        await sendEmail([user?.auth.email!], emailHtml, "Reset Your Password");
 
         return { success: true };
       } catch (error) {
@@ -191,11 +182,7 @@ export async function POST(req: Request) {
       }
     }
 
-    await sendPasswordResetEmail(
-      user.auth.email,
-      otp,
-      user.fullName.split(" ")[0]
-    );
+    await sendPasswordResetEmail(otp, user.fullName.split(" ")[0]);
 
     return NextResponse.json(
       {
