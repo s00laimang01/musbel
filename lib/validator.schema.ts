@@ -9,7 +9,7 @@ export const createDataPlanSchema = z.object({
   amount: z.number().positive(),
   availability: z.string().min(1),
   type: z.enum(["COOPERATE GIFTING", "GIFTING", "SME"]),
-  planId: z.number().positive(),
+  planId: z.any(),
   isPopular: z.boolean().default(false),
   provider: z.enum(["smePlug", "buyVTU"]),
 });

@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     const dataPlans = await DataPlan.find({ ...query }).sort({
       isPopular: -1,
-      updatedAt: 1,
+      amount: 1,
       //planId: 1,
     });
 
