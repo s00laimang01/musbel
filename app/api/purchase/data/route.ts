@@ -8,31 +8,25 @@ import { dataRequestSchema } from "@/lib/validator.schema";
 import { App } from "@/models/app";
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { BuyVTU } from "@/lib/server-utils";
-import { IBuyVtuNetworks } from "@/types";
+import { dataPlan, IBuyVtuNetworks } from "@/types";
 import { format } from "date-fns";
-//import { Client } from "@upstash/qstash";
-//import { configs } from "@/lib/constants";
-//
-//const AllQStashKeys = [
-//  process.env["QSTASHKEY7"],
-//  process.env["QSTASHKEY8"],
-//  process.env["QSTASHKEY9"],
-//  process.env["QSTASHKEY1"],
-//  process.env["QSTASHKEY2"],
-//  process.env["QSTASHKEY3"],
-//  process.env["QSTASHKEY4"],
-//  process.env["QSTASHKEY5"],
-//  process.env["QSTASHKEY6"],
-//  process.env["QSTASH_TOKEN"],
-//];
+import { Transaction } from "@/models/transactions"; // Add this import
+
+// Add a new schema for idempotency
+const dataRequestSchemaWithIdempotency = dataRequestSchema.extend({
+  idempotencyKey: z.string(),
+});
 
 export async function POST(request: Request) {
   const buyVtu = new BuyVTU();
   let isTransactionCommitted = false;
+  let user: any = null;
+  let dataPlan: dataPlan | null = null;
 
   try {
     const body = await request.json();
-    const validationResult = dataRequestSchema.safeParse(body);
+    console.log(body);
+    const validationResult = dataRequestSchemaWithIdempotency.safeParse(body);
 
     if (!validationResult.success) {
       return NextResponse.json(
@@ -50,6 +44,7 @@ export async function POST(request: Request) {
       _id,
       phoneNumber,
       byPassValidator = false,
+      idempotencyKey,
     } = validationResult.data;
 
     // Get the email of the current authenticated user
@@ -61,6 +56,53 @@ export async function POST(request: Request) {
     }
 
     await connectToDatabase();
+
+    const userEmail = serverSession.user.email;
+
+    // Find the current user in the db
+    user = await User.findOne({ "auth.email": userEmail }).select(
+      "+auth.transactionPin"
+    );
+
+    if (!user) {
+      throw new Error("USER_NOT_FOUND: please contact admin");
+    }
+
+    // Check for existing transaction with same idempotency key (if provided)
+    if (idempotencyKey) {
+      const existingTransaction = await Transaction.findOne({
+        user: user._id,
+        "meta.idempotencyKey": idempotencyKey,
+        type: "data",
+        createdAt: {
+          $gte: new Date(Date.now() - 10 * 60 * 1000), // Within last 10 minutes
+        },
+      });
+
+      if (existingTransaction) {
+        // Return the existing transaction result
+        return NextResponse.json(
+          httpStatusResponse(
+            200,
+            "Transaction already processed",
+            existingTransaction.meta
+          ),
+          { status: 200 }
+        );
+      }
+    }
+
+    // Verify the user transaction pin
+    await user?.verifyTransactionPin(pin);
+
+    // Find data plan
+    dataPlan = await DataPlan.findById(_id);
+
+    if (!dataPlan) {
+      throw new Error("PLAN_NOT_FOUND: we cannot find this plan");
+    }
+
+    // Start session after all validations
     await buyVtu.startSession();
 
     // Get the entire application configuration
@@ -73,35 +115,17 @@ export async function POST(request: Request) {
     await app?.systemIsunderMaintainance();
     await app?.isTransactionEnable("data");
 
-    const userEmail = serverSession.user.email;
-
-    // Find the current user in the db and also the transaction pin
-    const user = await User.findOne({ "auth.email": userEmail }).select(
-      "+auth.transactionPin"
-    );
-
-    if (!user) {
-      throw new Error("USER_NOT_FOUND: please contact admin");
-    }
-
-    // Verify the user transaction pin
-    await user?.verifyTransactionPin(pin);
-
-    // Find data plan
-    const dataPlan = await DataPlan.findById(_id).session(buyVtu.session);
-
-    if (!dataPlan) {
-      throw new Error("PLAN_NOT_FOUND: we cannot find this plan");
-    }
-
     // Check the transaction limit
     await app?.checkTransactionLimit(dataPlan.amount);
 
     // Verify user has sufficient balance
     await user.verifyUserBalance(dataPlan.amount);
 
-    //TODO: check network
+    // Set network
     buyVtu.setNetwork = dataPlan.network;
+
+    // Create a unique reference for this transaction
+    const transactionRef = buyVtu.ref;
 
     // Update user balance with session
     await user.updateOne(
@@ -109,87 +133,96 @@ export async function POST(request: Request) {
       { session: buyVtu.session }
     );
 
-    if (dataPlan.network === "Mtn" || dataPlan.provider === "smePlug") {
-      //use abanty data sme
-      const n: Record<string, any> = {
-        mtn: "1",
-        airtel: "2",
-        "9mobile": "3",
-        glo: "4",
-      };
-
-      await buyVtu.buyDataFromSMEPLUG(
-        n[dataPlan.network.toLowerCase()],
-        dataPlan.planId as number,
-        phoneNumber,
-        dataPlan.amount
-      );
-    }
-
-    if (dataPlan.network !== "Mtn" || dataPlan.provider === "buyVTU") {
-      const networdId: Record<IBuyVtuNetworks, string> = {
-        Mtn: "1",
-        Airtel: "airtel-data",
-        Glo: "glo-data",
-        "9Mobile": "etisalat-data",
-      };
-
-      await buyVtu.buyDataFromVtuPass({
-        phone: phoneNumber,
-        request_id: buyVtu.createRequestIdForVtuPass(),
-        serviceID: networdId[dataPlan?.network!] as "airtel-data",
-        variation_code: dataPlan?.planId + "",
-      });
-    }
-
+    // Create transaction record BEFORE making external API calls
     buyVtu.amount = dataPlan?.amount;
 
-    // Create transaction record
-    await buyVtu.createTransaction("data", user.id, {
+    // Pre-create transaction with pending status
+    await buyVtu.createPendingTransaction("data", user.id, {
+      //@ts-ignore
       ...dataPlan?.toJSON(),
       payerName: user.fullName,
       completionTime: format(new Date(), "PPP"),
       customerPhone: phoneNumber,
       applicableCountry: "NG",
+      idempotencyKey: idempotencyKey,
+      transactionRef: transactionRef,
+      phoneNumber,
     });
 
-    // Check if transaction creation was successful
-    if (!buyVtu.status) {
-      throw new Error(buyVtu.message || "Failed to create transaction record");
-    }
-
-    // Commit the transaction (this makes all changes permanent)
+    // Commit the balance deduction and pending transaction
     await buyVtu.commitSession();
     isTransactionCommitted = true;
 
-    //    let retry = 0;
-    //
-    //    while (retry < AllQStashKeys.length) {
-    //      try {
-    //        const qstashKey = AllQStashKeys[retry];
-    //        const qClient = new Client({ token: qstashKey });
-    //        await qClient.publishJSON({
-    //          url: "https://www.kinta-sme.com/api/account/anti-fraud/balance-checker",
-    //          body: {
-    //            userId: user._id,
-    //            tx_ref: buyVtu.ref,
-    //            oldBalance: user.balance,
-    //            expectedNewBalance: user.balance - dataPlan.amount,
-    //            signature: configs["X-RAPIDAPI-KEY"],
-    //          },
-    //          retries: 3,
-    //        });
-    //        break;
-    //      } catch (error) {
-    //        retry++;
-    //      }
-    //    }
+    // Now make external API calls AFTER committing the transaction
+    let vendingSuccess = false;
+    let vendingMessage = "";
+
+    try {
+      if (dataPlan.network === "Mtn" || dataPlan.provider === "smePlug") {
+        // Use abanty data sme
+        const n: Record<string, any> = {
+          mtn: "1",
+          airtel: "2",
+          "9mobile": "3",
+          glo: "4",
+        };
+
+        await buyVtu.buyDataFromSMEPLUG(
+          n[dataPlan.network.toLowerCase()],
+          dataPlan.planId as number,
+          phoneNumber,
+          dataPlan.amount
+        );
+      } else {
+        const networdId: Record<IBuyVtuNetworks, string> = {
+          Mtn: "1",
+          Airtel: "airtel-data",
+          Glo: "glo-data",
+          "9Mobile": "etisalat-data",
+        };
+
+        await buyVtu.buyDataFromVtuPass({
+          phone: phoneNumber,
+          request_id: buyVtu.createRequestIdForVtuPass(),
+          serviceID: networdId[dataPlan?.network!] as "airtel-data",
+          variation_code: dataPlan?.planId + "",
+        });
+      }
+
+      vendingSuccess = buyVtu.status;
+      vendingMessage = buyVtu.message || "";
+    } catch (vendingError) {
+      console.error("External vending API error:", vendingError);
+      vendingSuccess = false;
+      vendingMessage =
+        vendingError instanceof Error ? vendingError.message : "Vending failed";
+    }
+
+    // Update transaction status based on vending result
+    await buyVtu.updateTransactionStatus(vendingSuccess, vendingMessage);
+
+    if (!vendingSuccess) {
+      // If vending failed, we might want to refund the user
+      // But this is a business decision - some services keep the money for failed attempts
+      console.warn(
+        `Data vending failed for transaction ${transactionRef}: ${vendingMessage}`
+      );
+
+      // Optionally refund user (uncomment if needed):
+      // await user.updateOne({ $inc: { balance: dataPlan.amount } });
+    }
 
     return NextResponse.json(
       httpStatusResponse(
         200,
-        buyVtu.message || "Your data has been purchased successfully",
-        buyVtu.vendingResponse
+        vendingSuccess
+          ? buyVtu.message || "Your data has been purchased successfully"
+          : "Transaction processed, but data delivery may be pending. Contact support if data is not received.",
+        {
+          ...buyVtu.vendingResponse,
+          transactionRef: transactionRef,
+          vendingSuccess: vendingSuccess,
+        }
       ),
       { status: 200 }
     );

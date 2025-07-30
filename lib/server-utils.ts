@@ -870,64 +870,64 @@ export class BuyVTU {
     }
   }
 
-  public async createTransaction(
-    type: transactionType,
-    userId: string,
-    options?: Record<string, any>
-  ) {
-    try {
-      if (!this.session) {
-        throw new Error("Session not started. Call startSession first.");
-      }
-
-      if (!this.status) return;
-
-      const meta = {
-        ...this.vendingResponse,
-        ...this.powerVendResponse,
-        ...options,
-      };
-
-      const trxPayload: transaction = {
-        amount:
-          this.amount ||
-          this.vendingResponse?.totalAmount ||
-          this.powerVendResponse?.cost ||
-          0,
-        paymentMethod: "ownAccount",
-        accountId:
-          this.vendingResponse?.recipients ||
-          this.powerVendResponse?.recipients,
-        status: this.status ? "success" : "failed",
-        tx_ref: this.ref,
-        type,
-        user: userId,
-        meta,
-      };
-
-      const transaction = new Transaction(trxPayload);
-      await transaction.save({ session: this.session });
-
-      // Save the user contact to recently used contact
-      await addToRecentlyUsedContact(
-        userId,
-        trxPayload.type,
-        { ...meta, network: this.network },
-        this.session
-      );
-
-      this.transaction = transaction;
-      this.status = true;
-      return this;
-    } catch (error) {
-      this.status = false;
-      this.message =
-        error instanceof Error
-          ? error.message
-          : "TRANSACTION_CREATION_FAILED: unable to create transaction.";
-      return this;
-    }
-  }
+  //  public async createTransaction(
+  //    type: transactionType,
+  //    userId: string,
+  //    options?: Record<string, any>
+  //  ) {
+  //    try {
+  //      if (!this.session) {
+  //        throw new Error("Session not started. Call startSession first.");
+  //      }
+  //
+  //      if (!this.status) return;
+  //
+  //      const meta = {
+  //        ...this.vendingResponse,
+  //        ...this.powerVendResponse,
+  //        ...options,
+  //      };
+  //
+  //      const trxPayload: transaction = {
+  //        amount:
+  //          this.amount ||
+  //          this.vendingResponse?.totalAmount ||
+  //          this.powerVendResponse?.cost ||
+  //          0,
+  //        paymentMethod: "ownAccount",
+  //        accountId:
+  //          this.vendingResponse?.recipients ||
+  //          this.powerVendResponse?.recipients,
+  //        status: this.status ? "success" : "failed",
+  //        tx_ref: this.ref,
+  //        type,
+  //        user: userId,
+  //        meta,
+  //      };
+  //
+  //      const transaction = new Transaction(trxPayload);
+  //      await transaction.save({ session: this.session });
+  //
+  //      // Save the user contact to recently used contact
+  //      await addToRecentlyUsedContact(
+  //        userId,
+  //        trxPayload.type,
+  //        { ...meta, network: this.network },
+  //        this.session
+  //      );
+  //
+  //      this.transaction = transaction;
+  //      this.status = true;
+  //      return this;
+  //    } catch (error) {
+  //      this.status = false;
+  //      this.message =
+  //        error instanceof Error
+  //          ? error.message
+  //          : "TRANSACTION_CREATION_FAILED: unable to create transaction.";
+  //      return this;
+  //    }
+  //  }
 
   // Implementation for validator method
   public async validator(phoneNumber: string) {
@@ -1152,6 +1152,145 @@ export class BuyVTU {
         error instanceof Error && error.message
           ? error.message
           : "DATA_PURCHASE_FAILED: unable to process your request.";
+      return this;
+    }
+  }
+
+  public async createPendingTransaction(
+    type: transactionType,
+    userId: string,
+    options?: Record<string, any>
+  ) {
+    try {
+      if (!this.session) {
+        throw new Error("Session not started. Call startSession first.");
+      }
+
+      const meta = {
+        ...options,
+        status: "pending", // Mark as pending initially
+      };
+
+      const trxPayload: transaction = {
+        amount: this.amount || 0,
+        paymentMethod: "ownAccount",
+        accountId: options?.customerPhone || "",
+        status: "pending", // Initially pending
+        tx_ref: this.ref,
+        type,
+        user: userId,
+        meta,
+      };
+
+      const transaction = new Transaction(trxPayload);
+      await transaction.save({ session: this.session });
+
+      this.transaction = transaction;
+      this.status = true;
+      return this;
+    } catch (error) {
+      this.status = false;
+      this.message =
+        error instanceof Error
+          ? error.message
+          : "TRANSACTION_CREATION_FAILED: unable to create transaction.";
+      return this;
+    }
+  }
+
+  public async updateTransactionStatus(success: boolean, message: string) {
+    try {
+      if (!this.transaction) {
+        throw new Error("No transaction to update");
+      }
+
+      const updateData = {
+        status: success ? "success" : "failed",
+        "meta.vendingResponse": this.vendingResponse,
+        "meta.vendingSuccess": success,
+        "meta.vendingMessage": message,
+        "meta.completedAt": new Date(),
+      };
+
+      await Transaction.findByIdAndUpdate(this.transaction._id, {
+        $set: updateData,
+      });
+
+      // Save the user contact to recently used contact only if successful
+      if (success && this.transaction) {
+        await addToRecentlyUsedContact(
+          this.transaction.user,
+          this.transaction.type,
+          { ...this.transaction.meta, network: this.network }
+        );
+      }
+
+      this.status = success;
+      this.message = message;
+      return this;
+    } catch (error) {
+      console.error("Error updating transaction status:", error);
+      return this;
+    }
+  }
+
+  // Also update the existing createTransaction method to handle the new flow
+  public async createTransaction(
+    type: transactionType,
+    userId: string,
+    options?: Record<string, any>
+  ) {
+    try {
+      if (!this.session) {
+        throw new Error("Session not started. Call startSession first.");
+      }
+
+      if (!this.status) return;
+
+      const meta = {
+        ...this.vendingResponse,
+        ...this.powerVendResponse,
+        ...options,
+        status: this.status ? "success" : "failed",
+      };
+
+      const trxPayload: transaction = {
+        amount:
+          this.amount ||
+          this.vendingResponse?.totalAmount ||
+          this.powerVendResponse?.cost ||
+          0,
+        paymentMethod: "ownAccount",
+        accountId:
+          this.vendingResponse?.recipients ||
+          this.powerVendResponse?.recipients,
+        status: this.status ? "success" : "failed",
+        tx_ref: this.ref,
+        type,
+        user: userId,
+        meta,
+      };
+
+      const transaction = new Transaction(trxPayload);
+      await transaction.save({ session: this.session });
+
+      // Save the user contact to recently used contact
+      await addToRecentlyUsedContact(
+        userId,
+        trxPayload.type,
+        { ...meta, network: this.network, reciepients: options?.phoneNumber },
+        this.session
+      );
+
+      this.transaction = transaction;
+      this.status = true;
+      return this;
+    } catch (error) {
+      this.status = false;
+      this.message =
+        error instanceof Error
+          ? error.message
+          : "TRANSACTION_CREATION_FAILED: unable to create transaction.";
       return this;
     }
   }

@@ -16,6 +16,7 @@ import EnterPin from "./enter-pin";
 import { Switch } from "./ui/switch";
 import { api, errorMessage } from "@/lib/utils";
 import { Skeleton } from "./ui/skeleton";
+import { useUserStore } from "@/stores/user.store";
 
 export default function DataPlanCard({
   _id,
@@ -25,9 +26,12 @@ export default function DataPlanCard({
 }: dataPlan & { phoneNumber?: string; _isLoading?: boolean }) {
   const [isLoading, setIsLoading] = useState(false);
   const [byPassValidator, setByPassValidator] = useState(false);
+  const { user } = useUserStore();
 
   const handleBuyData = async (pin?: string) => {
     try {
+      const idempotencyKey = `${user?._id}-${Date.now()}-${Math.random()}`;
+
       if (!phoneNumber) {
         return toast.error("Please provide a valid phone number");
       }
@@ -38,6 +42,7 @@ export default function DataPlanCard({
         _id,
         phoneNumber,
         byPassValidator,
+        idempotencyKey,
       };
 
       const res = await api.post<{

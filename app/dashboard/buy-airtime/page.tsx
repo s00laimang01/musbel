@@ -26,6 +26,7 @@ import type { AirtimeVendingResponse, IBuyVtuNetworks } from "@/types";
 import EnterPin from "@/components/enter-pin";
 import { useQuery } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
+import { useUserStore } from "@/stores/user.store";
 
 const Page = () => {
   useNavBar("Buy Airtime");
@@ -35,6 +36,7 @@ const Page = () => {
   const [network, setNetwork] = useState<IBuyVtuNetworks | null>(null);
   const [isPending, startTransaction] = useState(false);
   const [byPassValidator, setByPassValidator] = useState(false);
+  const { user } = useUserStore();
 
   const { data: recentlyContact = [] } = useQuery({
     queryKey: ["recently-used"],
@@ -42,6 +44,9 @@ const Page = () => {
   });
 
   const buyAirtime = async (a?: number, pin?: string) => {
+    const idempotencyKey = `${
+      user?._id
+    }-airtime-${Date.now()}-${Math.random()}`;
     try {
       startTransaction(true);
       const amountToBuy = a || amount;
@@ -65,6 +70,7 @@ const Page = () => {
         network: network[0].toUpperCase() + network.slice(1).toLowerCase(),
         phoneNumber,
         byPassValidator,
+        idempotencyKey,
       });
 
       toast(res.data.message);
