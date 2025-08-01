@@ -183,7 +183,7 @@ export interface VirtualAccountData {
 
 // TRANSACTIONS
 
-export type transactionStatus = "success" | "failed" | "pending";
+export type transactionStatus = "success" | "failed" | "pending" | "refunded";
 export type transactionType =
   | "funding"
   | "airtime"

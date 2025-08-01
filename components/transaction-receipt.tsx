@@ -240,7 +240,10 @@ function TransactionReceipt(
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Recipient Mobile Number</span>
                 <span className="text-slate-950 font-mono">
-                  {Object.keys(transaction.meta?.vendReport)[0]}
+                  {transaction?.meta?.phoneNumber ||
+                    Object.keys(
+                      transaction.meta?.vendingResponse?.vendReport
+                    )[0]}
                 </span>
               </div>
               <div className="flex justify-between items-center">

@@ -1102,7 +1102,9 @@ export class BuyVTU {
     return requestId;
   }
 
-  public async buyDataFromVtuPass(_payload: {
+  public async buyDataFromVtuPass({
+    ..._payload
+  }: {
     phone: number | string;
     request_id?: string;
     serviceID: "airtel-data" | "glo-data" | "etisalat-data";
@@ -1112,7 +1114,7 @@ export class BuyVTU {
       const payload = {
         ..._payload,
         request_id: _payload.request_id || this.createRequestIdForVtuPass(),
-        //billersCode: "08036367979",
+        billersCode: _payload.phone,
         //amount: this.amount,
       };
 
@@ -1129,11 +1131,11 @@ export class BuyVTU {
 
       this.vendingResponse = {
         recipientCount: 1,
-        recipients: String(payload.phone),
+        recipients: String(_payload.phone),
         cost: Number(res.data?.amount),
         totalAmount: Number(res.data?.amount),
         vendReport: {
-          [payload.phone]: res.data.code === "000" ? "successful" : "failed",
+          [_payload.phone]: res.data.code === "000" ? "successful" : "failed",
         },
         vendStatus: null,
         commissionEarned: 0,
@@ -1477,3 +1479,142 @@ export class ReferralProcessor {
     }
   }
 }
+
+import { Types } from "mongoose";
+
+interface RefundResult {
+  success: boolean;
+  message: string;
+  transactionId?: string;
+  refundAmount?: number;
+}
+
+interface RefundError extends Error {
+  code?: string;
+  statusCode?: number;
+}
+
+/**
+ * Processes a refund for a user transaction
+ * @param txRef - Transaction reference ID or MongoDB ObjectId
+ * @returns Promise<RefundResult> - Result of the refund operation
+ * @throws {RefundError} When refund cannot be processed
+ */
+export const refundUser = async (txRef: string): Promise<RefundResult> => {
+  // Input validation
+  if (!txRef || typeof txRef !== "string" || txRef.trim().length === 0) {
+    const error: RefundError = new Error(
+      "Transaction reference is required and must be a valid string"
+    );
+    error.code = "INVALID_INPUT";
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const session = await mongoose.startSession();
+
+  try {
+    return await session.withTransaction(async () => {
+      // Find transaction by ID or reference
+      const transaction = await Transaction.findOne({
+        $or: [
+          { _id: Types.ObjectId.isValid(txRef) ? txRef : null },
+          { tx_ref: txRef },
+        ],
+        //status: "success",
+      }).session(session);
+
+      if (!transaction) {
+        const error: RefundError = new Error(
+          `Transaction not found with reference: ${txRef}`
+        );
+        error.code = "TRANSACTION_NOT_FOUND";
+        error.statusCode = 404;
+        throw error;
+      }
+
+      // Validate transaction status
+      if (transaction.status === "refunded") {
+        const error: RefundError = new Error(
+          `Transaction with status: ${transaction.status} has already been refunded.`
+        );
+        error.code = "TRANSACTON_ALREADY_REFUNDED";
+        error.statusCode = 422;
+        throw error;
+      }
+
+      console.log(transaction);
+
+      // Find associated user
+      const user = await User.findById(transaction.user).session(session);
+
+      if (!user) {
+        const error: RefundError = new Error(
+          `User not found with ID: ${transaction.user}`
+        );
+        error.code = "USER_NOT_FOUND";
+        error.statusCode = 404;
+        throw error;
+      }
+
+      // Validate refund amount
+      if (!transaction.amount || transaction.amount <= 0) {
+        const error: RefundError = new Error(
+          "Invalid transaction amount for refund"
+        );
+        error.code = "INVALID_AMOUNT";
+        error.statusCode = 422;
+        throw error;
+      }
+
+      // Process refund - update user balance
+      const previousBalance = user.balance;
+      user.balance = (user.balance || 0) + transaction.amount;
+
+      // Update transaction status
+      transaction.status = "refunded";
+
+      // Save both documents within transaction
+      await Promise.all([
+        user.save({ session }),
+        transaction.save({ session }),
+      ]);
+
+      // Log successful refund
+      console.log(
+        `Refund processed successfully: Transaction ${transaction._id}, Amount: ${transaction.amount}, User: ${user._id}`
+      );
+
+      return {
+        success: true,
+        message: "Refund processed successfully",
+        transactionId: transaction._id.toString(),
+        refundAmount: transaction.amount,
+      };
+    });
+  } catch (error) {
+    console.log(error);
+    // Log error for monitoring
+    console.error("Refund processing failed:", {
+      txRef,
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Re-throw with proper error handling
+    if (error instanceof Error && "code" in error) {
+      throw error; // Re-throw custom errors
+    }
+
+    // Handle unexpected errors
+    const unexpectedError: RefundError = new Error(
+      "An unexpected error occurred during refund processing"
+    );
+    unexpectedError.code = "INTERNAL_ERROR";
+    unexpectedError.statusCode = 500;
+    throw unexpectedError;
+  } finally {
+    await session.endSession();
+  }
+};

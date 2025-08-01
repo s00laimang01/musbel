@@ -25,7 +25,6 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    console.log(body);
     const validationResult = dataRequestSchemaWithIdempotency.safeParse(body);
 
     if (!validationResult.success) {
@@ -119,7 +118,7 @@ export async function POST(request: Request) {
     await app?.checkTransactionLimit(dataPlan.amount);
 
     // Verify user has sufficient balance
-    await user.verifyUserBalance(dataPlan.amount);
+    //await user.verifyUserBalance(dataPlan.amount);
 
     // Set network
     buyVtu.setNetwork = dataPlan.network;

@@ -12,6 +12,7 @@ import {
   BookOpen,
   DollarSign,
   Search,
+  RotateCcw,
 } from "lucide-react";
 
 import {
@@ -32,9 +33,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { apiResponse, cn, errorMessage, formatCurrency } from "@/lib/utils";
 import { PATHS, transaction } from "@/types";
 import Link from "next/link";
+import axios from "axios";
+import { toast } from "sonner";
 
 interface TransactionsListProps {
   transactions: transaction[];
@@ -42,6 +45,23 @@ interface TransactionsListProps {
 
 export function TransactionsList({ transactions }: TransactionsListProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const refundUser = async (id: string) => {
+    try {
+      setLoading(true);
+      const res = await axios.post<apiResponse>(`/api/transactions/refund`, {
+        transactionId: id,
+      });
+
+      toast.success(res.data.message || "User refunded successfully");
+    } catch (error: any) {
+      const { message } = errorMessage(error);
+      toast.error(message || "Failed to refund user");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredTransactions =
     transactions?.filter(
@@ -132,13 +152,24 @@ export function TransactionsList({ transactions }: TransactionsListProps) {
                   <TableCell>
                     <TransactionStatusBadge status={transaction.status} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="flex items-center">
                     <Button asChild variant="ghost" size="sm">
                       <Link
                         href={`${PATHS.ADMIN_TRANSACTIONS + transaction._id}`}
                       >
                         View
                       </Link>
+                    </Button>
+                    <Button
+                      onClick={() => refundUser(transaction._id!)}
+                      disabled={loading}
+                      variant="ghost"
+                      size="sm"
+                    >
+                      <RotateCcw
+                        className={cn(loading && "animate-spin")}
+                        size={18}
+                      />
                     </Button>
                   </TableCell>
                 </TableRow>
