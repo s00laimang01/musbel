@@ -8,6 +8,7 @@ import { connectToDatabase } from "@/lib/connect-to-db";
 import { BuyVTU } from "@/lib/server-utils";
 import { Transaction } from "@/models/transactions"; // Add this import
 import { z } from "zod";
+import { availableNetworks } from "@/types";
 
 // Add idempotency to the schema
 const airtimeRequestSchemaWithIdempotency = airtimeRequestSchema.extend({
@@ -19,7 +20,6 @@ export async function POST(request: Request) {
   let isTransactionCommitted = false;
   let user: any = null;
 
-  // Start a MongoDB session for transaction
   const buyVtu = new BuyVTU(undefined, {
     validatePhoneNumber: body.byPassValidator ?? false,
     network: body.network,
@@ -30,12 +30,13 @@ export async function POST(request: Request) {
     const validationResult =
       airtimeRequestSchemaWithIdempotency.safeParse(body);
 
-    // If the validation process was not successful
     if (!validationResult.success) {
       return NextResponse.json(
         httpStatusResponse(
           400,
-          "INVALID_AIRTIME_REQUEST: The format of your request is invalid",
+          validationResult.error.issues
+            .map((issue) => `${issue.path}: ${issue.message}`)
+            .join(" ,"),
           validationResult.error.format()
         ),
         { status: 400 }
@@ -77,7 +78,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Check for existing transaction with same idempotency key (if provided)
     if (idempotencyKey) {
       const existingTransaction = await Transaction.findOne({
         user: user._id,
@@ -89,7 +89,6 @@ export async function POST(request: Request) {
       });
 
       if (existingTransaction) {
-        // Return the existing transaction result
         return NextResponse.json(
           httpStatusResponse(
             200,
@@ -115,20 +114,20 @@ export async function POST(request: Request) {
       .select("+buyVtu")
       .session(buyVtu?.session);
 
-    const accessToken = await app?.refreshAccessToken();
-    buyVtu.setAccessToken = accessToken!;
+    //const accessToken = await app?.refreshAccessToken();
+    //buyVtu.setAccessToken = accessToken!;
     buyVtu.setNetwork = network as any;
 
     await app?.systemIsunderMaintainance();
     await app?.isTransactionEnable("airtime");
     await app?.checkTransactionLimit(amount);
 
-    const ntwks: Record<string, number> = {
-      Mtn: 1,
-      Airtel: 2,
-      Glo: 3,
-      "9Mobile": 4,
-    };
+    //const ntwks: Record<string, number> = {
+    //  Mtn: 1,
+    //  Airtel: 2,
+    //  Glo: 3,
+    //  "9Mobile": 4,
+    //};
 
     // Update user balance with session
     await user.updateOne(
@@ -137,7 +136,7 @@ export async function POST(request: Request) {
     );
 
     // Create a unique reference for this transaction
-    const transactionRef = buyVtu.ref;
+    const transactionRef = buyVtu.createRequestIdForVtuPass();
 
     // Set amount for transaction
     buyVtu.amount = amount;
@@ -163,12 +162,11 @@ export async function POST(request: Request) {
 
     try {
       // Use the buyAirtime function to purchase airtime
-      await buyVtu.buyAirtimeFromA4bData({
-        amount,
-        bypass: byPassValidator,
-        network: String(ntwks[network]),
+      await buyVtu.buyAirtimeFromVTPass({
         phone: phoneNumber,
-        "request-id": buyVtu.ref,
+        amount: amount,
+        network: network.toLowerCase() as availableNetworks,
+        request_id: transactionRef,
       });
 
       vendingSuccess = buyVtu.status;

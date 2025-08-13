@@ -99,7 +99,7 @@ const Page = () => {
                     key={idx}
                     onSelect={setPhoneNumber}
                     network={p.meta?.network!}
-                    number={p?.meta?.recipients!}
+                    number={p?.meta?.payerNumber! || p?.meta?.customerPhone!}
                     dataPlan={p.meta?.data!}
                     amount={0}
                     date={p.lastUsed}

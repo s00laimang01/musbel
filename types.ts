@@ -791,7 +791,7 @@ export interface IReferralResponse extends IReferral {
 //      "email": "wanchiko20@gmail.com"
 //    }
 
-export interface VtuPassDataResponse {
+export interface VtuPassPayResponse {
   code: string;
   content: {
     transactions: {

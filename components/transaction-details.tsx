@@ -20,7 +20,6 @@ import { ScrollArea } from "./scroll-area";
 import TransactionReceipt, {
   TransactionReceiptSkeleton,
 } from "./transaction-receipt";
-import html2canvas from "html2canvas";
 
 interface TransactionDetailsSheetProps {
   tx_ref: string;
@@ -59,47 +58,47 @@ export function TransactionDetailsSheet({
   const downloadReceipt = async () => {
     if (!receiptRef.current) return;
 
-    setIsDownloading(true);
-
-    try {
-      // Create canvas from the receipt element
-      const canvas = await html2canvas(receiptRef.current, {
-        backgroundColor: "#ffffff",
-        scale: 2, // Higher quality
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        width: receiptRef.current.scrollWidth,
-        height: receiptRef.current.scrollHeight,
-      });
-
-      // Convert canvas to blob
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) return;
-
-          // Create download link
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = `receipt-${tx_ref}-${Date.now()}.png`;
-
-          // Trigger download
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          // Clean up
-          URL.revokeObjectURL(url);
-        },
-        "image/png",
-        1.0
-      );
-    } catch (error) {
-      console.error("Error downloading receipt:", error);
-    } finally {
-      setIsDownloading(false);
-    }
+    //    setIsDownloading(true);
+    //
+    //    try {
+    //      // Create canvas from the receipt element
+    //      const canvas = await html2canvas(receiptRef.current, {
+    //        backgroundColor: "#ffffff",
+    //        scale: 2, // Higher quality
+    //        useCORS: true,
+    //        allowTaint: true,
+    //        logging: false,
+    //        width: receiptRef.current.scrollWidth,
+    //        height: receiptRef.current.scrollHeight,
+    //      });
+    //
+    //      // Convert canvas to blob
+    //      canvas.toBlob(
+    //        (blob) => {
+    //          if (!blob) return;
+    //
+    //          // Create download link
+    //          const url = URL.createObjectURL(blob);
+    //          const link = document.createElement("a");
+    //          link.href = url;
+    //          link.download = `receipt-${tx_ref}-${Date.now()}.png`;
+    //
+    //          // Trigger download
+    //          document.body.appendChild(link);
+    //          link.click();
+    //          document.body.removeChild(link);
+    //
+    //          // Clean up
+    //          URL.revokeObjectURL(url);
+    //        },
+    //        "image/png",
+    //        1.0
+    //      );
+    //    } catch (error) {
+    //      console.error("Error downloading receipt:", error);
+    //    } finally {
+    //      setIsDownloading(false);
+    //    }
   };
 
   return (

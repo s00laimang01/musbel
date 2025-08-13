@@ -61,6 +61,8 @@ function TransactionReceipt(
 ) {
   const { data: session } = useSession();
 
+  console.log({ transaction });
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -195,7 +197,9 @@ function TransactionReceipt(
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Recipient Mobile Number</span>
                 <span className="text-slate-950 font-mono">
-                  {Object.keys(transaction.meta.vendReport)[0]}
+                  {Object.keys(
+                    transaction.meta?.vendingResponse?.vendReport
+                  )?.[0] || "Not Founc"}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -208,7 +212,7 @@ function TransactionReceipt(
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">PayPoints Earned</span>
                   <span className="text-green-400 font-medium">
-                    + {transaction.meta.kintaSmePointsEarned}
+                    + {transaction.meta?.kintaSmePointsEarned || 0}
                   </span>
                 </div>
               )}

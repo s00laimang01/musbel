@@ -180,7 +180,7 @@ const Page = () => {
                         //@ts-ignore
                         p?.meta?.network.slice(1).toLowerCase()
                       }
-                      number={p?.meta?.recipients!}
+                      number={p?.meta?.payerNumber! || p?.meta?.customerPhone!}
                       dataPlan=""
                       amount={p.meta?.amount!}
                       date={p.lastUsed}

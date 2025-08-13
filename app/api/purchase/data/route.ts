@@ -124,7 +124,7 @@ export async function POST(request: Request) {
     buyVtu.setNetwork = dataPlan.network;
 
     // Create a unique reference for this transaction
-    const transactionRef = buyVtu.ref;
+    const transactionRef = buyVtu.createRequestIdForVtuPass();
 
     // Update user balance with session
     await user.updateOne(
@@ -182,7 +182,7 @@ export async function POST(request: Request) {
 
         await buyVtu.buyDataFromVtuPass({
           phone: phoneNumber,
-          request_id: buyVtu.createRequestIdForVtuPass(),
+          request_id: transactionRef,
           serviceID: networdId[dataPlan?.network!] as "airtel-data",
           variation_code: dataPlan?.planId + "",
         });
@@ -191,7 +191,6 @@ export async function POST(request: Request) {
       vendingSuccess = buyVtu.status;
       vendingMessage = buyVtu.message || "";
     } catch (vendingError) {
-      console.error("External vending API error:", vendingError);
       vendingSuccess = false;
       vendingMessage =
         vendingError instanceof Error ? vendingError.message : "Vending failed";
@@ -199,17 +198,6 @@ export async function POST(request: Request) {
 
     // Update transaction status based on vending result
     await buyVtu.updateTransactionStatus(vendingSuccess, vendingMessage);
-
-    if (!vendingSuccess) {
-      // If vending failed, we might want to refund the user
-      // But this is a business decision - some services keep the money for failed attempts
-      console.warn(
-        `Data vending failed for transaction ${transactionRef}: ${vendingMessage}`
-      );
-
-      // Optionally refund user (uncomment if needed):
-      // await user.updateOne({ $inc: { balance: dataPlan.amount } });
-    }
 
     return NextResponse.json(
       httpStatusResponse(

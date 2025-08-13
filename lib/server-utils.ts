@@ -28,7 +28,8 @@ import {
   IReferral,
   DataVendingResponse,
   AirtimeVendingResponse,
-  VtuPassDataResponse,
+  VtuPassPayResponse,
+  availableNetworks,
 } from "@/types";
 import axios from "axios";
 import mongoose, { PipelineStage } from "mongoose";
@@ -49,7 +50,12 @@ export const budPay = (type: "s2s" | "v2" = "v2") => {
 };
 
 export const vtuPassApi = axios.create({
-  baseURL: `https://sandbox.vtpass.com/api`,
+  baseURL: `https://vtpass.com/api`,
+  headers: {
+    "api-key": process.env.VTU_PASS_API_KEY,
+    "secret-key": process.env.VTU_PASS_SECRET_KEY,
+    "public-key": process.env.VTU_PASS_PUBLIC_KEY,
+  },
 });
 
 export const createOneTimeVirtualAccount = async (
@@ -431,8 +437,6 @@ export async function processVirtualAccountForUser(
     phone: newUser.phoneNumber,
     reference: user._id!,
   });
-
-  console.log({ account });
 
   // If the creation is not successful, notify the user about it
   if (!account.status) {
@@ -1118,16 +1122,7 @@ export class BuyVTU {
         //amount: this.amount,
       };
 
-      console.log({ payload });
-
-      const res = await vtuPassApi.post<VtuPassDataResponse>("/pay", payload, {
-        headers: {
-          "api-key": process.env.VTU_PASS_API_KEY,
-          "secret-key": process.env.VTU_PASS_SECRET_KEY,
-        },
-      });
-
-      console.log({ respose: res.data });
+      const res = await vtuPassApi.post<VtuPassPayResponse>("/pay", payload);
 
       this.vendingResponse = {
         recipientCount: 1,
@@ -1177,7 +1172,7 @@ export class BuyVTU {
         amount: this.amount || 0,
         paymentMethod: "ownAccount",
         accountId: options?.customerPhone || "",
-        status: "pending", // Initially pending
+        status: "pending",
         tx_ref: this.ref,
         type,
         user: userId,
@@ -1236,7 +1231,6 @@ export class BuyVTU {
     }
   }
 
-  // Also update the existing createTransaction method to handle the new flow
   public async createTransaction(
     type: transactionType,
     userId: string,
@@ -1293,6 +1287,57 @@ export class BuyVTU {
         error instanceof Error
           ? error.message
           : "TRANSACTION_CREATION_FAILED: unable to create transaction.";
+      return this;
+    }
+  }
+
+  public async buyAirtimeFromVTPass(_payload: {
+    phone: string;
+    request_id: string;
+    amount: number;
+    network: availableNetworks;
+  }) {
+    try {
+      const serviceID: Record<availableNetworks, string | availableNetworks> = {
+        mtn: _payload.network,
+        glo: _payload.network,
+        airtel: _payload.network,
+        "9mobile": "etisalat",
+      };
+
+      const payload = {
+        ..._payload,
+        serviceID: serviceID[_payload.network],
+      };
+
+      const res = await vtuPassApi.post<VtuPassPayResponse>("/pay", payload);
+
+      console.log(res);
+
+      this.vendingResponse = {
+        recipientCount: 1,
+        recipients: String(payload.phone),
+        cost: Number(res.data?.amount),
+        totalAmount: Number(res.data?.amount),
+        vendReport: {
+          [_payload.phone]: res.data.code === "000" ? "successful" : "failed",
+        },
+        vendStatus: null,
+        commissionEarned: 0,
+      };
+
+      this.status = res.data.code === "000";
+      this.message = !this.status
+        ? "Airtime vending failed"
+        : "Airtime purchase successful, you will be creditted soon";
+    } catch (error) {
+      console.log(error);
+
+      this.status = false;
+
+      this.message =
+        "Oops, there was an error when trying to purchase an airtime for you";
+
       return this;
     }
   }

@@ -287,14 +287,14 @@ const Page = () => {
                   <span className="text-primary text-4xl font-semibold">
                     {virtualAccount?.data.account_number}
                   </span>
-                  <button
+                  <Button
                     onClick={() =>
                       copyAccountNumber(virtualAccount?.data.account_number)
                     }
                     className="ml-2"
                   >
                     <Copy className="h-5 w-5 text-slate-400" />
-                  </button>
+                  </Button>
                 </div>
                 <p className="text-sm text-slate-700 font-medium mb-2">
                   {virtualAccount?.data.account_name}
