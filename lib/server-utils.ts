@@ -984,6 +984,8 @@ export class BuyVTU {
         { headers: { Authorization: `Bearer ${process.env.SME_PLUG_API_KEY}` } }
       );
 
+      console.log(res.data);
+
       this.vendingResponse = {
         recipientCount: 1,
         recipients: phoneNumber,

@@ -107,10 +107,6 @@ export async function POST(request: Request) {
     // Get the entire application configuration
     const app = await App.findOne({}).select("+buyVtu").session(buyVtu.session);
 
-    // Refresh/Retrieve the buyVtu accessToken
-    const accessToken = await app?.refreshAccessToken();
-    buyVtu.setAccessToken = accessToken!;
-
     await app?.systemIsunderMaintainance();
     await app?.isTransactionEnable("data");
 
@@ -199,6 +195,8 @@ export async function POST(request: Request) {
 
     // Update transaction status based on vending result
     await buyVtu.updateTransactionStatus(vendingSuccess, vendingMessage);
+
+    console.log({ vendingMessage, vendingSuccess });
 
     return NextResponse.json(
       httpStatusResponse(
