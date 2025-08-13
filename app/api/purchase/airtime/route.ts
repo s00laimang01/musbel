@@ -183,29 +183,21 @@ export async function POST(request: Request) {
     // Update transaction status based on vending result
     await buyVtu.updateTransactionStatus(vendingSuccess, vendingMessage);
 
-    if (!vendingSuccess) {
-      // If vending failed, log the issue
-      console.warn(
-        `Airtime vending failed for transaction ${transactionRef}: ${vendingMessage}`
-      );
-
-      // Optionally refund user (uncomment if needed):
-      // await user.updateOne({ $inc: { balance: amount } });
-    }
-
     return NextResponse.json(
       httpStatusResponse(
-        200,
+        vendingSuccess ? 200 : 400,
         vendingSuccess
           ? buyVtu.message || "Airtime purchase successful"
-          : "Transaction processed, but airtime delivery may be pending. Contact support if airtime is not received.",
+          : vendingMessage ||
+              "Oops, something went wrong while purchasing airtime for you",
+
         {
           ...buyVtu.vendingResponse,
           transactionRef: transactionRef,
           vendingSuccess: vendingSuccess,
         }
       ),
-      { status: 200 }
+      { status: vendingSuccess ? 200 : 400 }
     );
   } catch (error) {
     console.error("Airtime purchase error:", error);

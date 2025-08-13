@@ -958,7 +958,8 @@ export class BuyVTU {
     networkId: number,
     planId: number,
     phoneNumber: string,
-    amount: number
+    amount: number,
+    ref: string
   ) {
     try {
       interface IRes {
@@ -974,7 +975,7 @@ export class BuyVTU {
         network_id: networkId,
         plan_id: planId,
         phone: phoneNumber,
-        customer_reference: this.ref,
+        customer_reference: ref,
       };
 
       const res = await axios.post<IRes>(

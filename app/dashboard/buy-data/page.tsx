@@ -32,6 +32,7 @@ const Page = () => {
   const { isLoading, data } = useQuery({
     queryKey: ["data-plans"],
     queryFn: () => api.get<{ data: dataPlan[] }>(`/create/data-plan/`),
+    enabled: !!network,
   });
 
   const { isLoading: _isLoading, data: recentlyUsed } = useQuery({
@@ -136,7 +137,6 @@ const Page = () => {
                 />
               </SelectTrigger>
               <SelectContent className="rounded-none">
-                <SelectItem value="all">All Networks</SelectItem>
                 {AVIALABLE_NETWORKS.map((type) => (
                   <SelectItem key={type} value={type} className="capitalize">
                     {type}
@@ -205,7 +205,7 @@ const Page = () => {
                   transition={{ duration: 0.3 }}
                   className="col-span-full text-center py-8 text-gray-500"
                 >
-                  No data plans match your selected filters.
+                  Please select a network to show data plans
                 </motion.div>
               )}
             </motion.div>

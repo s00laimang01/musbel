@@ -170,7 +170,8 @@ export async function POST(request: Request) {
           n[dataPlan.network.toLowerCase()],
           dataPlan.planId as number,
           phoneNumber,
-          dataPlan.amount
+          dataPlan.amount,
+          transactionRef
         );
       } else {
         const networdId: Record<IBuyVtuNetworks, string> = {
@@ -201,17 +202,18 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       httpStatusResponse(
-        200,
+        vendingSuccess ? 200 : 400,
         vendingSuccess
           ? buyVtu.message || "Your data has been purchased successfully"
-          : "Transaction processed, but data delivery may be pending. Contact support if data is not received.",
+          : vendingMessage ||
+              "Oops, something went wrong while purchasing data for you",
         {
           ...buyVtu.vendingResponse,
           transactionRef: transactionRef,
           vendingSuccess: vendingSuccess,
         }
       ),
-      { status: 200 }
+      { status: vendingSuccess ? 200 : 400 }
     );
   } catch (error) {
     console.error("Data purchase error:", error);
