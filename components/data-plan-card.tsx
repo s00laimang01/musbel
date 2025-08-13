@@ -62,11 +62,9 @@ export default function DataPlanCard({
     return <Skeleton className="w-full h-[20rem]" />;
   }
 
-  console.log({ dataPlan });
-
   return (
     <Card
-      className={`w-full rounded-none overflow-hidden border-2 shadow-lg transition-all hover:shadow-xl p-0 ${
+      className={`w-full rounded-none overflow-hidden border-2 shadow-lg transition-all hover:shadow-xl p-0 md:h-[22rem] ${
         isLoading ? "opacity-80 pointer-events-none" : ""
       }`}
     >
@@ -87,7 +85,7 @@ export default function DataPlanCard({
       </CardHeader>
       <CardContent className="pt-6 px-4">
         <div className="text-center mb-4">
-          <h2 className="text-xl font-medium tracking-tight mb-1">
+          <h2 className="text-xl font-medium tracking-tight line-clamp-2 mb-1">
             {dataPlan.data}
           </h2>
           <p className="text-sm text-muted-foreground">{dataPlan.type}</p>
@@ -106,7 +104,7 @@ export default function DataPlanCard({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="bg-gray-50 p-1 w-full">
+      <CardFooter className="h-[calc(100vh-40px)] flex items-end justify-end p-1 w-full">
         <EnterPin
           onVerify={handleBuyData}
           moreChild={

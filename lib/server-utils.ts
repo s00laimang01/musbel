@@ -1119,7 +1119,6 @@ export class BuyVTU {
         ..._payload,
         request_id: _payload.request_id || this.createRequestIdForVtuPass(),
         billersCode: _payload.phone,
-        //amount: this.amount,
       };
 
       const res = await vtuPassApi.post<VtuPassPayResponse>("/pay", payload);
