@@ -27,6 +27,7 @@ import EnterPin from "@/components/enter-pin";
 import { useQuery } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { useUserStore } from "@/stores/user.store";
+import { useDashboard } from "@/stores/dashboard.store";
 
 const Page = () => {
   useNavBar("Buy Airtime");
@@ -37,6 +38,7 @@ const Page = () => {
   const [isPending, startTransaction] = useState(false);
   const [byPassValidator, setByPassValidator] = useState(false);
   const { user } = useUserStore();
+  const { setNotification } = useDashboard();
 
   const { data: recentlyContact = [] } = useQuery({
     queryKey: ["recently-used"],
@@ -62,7 +64,7 @@ const Page = () => {
       }
 
       const res = await api.post<{
-        data: AirtimeVendingResponse;
+        data: { transactionRef: string };
         message: string;
       }>(`/purchase/airtime/`, {
         pin,
@@ -73,9 +75,18 @@ const Page = () => {
         idempotencyKey,
       });
 
-      toast(res.data.message);
+      setNotification(true, {
+        title: "Airtime Purchase successful",
+        description: res.data.message,
+        tx_ref: res.data.data.transactionRef,
+        type: "success",
+      });
     } catch (error) {
-      toast.error(errorMessage(error).message);
+      setNotification(true, {
+        title: "Airtime Purchase failed",
+        description: errorMessage(error).message,
+        type: "failed",
+      });
     } finally {
       startTransaction(false);
     }

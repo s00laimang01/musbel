@@ -17,6 +17,7 @@ import { Switch } from "./ui/switch";
 import { api, errorMessage } from "@/lib/utils";
 import { Skeleton } from "./ui/skeleton";
 import { useUserStore } from "@/stores/user.store";
+import { useDashboard } from "@/stores/dashboard.store";
 
 export default function DataPlanCard({
   _id,
@@ -26,6 +27,7 @@ export default function DataPlanCard({
 }: dataPlan & { phoneNumber?: string; _isLoading?: boolean }) {
   const [isLoading, setIsLoading] = useState(false);
   const [byPassValidator, setByPassValidator] = useState(false);
+  const { setNotification } = useDashboard();
   const { user } = useUserStore();
 
   const handleBuyData = async (pin?: string) => {
@@ -46,13 +48,22 @@ export default function DataPlanCard({
       };
 
       const res = await api.post<{
-        data: DataVendingResponse;
+        data: { transactionRef: string };
         message: string;
       }>(`/purchase/data/`, payload);
 
-      toast(res.data.message);
+      setNotification(true, {
+        title: "Data Purchase successful",
+        description: res.data.message,
+        tx_ref: res.data.data.transactionRef,
+        type: "success",
+      });
     } catch (error) {
-      toast.error(errorMessage(error).message);
+      setNotification(true, {
+        title: "Data Purchase failed",
+        description: errorMessage(error).message,
+        type: "failed",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +75,7 @@ export default function DataPlanCard({
 
   return (
     <Card
-      className={`w-full rounded-none overflow-hidden border-2 shadow-lg transition-all hover:shadow-xl p-0 md:h-[22rem] ${
+      className={`w-full rounded-none overflow-hidden border-2 shadow-lg transition-all hover:shadow-xl p-0 md:h-[22rem] h-fit ${
         isLoading ? "opacity-80 pointer-events-none" : ""
       }`}
     >
@@ -104,7 +115,7 @@ export default function DataPlanCard({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="h-[calc(100vh-40px)] flex items-end justify-end p-1 w-full">
+      <CardFooter className="md:h-[calc(100vh-40px)] flex items-end justify-end p-1 w-full">
         <EnterPin
           onVerify={handleBuyData}
           moreChild={

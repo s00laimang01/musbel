@@ -93,6 +93,25 @@ export interface dashboardStore {
 
   // Setters
   setTitle: (title: string) => void;
+
+  notification: {
+    open: boolean;
+    options?: {
+      type: transactionStatus;
+      title?: string;
+      description?: string;
+      tx_ref?: string;
+    };
+  };
+  setNotification: (
+    prop: boolean,
+    options?: {
+      type: transactionStatus;
+      title?: string;
+      description?: string;
+      tx_ref?: string;
+    }
+  ) => void;
 }
 
 export interface userStore {

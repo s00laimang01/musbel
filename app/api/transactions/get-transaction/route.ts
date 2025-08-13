@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     }
 
     const transaction = await Transaction.findOne({
-      tx_ref,
+      $or: [{ tx_ref }, { "meta.transactionRef": tx_ref }],
       ...query,
     });
 

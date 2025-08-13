@@ -9,4 +9,15 @@ export const useDashboard = create<dashboardStore>((set) => ({
       title,
     }));
   },
+  notification: {
+    open: false,
+  },
+  setNotification(prop, options) {
+    set({
+      notification: {
+        open: prop,
+        options,
+      },
+    });
+  },
 }));

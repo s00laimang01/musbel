@@ -1123,6 +1123,8 @@ export class BuyVTU {
 
       const res = await vtuPassApi.post<VtuPassPayResponse>("/pay", payload);
 
+      console.log(res);
+
       this.vendingResponse = {
         recipientCount: 1,
         recipients: String(_payload.phone),
@@ -1172,7 +1174,7 @@ export class BuyVTU {
         paymentMethod: "ownAccount",
         accountId: options?.customerPhone || "",
         status: "pending",
-        tx_ref: this.ref,
+        tx_ref: options?.transactionRef || "",
         type,
         user: userId,
         meta,
@@ -1310,8 +1312,6 @@ export class BuyVTU {
       };
 
       const res = await vtuPassApi.post<VtuPassPayResponse>("/pay", payload);
-
-      console.log(res);
 
       this.vendingResponse = {
         recipientCount: 1,

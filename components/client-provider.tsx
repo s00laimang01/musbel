@@ -21,6 +21,7 @@ import Image from "next/image";
 import { error } from "console";
 import { useRouter } from "next/navigation";
 import { PATHS } from "@/types";
+import { NotificationModal } from "./notification-modal";
 
 const ClientProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -64,6 +65,7 @@ const ClientProvider: FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <div className="flex min-h-screen bg-white w-screen relative">
       <Toaster position="top-center" richColors />
+      <NotificationModal />
       <Button
         size="sm"
         variant="ringHover"
