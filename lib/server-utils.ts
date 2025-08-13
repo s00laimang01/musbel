@@ -1002,7 +1002,9 @@ export class BuyVTU {
         res.data.status &&
           this.vendingResponse.vendReport[phoneNumber] === "successful"
       );
-      this.message = !this.status ? "Data vending failed" : res.data.data.msg;
+      this.message = !this.status
+        ? res.data.data.msg || "Data vending failed"
+        : res.data.data.msg;
 
       return this;
     } catch (error: any) {
@@ -1142,7 +1144,7 @@ export class BuyVTU {
 
       this.status = res.data.code === "000";
       this.message = !this.status
-        ? "Data vending failed"
+        ? res.data.response_description
         : `Your data purchase was successful and you will credited shortly`;
 
       return this;

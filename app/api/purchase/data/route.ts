@@ -189,8 +189,8 @@ export async function POST(request: Request) {
       vendingMessage = buyVtu.message || "";
     } catch (vendingError) {
       vendingSuccess = false;
-      vendingMessage =
-        vendingError instanceof Error ? vendingError.message : "Vending failed";
+      //vendingMessage =
+      //  vendingError instanceof Error ? vendingError.message : "Vending failed";
     }
 
     // Update transaction status based on vending result
