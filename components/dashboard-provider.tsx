@@ -10,7 +10,8 @@ import { getUser } from "@/lib/utils";
 import { Sidebar } from "./dashboard/sidebar";
 import { Header } from "./dashboard/header";
 import { usePathname } from "next/navigation";
-import { useMediaQuery, useWindowSize } from "@uidotdev/usehooks";
+import { useWindowSize } from "@uidotdev/usehooks";
+import { NotificationModal } from "./notification-modal";
 
 const DashboardProvider: FC<{ children: ReactNode; isMobile?: boolean }> = ({
   children,
@@ -56,7 +57,7 @@ const DashboardProvider: FC<{ children: ReactNode; isMobile?: boolean }> = ({
   return (
     <div className="flex min-h-screen bg-white">
       <Toaster position="top-center" richColors />
-
+      <NotificationModal />
       <div className="md:flex min-h-screen bg-background w-full">
         <Sidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
         <div className="flex flex-1 flex-col">

@@ -69,6 +69,8 @@ export interface dataPlan {
   isPopular?: boolean;
   planId: number | string;
   provider: "buyVTU" | "smePlug";
+  isDisabled?: boolean;
+  removedFromList?: boolean;
 }
 
 export interface FeatureCardProps {

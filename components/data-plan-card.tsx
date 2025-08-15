@@ -134,7 +134,7 @@ export default function DataPlanCard({
         >
           <Button
             className="w-full bg-green-600/80 hover:bg-primary/80 text-white rounded-none"
-            disabled={isLoading}
+            disabled={isLoading || dataPlan.isDisabled}
           >
             {isLoading ? (
               <span className="flex items-center gap-2">

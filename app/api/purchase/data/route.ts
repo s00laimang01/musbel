@@ -101,6 +101,12 @@ export async function POST(request: Request) {
       throw new Error("PLAN_NOT_FOUND: we cannot find this plan");
     }
 
+    if (dataPlan.isDisabled) {
+      throw new Error(
+        "PLAN_DISABLED: this plan is disabled and cannot be purchased at the moment"
+      );
+    }
+
     // Start session after all validations
     await buyVtu.startSession();
 
@@ -195,8 +201,6 @@ export async function POST(request: Request) {
 
     // Update transaction status based on vending result
     await buyVtu.updateTransactionStatus(vendingSuccess, vendingMessage);
-
-    console.log({ vendingMessage, vendingSuccess });
 
     return NextResponse.json(
       httpStatusResponse(

@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
     const existingPlan = await DataPlan.findOne({
       planId: validatedData.planId,
     });
+
     if (existingPlan) {
       return NextResponse.json(
         { success: false, message: "A plan with this ID already exists" },
@@ -165,6 +166,8 @@ export async function DELETE(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const { _id, ...updates } = await request.json();
+
+    console.log({ updates });
 
     await connectToDatabase();
 

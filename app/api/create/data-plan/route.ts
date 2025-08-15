@@ -1,13 +1,37 @@
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { httpStatusResponse } from "@/lib/utils";
 import { DataPlan } from "@/models/data-plan";
+import { User } from "@/models/users";
 import { dataPlan } from "@/types";
+import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
     const { amount, availability, network, ...rest } =
       (await request.json()) as dataPlan;
+
+    const session = await getServerSession();
+
+    if (!session?.user.email) {
+      return NextResponse.json(httpStatusResponse(401, "Unauthorized"), {
+        status: 401,
+      });
+    }
+
+    const user = await User.findOne({ "auth.email": session.user.email });
+
+    if (!user) {
+      return NextResponse.json(httpStatusResponse(404, "User not found"), {
+        status: 404,
+      });
+    }
+
+    if (user.role !== "admin") {
+      return NextResponse.json(httpStatusResponse(403, "Forbidden"), {
+        status: 403,
+      });
+    }
 
     const dataPlanPayload: dataPlan = {
       amount,
@@ -41,6 +65,28 @@ export async function GET(request: NextRequest) {
     const network = q.get("network");
     const planType = q.get("planType");
 
+    const session = await getServerSession();
+
+    if (!session?.user.email) {
+      return NextResponse.json(httpStatusResponse(401, "Unauthorized"), {
+        status: 401,
+      });
+    }
+
+    const user = await User.findOne({ "auth.email": session.user.email });
+
+    if (!user) {
+      return NextResponse.json(httpStatusResponse(404, "User not found"), {
+        status: 404,
+      });
+    }
+
+    if (user.role !== "admin") {
+      return NextResponse.json(httpStatusResponse(403, "Forbidden"), {
+        status: 403,
+      });
+    }
+
     let query: Record<any, any> = {};
 
     await connectToDatabase();
@@ -53,10 +99,12 @@ export async function GET(request: NextRequest) {
       query["type"] = planType;
     }
 
-    const dataPlans = await DataPlan.find({ ...query }).sort({
+    const dataPlans = await DataPlan.find({
+      ...query,
+      $or: [{ removedFromList: false }, { removedFromList: undefined }],
+    }).sort({
       isPopular: -1,
       amount: 1,
-      //planId: 1,
     });
 
     return NextResponse.json(

@@ -37,6 +37,14 @@ const DataPlanSchema: mongoose.Schema<dataPlan> = new mongoose.Schema({
     required: true,
     enum: ["smePlug", "buyVTU"],
   },
+  isDisabled: {
+    type: Boolean,
+    default: false,
+  },
+  removedFromList: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const DataPlan: mongoose.Model<dataPlan> =

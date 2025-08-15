@@ -45,6 +45,7 @@ import { CreateDataPlanDialog } from "@/components/dashboard/create-data-plan";
 import { dataPlan } from "@/types";
 import { toast } from "sonner";
 import PromptModal from "@/components/prompt-modal";
+import { useDashboard } from "@/stores/dashboard.store";
 
 // Type definitions
 interface DataPlan {
@@ -82,8 +83,9 @@ export default function DataPlansPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [dataPlan, setDataPlan] = useState<dataPlan>();
   const [dataId, setDataId] = useState<string>();
+  const { setNotification } = useDashboard();
+  const [open, setOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -161,6 +163,30 @@ export default function DataPlansPage() {
     }
   };
 
+  const editPlan = async (payload: Partial<dataPlan>) => {
+    try {
+      await api.patch("/admin/data/", { _id: payload._id, ...payload });
+
+      queryClient.invalidateQueries({
+        queryKey: ["dataPlans", page, limit, searchTerm, network],
+      });
+
+      setNotification(true, {
+        title: "Data plan updated successfully",
+        type: "success",
+        description: "Your request to update this data plan was successful",
+      });
+    } catch (error) {
+      setNotification(true, {
+        title: "Data plan update failed",
+        type: "failed",
+        description: errorMessage(error).message,
+      });
+    } finally {
+      setOpen(false);
+    }
+  };
+
   React.useEffect(() => {
     if (data && initialLoad) {
       setInitialLoad(false);
@@ -199,16 +225,6 @@ export default function DataPlansPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      {dataPlan && (
-        <CreateDataPlanDialog
-          dataPlan={dataPlan}
-          _open
-          onClose={() => {
-            setDataPlan(undefined);
-          }}
-        />
-      )}
-
       {dataId && (
         <PromptModal
           onConfirm={deletePlan}
@@ -281,15 +297,11 @@ export default function DataPlansPage() {
               </div>
             </CardContent>
             <CardFooter className="flex gap-2">
-              <Button
-                onClick={() => {
-                  setDataPlan(plan);
-                }}
-                className="flex-1 rounded-none"
-                variant="outline"
-              >
-                Edit
-              </Button>
+              <CreateDataPlanDialog dataPlan={plan}>
+                <Button className="flex-1 rounded-none" variant="outline">
+                  Edit
+                </Button>
+              </CreateDataPlanDialog>
               <Button variant="destructive" asChild>
                 <Button
                   onClick={() => setDataId(plan._id)}
@@ -318,7 +330,7 @@ export default function DataPlansPage() {
         <Button type="submit" variant="default" className="rounded-none">
           Search
         </Button>
-        <DropdownMenu>
+        <DropdownMenu open={open} onOpenChange={setOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="rounded-none">
               Filter
@@ -392,14 +404,50 @@ export default function DataPlansPage() {
                           <span className="sr-only">Actions</span>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setDataPlan(plan);
+                      <DropdownMenuContent align="end" className="w-[170px]">
+                        <CreateDataPlanDialog
+                          dataPlan={plan}
+                          onClose={() => {
+                            setOpen(false);
                           }}
                         >
-                          Edit plan
-                        </DropdownMenuItem>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full items-center justify-start"
+                          >
+                            Edit plan
+                          </Button>
+                        </CreateDataPlanDialog>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full items-center justify-start"
+                          onClick={() => {
+                            editPlan({
+                              _id: plan._id,
+                              isDisabled: !plan.isDisabled,
+                            });
+                          }}
+                        >
+                          {plan.isDisabled ? "Enable Plan" : "Disable Plan"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full items-center justify-start"
+                          onClick={() => {
+                            editPlan({
+                              _id: plan._id,
+                              removedFromList: !plan.removedFromList,
+                            });
+                          }}
+                        >
+                          {plan.removedFromList
+                            ? "Add to List"
+                            : "Remove from List"}
+                        </Button>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => setDataId(plan._id!)}
