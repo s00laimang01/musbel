@@ -28,9 +28,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { useUserStore } from "@/stores/user.store";
 import { useDashboard } from "@/stores/dashboard.store";
+import { useHealthChecker } from "@/hooks/use-health-checker";
 
 const Page = () => {
   useNavBar("Buy Airtime");
+  useHealthChecker("airtime");
 
   const [amount, setAmount] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");

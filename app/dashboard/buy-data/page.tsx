@@ -21,9 +21,11 @@ import { useQuery } from "@tanstack/react-query";
 import { api, getRecentlyUsedContacts } from "@/lib/utils";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import Text from "@/components/text";
+import { useHealthChecker } from "@/hooks/use-health-checker";
 
 const Page = () => {
   useNavBar("Buy Data");
+  useHealthChecker("data");
   const [network, setNetwork] = useState<availableNetworks | null>(null);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [planType, setPlanType] = useState("");
