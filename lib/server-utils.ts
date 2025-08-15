@@ -1126,6 +1126,8 @@ export class BuyVTU {
         billersCode: _payload.phone,
       };
 
+      console.log({ payload });
+
       const res = await vtuPassApi.post<VtuPassPayResponse>("/pay", payload);
 
       console.log(res);

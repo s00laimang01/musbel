@@ -21,7 +21,6 @@ export async function POST(request: Request) {
   const buyVtu = new BuyVTU();
   let isTransactionCommitted = false;
   let user: any = null;
-  let dataPlan: dataPlan | null = null;
 
   try {
     const body = await request.json();
@@ -95,7 +94,9 @@ export async function POST(request: Request) {
     await user?.verifyTransactionPin(pin);
 
     // Find data plan
-    dataPlan = await DataPlan.findById(_id);
+    const dataPlan = await DataPlan.findById(_id);
+
+    console.log(dataPlan);
 
     if (!dataPlan) {
       throw new Error("PLAN_NOT_FOUND: we cannot find this plan");
@@ -187,7 +188,7 @@ export async function POST(request: Request) {
           phone: phoneNumber,
           request_id: transactionRef,
           serviceID: networdId[dataPlan?.network!] as "airtel-data",
-          variation_code: dataPlan?.planId + "",
+          variation_code: dataPlan?.planId as string,
         });
       }
 
