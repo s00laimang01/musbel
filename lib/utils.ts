@@ -180,10 +180,7 @@ export const httpStatusResponse = (
 
 export const checkIfUserIsAuthenticated = async (session: Session | null) => {
   if (!session) {
-    return NextResponse.json(
-      httpStatusResponse(401, "UNAUTHENTICATED: Please signIn to continue."),
-      { status: 401 }
-    );
+    throw new Error("UNAUTHENTICATED: Please signIn to continue.");
   }
 
   return true;
