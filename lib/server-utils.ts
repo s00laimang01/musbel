@@ -1274,7 +1274,10 @@ export class BuyVTU {
       if (!this.status) return;
 
       const meta = {
-        ...this.vendingResponse,
+        vendingResponse: {
+          ...this.vendingResponse,
+          commissionEarned: this.amount! * 0.02,
+        },
         ...this.powerVendResponse,
         ...options,
         status: this.status ? "success" : "failed",

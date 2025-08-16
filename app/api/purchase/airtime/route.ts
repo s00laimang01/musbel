@@ -100,11 +100,14 @@ export async function POST(request: Request) {
       }
     }
 
+    const COMMISSION = amount * 0.02;
+    const AMOUNT = amount - COMMISSION;
+
     // Verify the user transaction pin
     await user.verifyTransactionPin(pin);
 
     // Verify user has sufficient balance
-    await user.verifyUserBalance(amount);
+    await user.verifyUserBalance(AMOUNT);
 
     // Start the session to avoid partial update on the DB
     await buyVtu.startSession();
@@ -120,7 +123,7 @@ export async function POST(request: Request) {
 
     await app?.systemIsunderMaintainance();
     await app?.isTransactionEnable("airtime");
-    await app?.checkTransactionLimit(amount);
+    await app?.checkTransactionLimit(AMOUNT);
 
     //const ntwks: Record<string, number> = {
     //  Mtn: 1,
@@ -131,7 +134,7 @@ export async function POST(request: Request) {
 
     // Update user balance with session
     await user.updateOne(
-      { $inc: { balance: -amount } },
+      { $inc: { balance: -AMOUNT } },
       { session: buyVtu.session }
     );
 
@@ -139,7 +142,7 @@ export async function POST(request: Request) {
     const transactionRef = buyVtu.createRequestIdForVtuPass();
 
     // Set amount for transaction
-    buyVtu.amount = amount;
+    buyVtu.amount = AMOUNT;
 
     // Pre-create transaction with pending status
     await buyVtu.createPendingTransaction("airtime", user.id, {
