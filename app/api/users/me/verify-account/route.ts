@@ -7,6 +7,8 @@ import { User } from "@/models/users";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
+const OTP_EXPIRY_MINUTES = 15;
+
 export async function POST(request: Request) {
   try {
     const { type = "email" } = await request.json();
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
       createdAt: { $gte: new Date(Date.now() - 1 * 60 * 60 * 1000) }, // Last 1 hour
     });
 
-    if (existingOtpAttempts >= 3) {
+    if (existingOtpAttempts >= 4) {
       return NextResponse.json(
         httpStatusResponse(
           429,
@@ -72,7 +74,7 @@ export async function POST(request: Request) {
     const newOtp = new OTP({
       otp: otpCode,
       user: user._id,
-      expirationTime: new Date(Date.now() + 15 * 60000),
+      expirationTime: new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000),
     });
     await newOtp.save();
 
@@ -121,7 +123,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (otp.expirationTime < new Date()) {
+    if (otp.expirationTime.getTime() < new Date().getTime()) {
       return NextResponse.json(
         httpStatusResponse(400, "OTP_EXPIRED: OTP has expired"),
         { status: 400 }
