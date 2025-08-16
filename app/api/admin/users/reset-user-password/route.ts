@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const resetLink = `https://abanty-data-sme-amber.vercel.app/auth/reset-password?email=${email}&otp=${otp}`;
+    const resetLink = `https://www.kinta-sme.com/auth/reset-password?email=${email}&otp=${otp}`;
 
     async function sendPasswordResetEmail(email: string, userName?: string) {
       try {
@@ -183,12 +183,7 @@ export async function POST(request: Request) {
         `;
 
         // Send the email
-        await sendEmail(
-          [email],
-          emailHtml,
-          "Reset your Kinta SME password",
-          "s00laimang20@gmail.com"
-        );
+        sendEmail([email], emailHtml, "Reset your Kinta SME password");
 
         return { success: true };
       } catch (error) {
