@@ -34,7 +34,7 @@ const Page = () => {
   const { isLoading, data } = useQuery({
     queryKey: ["data-plans"],
     queryFn: () => api.get<{ data: dataPlan[] }>(`/create/data-plan/`),
-    //enabled: !!network,
+    enabled: !!network,
   });
 
   const { isLoading: _isLoading, data: recentlyUsed } = useQuery({
@@ -129,10 +129,10 @@ const Page = () => {
             <Select
               value={(network as string) || ""}
               onValueChange={(value: availableNetworks) => {
-                setNetwork(value);
+                setNetwork((prev) => (value === prev ? null : value));
               }}
             >
-              <SelectTrigger className="md:w-[180px] w-full rounded-none capitalize">
+              <SelectTrigger className="md:w-[180px] h-12 w-full rounded-none capitalize">
                 <SelectValue
                   placeholder="Select Network"
                   className="capitalize"
@@ -150,17 +150,16 @@ const Page = () => {
             <Select
               value={planType}
               onValueChange={(value) => {
-                setPlanType(value);
+                setPlanType((prev) => (value === prev ? "" : value));
               }}
             >
-              <SelectTrigger className="md:w-[180px] w-full rounded-none capitalize">
+              <SelectTrigger className="md:w-[180px] w-full h-12 rounded-none capitalize">
                 <SelectValue
                   placeholder="Select Data Type"
                   className="capitalize"
                 />
               </SelectTrigger>
               <SelectContent className="rounded-none">
-                <SelectItem value="all">All Types</SelectItem>
                 {PLAN_TYPES.map((status) => (
                   <SelectItem key={status} value={status}>
                     {status}

@@ -81,12 +81,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (user.role !== "admin") {
-      return NextResponse.json(httpStatusResponse(403, "Forbidden"), {
-        status: 403,
-      });
-    }
-
     let query: Record<any, any> = {};
 
     await connectToDatabase();
