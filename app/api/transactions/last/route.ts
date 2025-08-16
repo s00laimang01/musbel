@@ -1,3 +1,4 @@
+import { connectToDatabase } from "@/lib/connect-to-db";
 import { checkIfUserIsAuthenticated, httpStatusResponse } from "@/lib/utils";
 import { Transaction } from "@/models/transactions";
 import { User } from "@/models/users";
@@ -7,6 +8,8 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   try {
     const session = await getServerSession();
+
+    await connectToDatabase();
 
     const user = await User.findOne({ "auth.email": session?.user?.email });
 

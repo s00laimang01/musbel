@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
     const session = await getServerSession();
 
-    checkIfUserIsAuthenticated(session);
+    await checkIfUserIsAuthenticated(session);
 
     if (type === "phoneNumber") {
       return NextResponse.json(
