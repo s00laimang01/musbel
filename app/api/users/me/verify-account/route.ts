@@ -114,6 +114,8 @@ export async function GET(request: NextRequest) {
   try {
     const q = request.nextUrl.searchParams;
 
+    await connectToDatabase();
+
     const otp = await OTP.findOne({ otp: q.get("otp") });
 
     if (!otp) {
