@@ -95,16 +95,16 @@ export async function POST(request: NextRequest) {
     const validatedData = createDataPlanSchema.parse(body);
 
     // Check if a plan with the same planId already exists
-    const existingPlan = await DataPlan.findOne({
-      planId: validatedData.planId,
-    });
-
-    if (existingPlan) {
-      return NextResponse.json(
-        { success: false, message: "A plan with this ID already exists" },
-        { status: 400 }
-      );
-    }
+    //    const existingPlan = await DataPlan.findOne({
+    //      planId: validatedData.planId,
+    //    });
+    //
+    //    if (existingPlan) {
+    //      return NextResponse.json(
+    //        { success: false, message: "A plan with this ID already exists" },
+    //        { status: 400 }
+    //      );
+    //    }
 
     // Create new data plan
     const newDataPlan = new DataPlan(validatedData);
