@@ -25,7 +25,7 @@ export const formSchema = z.object({
   data: z.string().min(1, "Data amount is required"),
   amount: z.coerce.number().positive("Amount must be positive"),
   availability: z.string().min(1, "Availability is required"),
-  type: z.enum(["CHEAP", "SME"], {
+  type: z.enum(["CHEAP", "SME", "GIFTING"], {
     required_error: "Please select a plan type",
   }),
   planId: z.any(),

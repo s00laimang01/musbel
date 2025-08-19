@@ -622,7 +622,7 @@ export const DATA_PLANS = [
   },
 ];
 
-export const PLAN_TYPES: planTypes[] = ["SME", "CHEAP"];
+export const PLAN_TYPES: planTypes[] = ["SME", "CHEAP", "GIFTING"];
 
 export const METER_TYPE: meterType[] = ["POSTPAID", "PREPAID"];
 

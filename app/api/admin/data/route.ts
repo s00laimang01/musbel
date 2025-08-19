@@ -119,9 +119,17 @@ export async function POST(request: NextRequest) {
 
     // Handle validation errors
     if (error instanceof z.ZodError) {
-      return NextResponse.json(httpStatusResponse(400, error.message), {
-        status: 400,
-      });
+      return NextResponse.json(
+        httpStatusResponse(
+          400,
+          error.issues
+            .map((issue) => `${issue.path}: ${issue.message}`)
+            .join(", ")
+        ),
+        {
+          status: 400,
+        }
+      );
     }
 
     // Handle mongoose validation errors

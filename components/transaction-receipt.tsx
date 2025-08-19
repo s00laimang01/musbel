@@ -61,8 +61,6 @@ function TransactionReceipt(
 ) {
   const { data: session } = useSession();
 
-  console.log({ transaction });
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);

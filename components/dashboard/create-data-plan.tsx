@@ -173,6 +173,7 @@ export function CreateDataPlanDialog({
                         <SelectContent>
                           <SelectItem value="CHEAP">CHEAP</SelectItem>
                           <SelectItem value="SME">SME</SelectItem>
+                          <SelectItem value="GIFTING">GIFTING</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
