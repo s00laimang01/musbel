@@ -55,9 +55,8 @@ DataPlanSchema.pre("save", async function (next) {
     const planExist = await DataPlan.exists({
       amount: this.amount,
       network: this.network,
-      availability: this.availability,
-      data: this.data,
       provider: this.provider,
+      planId: this.planId,
     });
 
     if (planExist) {

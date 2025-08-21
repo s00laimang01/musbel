@@ -22,19 +22,28 @@ import { api, getRecentlyUsedContacts } from "@/lib/utils";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import Text from "@/components/text";
 import { useHealthChecker } from "@/hooks/use-health-checker";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const Page = () => {
   useNavBar("Buy Data");
   useHealthChecker("data");
   const [network, setNetwork] = useState<availableNetworks | null>(null);
+  const [isNetworkSelected, setIsNetworkSelected] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [planType, setPlanType] = useState("");
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const [open, setOpen] = useState(false);
 
   const { isLoading, data } = useQuery({
     queryKey: ["data-plans"],
     queryFn: () => api.get<{ data: dataPlan[] }>(`/create/data-plan/`),
-    enabled: !!network,
+    enabled: !!network && !!planType,
   });
 
   const { isLoading: _isLoading, data: recentlyUsed } = useQuery({
@@ -130,6 +139,7 @@ const Page = () => {
               value={(network as string) || ""}
               onValueChange={(value: availableNetworks) => {
                 setNetwork((prev) => (value === prev ? null : value));
+                if (value) setOpen((prev) => !prev);
               }}
             >
               <SelectTrigger className="md:w-[180px] h-12 w-full rounded-none capitalize">
@@ -213,6 +223,28 @@ const Page = () => {
           </AnimatePresence>
         </div>
       </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select Plan Type</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 w-full">
+            {PLAN_TYPES.map((plantype, idx) => (
+              <Button
+                key={idx}
+                variant="outline"
+                className="rounded-none w-full h-[3rem]"
+                onClick={() => {
+                  setPlanType(plantype);
+                  setOpen(false);
+                }}
+              >
+                {plantype.toUpperCase()}
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
