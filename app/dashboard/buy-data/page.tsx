@@ -24,9 +24,11 @@ import Text from "@/components/text";
 import { useHealthChecker } from "@/hooks/use-health-checker";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -135,48 +137,61 @@ const Page = () => {
               <span className="text-sm font-medium">Choose Plan:</span>
             </div>
 
-            <Select
-              value={(network as string) || ""}
-              onValueChange={(value: availableNetworks) => {
-                setNetwork((prev) => (value === prev ? null : value));
-                if (value) setOpen((prev) => !prev);
-              }}
-            >
-              <SelectTrigger className="md:w-[180px] h-12 w-full rounded-none capitalize">
-                <SelectValue
-                  placeholder="Select Network"
-                  className="capitalize"
-                />
-              </SelectTrigger>
-              <SelectContent className="rounded-none">
-                {AVIALABLE_NETWORKS.map((type) => (
-                  <SelectItem key={type} value={type} className="capitalize">
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="h-[3rem] capitalize">
+                  {network || "  Select Network"}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Select Network</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col gap-3 w-full">
+                  {AVIALABLE_NETWORKS.map((ntw, idx) => (
+                    <DialogClose key={idx} asChild>
+                      <Button
+                        variant="outline"
+                        className="rounded-none w-full h-[3rem]"
+                        onClick={() => {
+                          setNetwork(ntw as availableNetworks);
+                        }}
+                      >
+                        {ntw.toUpperCase()}
+                      </Button>
+                    </DialogClose>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
 
-            <Select
-              value={planType}
-              onValueChange={(value) => {
-                setPlanType((prev) => (value === prev ? "" : value));
-              }}
-            >
-              <SelectTrigger className="md:w-[180px] w-full h-12 rounded-none capitalize">
-                <SelectValue
-                  placeholder="Select Data Type"
-                  className="capitalize"
-                />
-              </SelectTrigger>
-              <SelectContent className="rounded-none">
-                {PLAN_TYPES.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="h-[3rem]">
+                  {planType || "Select Plan Type"}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Select Plan Type</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col gap-3 w-full">
+                  {PLAN_TYPES.map((plantype, idx) => (
+                    <DialogClose asChild key={idx}>
+                      <Button
+                        variant="outline"
+                        className="rounded-none w-full h-[3rem]"
+                        onClick={() => {
+                          setPlanType(plantype);
+                        }}
+                      >
+                        {plantype.toUpperCase()}
+                      </Button>
+                    </DialogClose>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           <div className="w-full h-px bg-gray-100 my-6" />
@@ -223,28 +238,6 @@ const Page = () => {
           </AnimatePresence>
         </div>
       </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Select Plan Type</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 w-full">
-            {PLAN_TYPES.map((plantype, idx) => (
-              <Button
-                key={idx}
-                variant="outline"
-                className="rounded-none w-full h-[3rem]"
-                onClick={() => {
-                  setPlanType(plantype);
-                  setOpen(false);
-                }}
-              >
-                {plantype.toUpperCase()}
-              </Button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
