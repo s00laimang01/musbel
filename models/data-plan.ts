@@ -50,22 +50,22 @@ const DataPlanSchema: mongoose.Schema<dataPlan> = new mongoose.Schema({
 const DataPlan: mongoose.Model<dataPlan> =
   mongoose.models.DataPlan || mongoose.model("DataPlan", DataPlanSchema);
 
-DataPlanSchema.pre("save", async function (next) {
-  try {
-    const planExist = await DataPlan.exists({
-      amount: this.amount,
-      network: this.network,
-      provider: this.provider,
-      planId: this.planId,
-    });
-
-    if (planExist) {
-      next(new Error("Plan already exists"));
-    }
-  } catch (error) {
-    const err = error as Error;
-    next(err);
-  }
-});
+//DataPlanSchema.pre("save", async function (next) {
+//  try {
+//    const planExist = await DataPlan.exists({
+//      amount: this.amount,
+//      network: this.network,
+//      provider: this.provider,
+//      planId: this.planId,
+//    });
+//
+//    if (planExist) {
+//      next(new Error("Plan already exists"));
+//    }
+//  } catch (error) {
+//    const err = error as Error;
+//    next(err);
+//  }
+//});
 
 export { DataPlan };
