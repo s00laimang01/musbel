@@ -183,7 +183,7 @@ export async function POST(request: Request) {
         `;
 
         // Send the email
-        sendEmail([email], emailHtml, "Reset your Kinta SME password");
+        sendEmail([email], emailHtml, "Reset your Musbel password");
 
         return { success: true };
       } catch (error) {

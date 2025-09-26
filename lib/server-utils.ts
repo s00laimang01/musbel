@@ -497,7 +497,7 @@ export async function sendEmail(
     "https://api.brevo.com/v3/smtp/email",
     {
       sender: {
-        name: "KINTA SME",
+        name: "Musbel",
         email: replyTo || "s00laimang00@gmail.com",
       },
       to: recipients.map((recipient) => ({ email: recipient })),

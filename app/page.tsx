@@ -4,7 +4,7 @@ export default function Home() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "KINTA SME",
+    name: "Musbel",
     url: "https://www.kinta-sme.com",
     description:
       "Your one-stop platform for data bundles, airtime recharge, and utility bill payments. Buy data plans, recharge airtime, pay electricity bills, and manage digital services efficiently.",

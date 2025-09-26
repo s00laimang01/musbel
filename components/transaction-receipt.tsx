@@ -112,7 +112,7 @@ function TransactionReceipt(
               <Avatar className="shadow-md">
                 <AvatarImage src="/kinta-sme-logo.jpg" />
                 <AvatarFallback className="bg-primary">
-                  {getInitials("KintaSme")}
+                  {getInitials("Musbel")}
                 </AvatarFallback>
               </Avatar>
               {configs.appName}
@@ -339,7 +339,7 @@ function TransactionReceipt(
           <p className="mb-1">No Funding Percentage</p>
           <p className="mb-1">Secure and fast processing</p>
           <p className="text-green-500 font-medium">
-            Thank you for choosing KintaSME!
+            Thank you for choosing Musbel!
           </p>
         </div>
       </CardContent>

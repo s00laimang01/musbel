@@ -9,7 +9,7 @@ import z from "zod";
 import { CreditCard, GraduationCap, Zap } from "lucide-react";
 
 export const configs = {
-  appName: "KINTA SME",
+  appName: "Musbel",
   "X-RAPIDAPI-HOST": process.env["X-RAPIDAPI-HOST"],
   "X-RAPIDAPI-KEY": process.env["NEXT_PUBLIC_X_RAPIDAPI_KEY"],
   FLW_ENCRYPTION_KEY: process.env["FLW_ENCRYPTION_KEY"],

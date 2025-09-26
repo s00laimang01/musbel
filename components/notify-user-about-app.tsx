@@ -42,8 +42,8 @@ export default function AppInstallDialog() {
 
     // Simulate download trigger (replace with actual download logic)
     const link = document.createElement("a");
-    link.href = "/kinta-sme-data.apk"; // Updated path - files in public are served from root
-    link.download = "kinta-sme-data.apk";
+    link.href = "/kinta-sme-data.apk"; // Keep existing file to avoid 404 unless replaced
+    link.download = "musbel-data.apk";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -198,7 +198,7 @@ export default function AppInstallDialog() {
                 <div>
                   <p className="font-medium text-sm">Tap the downloaded file</p>
                   <p className="text-xs text-muted-foreground">
-                    Look for "Kinta-Sme-Data.apk" and tap to install
+                    Look for "Musbel-Data.apk" and tap to install
                   </p>
                 </div>
               </div>
