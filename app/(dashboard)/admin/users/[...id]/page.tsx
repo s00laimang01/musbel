@@ -31,6 +31,7 @@ import { useParams } from "next/navigation";
 import { UserActionButtons } from "@/components/dashboard/user-action-btn";
 import { toast } from "sonner";
 import { configs } from "@/lib/constants";
+import axios from "axios";
 
 async function getUser(id: string) {
   const res = await api.get<{
@@ -75,11 +76,13 @@ export default function UserDetailsPage() {
       }
 
       if (action === "generateAccount") {
-        await api.post(
-          `https://miscellaneous-musbel.vercel.app/api/generate-dedicated-account-number`,
+        await axios.post(
+          `https://www.miscellaneous-musbel.vercel.app/api/generate-dedicated-account-number`,
           {
             userId: userId,
-            signature: configs["X-RAPIDAPI-KEY"],
+            signature:
+              configs["X-RAPIDAPI-KEY"] ||
+              "5DW7hQekykBzXXJMIGLAGVr75RPvwYHaxIDqCP9/yZo=",
           }
         );
       }

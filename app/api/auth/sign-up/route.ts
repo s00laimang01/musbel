@@ -111,7 +111,7 @@ export async function POST(request: Request) {
 
         const qClient = new QClient({ token: qStashKey || "" });
         await qClient.publishJSON({
-          url: "https://miscellaneous-musbel.vercel.app/api/generate-dedicated-account-number",
+          url: "https://www.miscellaneous-musbel.vercel.app/api/generate-dedicated-account-number",
           body: {
             userId: user[0]._id.toString(),
             signature:
