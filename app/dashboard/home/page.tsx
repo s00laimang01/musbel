@@ -41,7 +41,7 @@ const Page = () => {
       <RemindUserToCreateTransactionPin />
       <SystemMessage />
       <RemindUserToRefer />
-      <AppInstallDialog />
+      {/*<AppInstallDialog />*/}
       {/* Desktop Header - hidden on mobile */}
       <div className="hidden md:block">
         <Header
