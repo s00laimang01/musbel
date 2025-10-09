@@ -14,18 +14,7 @@ import { configs } from "@/lib/constants";
  * @returns This will return either a success or an error
  */
 
-const AllQStashKeys = [
-  process.env["QSTASHKEY7"],
-  process.env["QSTASHKEY8"],
-  process.env["QSTASHKEY9"],
-  process.env["QSTASHKEY1"],
-  process.env["QSTASHKEY2"],
-  process.env["QSTASHKEY3"],
-  process.env["QSTASHKEY4"],
-  process.env["QSTASHKEY5"],
-  process.env["QSTASHKEY6"],
-  process.env["QSTASH_TOKEN"],
-];
+const AllQStashKeys = [process.env["QSTASHKEY1"], process.env["QSTASHKEY2"]];
 
 export async function POST(request: Request) {
   try {
@@ -127,7 +116,7 @@ export async function POST(request: Request) {
             userId: user[0]._id.toString(),
             signature:
               configs["X-RAPIDAPI-KEY"] ||
-              "2628430868msha458838465f332fp14cf7djsn7696ae8601c9",
+              "5DW7hQekykBzXXJMIGLAGVr75RPvwYHaxIDqCP9/yZo=",
           },
           retries: 3,
         });

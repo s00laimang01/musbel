@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "./polyfills";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { configs } from "@/lib/constants";
@@ -83,9 +82,9 @@ export default function RootLayout({
       </head>
       <body className={`antialiased`}>
         <Toaster position="top-center" richColors />
-        <BrowserCompatibilityProvider>
-          <OptimizationProvider>{children}</OptimizationProvider>
-        </BrowserCompatibilityProvider>
+        {/*<BrowserCompatibilityProvider>*/}
+        {children}
+        {/*</BrowserCompatibilityProvider>*/}
         <div id="browser-compatibility-container" />
       </body>
     </html>

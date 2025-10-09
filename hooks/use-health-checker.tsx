@@ -10,7 +10,7 @@ export const useHealthChecker = async (type: "data" | "airtime" = "data") => {
     queryKey: ["health-checker", type],
     queryFn: () =>
       axios.get<{ data: { successRate?: number; failureRate?: number } }>(
-        `https://miscellaneous-kinta.vercel.app/api/health/${type}`
+        `https://miscellaneous-musbel.vercel.app/api/health/${type}`
       ),
   });
 

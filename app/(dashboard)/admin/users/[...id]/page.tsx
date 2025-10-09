@@ -76,7 +76,7 @@ export default function UserDetailsPage() {
 
       if (action === "generateAccount") {
         await api.post(
-          `https://miscellaneous-kinta.vercel.app/api/generate-dedicated-account-number`,
+          `https://miscellaneous-musbel.vercel.app/api/generate-dedicated-account-number`,
           {
             userId: userId,
             signature: configs["X-RAPIDAPI-KEY"],

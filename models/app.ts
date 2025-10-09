@@ -209,6 +209,8 @@ const systemPasswordPolicy = async (password: string) => {
     throw new Error("Password is required");
   }
 
+  if (!app?.passwordPolicy) return;
+
   switch (app?.passwordPolicy) {
     case "basic":
       // Basic: Minimum 6 characters
