@@ -257,7 +257,10 @@ export default function UsersPage() {
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user._id!}>
+                <TableRow
+                  key={user._id!}
+                  onClick={() => handleViewUser(user._id!)}
+                >
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar className="h-8 w-8">
