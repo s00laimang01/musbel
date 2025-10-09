@@ -77,7 +77,7 @@ export default function UserDetailsPage() {
 
       if (action === "generateAccount") {
         await axios.post(
-          `https://www.miscellaneous-musbel.vercel.app/api/generate-dedicated-account-number`,
+          `https://miscellaneous-musbel.vercel.app/api/generate-dedicated-account-number`,
           {
             userId: userId,
             signature:
