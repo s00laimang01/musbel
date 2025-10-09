@@ -110,7 +110,7 @@ function TransactionReceipt(
           <div className="flex justify-center mb-4">
             <div className="text-green-800 font-bold text-xl flex items-center gap-2">
               <Avatar className="shadow-md">
-                <AvatarImage src="/kinta-sme-logo.jpg" />
+                <AvatarImage src="/musbel-logo.jpg" />
                 <AvatarFallback className="bg-primary">
                   {getInitials("Musbel")}
                 </AvatarFallback>

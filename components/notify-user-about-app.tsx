@@ -42,7 +42,7 @@ export default function AppInstallDialog() {
 
     // Simulate download trigger (replace with actual download logic)
     const link = document.createElement("a");
-    link.href = "/kinta-sme-data.apk"; // Keep existing file to avoid 404 unless replaced
+    link.href = "/musbel-data.apk"; // Keep existing file to avoid 404 unless replaced
     link.download = "musbel-data.apk";
     document.body.appendChild(link);
     link.click();

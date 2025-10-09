@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   applicationName: configs.appName,
   keywords:
     "data bundles, airtime topup, electricity bills, exam results, MTN data, Airtel data, Glo data, 9mobile data, utility payments, cheap data, bulk data, data subscription, airtime recharge, bill payments, WAEC result checker, NECO result checker, JAMB result checker, prepaid meter, postpaid meter, EKEDC, IKEDC, AEDC, PHEDC, mobile data, internet data plans, VTU services, utility bill payments, online recharge, data reseller, SME data plans, corporate data plans, instant recharge, automated payments, digital wallet, mobile wallet, online transactions, secure payments",
-  authors: [{ name: "Musbel", url: "https://www.kinta-sme.com" }],
+  authors: [{ name: "Musbel", url: "https://www.musbel.com" }],
   creator: "Musbel",
   publisher: "Musbel",
   formatDetection: {
@@ -22,12 +22,12 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://www.kinta-sme.com"),
+  metadataBase: new URL("https://www.musbel.com"),
   openGraph: {
     title: `${configs.appName} - Buy Data, Airtime & Pay Bills`,
     description:
       "Buy data bundles, airtime, pay electricity bills and check exam results at the best prices. Fast delivery and 24/7 customer support.",
-    url: "https://www.kinta-sme.com",
+    url: "https://www.musbel.com",
     siteName: configs.appName,
     images: ["/og-image.jpg"],
     locale: "en_US",

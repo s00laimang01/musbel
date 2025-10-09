@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const resetLink = `https://www.kinta-sme.com/auth/reset-password?email=${email}&otp=${otp}`;
+    const resetLink = `https://www.musbel.vercel.app/auth/reset-password?email=${email}&otp=${otp}`;
 
     async function sendPasswordResetEmail(email: string, userName?: string) {
       try {
