@@ -42,7 +42,7 @@ const Page = () => {
             <Button
               onClick={() =>
                 sendWhatsAppMessage(
-                  "+2347040666904",
+                  "+2348066136937",
                   `Hello, I would like to fund my account. My user ID is ${user?._id}, and I would like to fund my account with `
                 )
               }

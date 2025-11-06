@@ -72,7 +72,7 @@ const ClientProvider: FC<{ children: ReactNode }> = ({ children }) => {
         className=" fixed bottom-3 right-3 rounded-full p-3 h-[3rem] w-[3rem] z-50"
         onClick={() =>
           sendWhatsAppMessage(
-            "+2347040666904",
+            "+2348066136937",
             `Hello, I want an assistance with`
           )
         }
