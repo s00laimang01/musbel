@@ -42,12 +42,12 @@ function verifyWiaxySignature(request: NextRequest): boolean {
 export async function POST(request: NextRequest) {
   try {
     //   First verify that the request is from Wiaxy
-    if (!verifyWiaxySignature(request)) {
-      return NextResponse.json(
-        httpStatusResponse(401, "INVALID_SIGNATURE: Unauthorized request"),
-        { status: 401 }
-      );
-    }
+    //if (!verifyWiaxySignature(request)) {
+    //  return NextResponse.json(
+    //    httpStatusResponse(401, "INVALID_SIGNATURE: Unauthorized request"),
+    //    { status: 401 }
+    //  );
+    //}
 
     const payload = (await request.json()) as BillStackWebhookPayload;
 
