@@ -125,12 +125,12 @@ export async function POST(request: Request) {
     await app?.isTransactionEnable("airtime");
     await app?.checkTransactionLimit(AMOUNT);
 
-    //const ntwks: Record<string, number> = {
-    //  Mtn: 1,
-    //  Airtel: 2,
-    //  Glo: 3,
-    //  "9Mobile": 4,
-    //};
+    const ntwks: Record<string, number> = {
+     Mtn: 1,
+     Airtel: 2,
+     Glo: 4,
+     "9Mobile": 3,
+    };
 
     // Update user balance with session
     await user.updateOne(
@@ -164,13 +164,20 @@ export async function POST(request: Request) {
     let vendingMessage = "";
 
     try {
-      // Use the buyAirtime function to purchase airtime
-      await buyVtu.buyAirtimeFromVTPass({
-        phone: phoneNumber,
-        amount: amount,
-        network: network.toLowerCase() as availableNetworks,
-        request_id: transactionRef,
-      });
+      // // Use the buyAirtime function to purchase airtime
+      // await buyVtu.buyAirtimeFromVTPass({
+      //   phone: phoneNumber,
+      //   amount: amount,
+      //   network: network.toLowerCase() as availableNetworks,
+      //   request_id: transactionRef,
+      // });
+
+      await buyVtu.buyAirtimeFromSmePlug({
+          "phone": phoneNumber,
+          "network_id": String(ntwks[network]),
+          "customer_reference": transactionRef,
+          "amount": amount,
+      })
 
       vendingSuccess = buyVtu.status;
       vendingMessage = buyVtu.message || "";

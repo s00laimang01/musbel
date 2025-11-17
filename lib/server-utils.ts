@@ -735,6 +735,57 @@ export class BuyVTU {
     }
   }
 
+  public async buyAirtimeFromSmePlug(payload:{network_id: string; phone:string; amount:number, customer_reference:string}) {
+      try{
+          const endPoints = `https://smeplug.ng/api/v1/airtime/purchase`
+
+          interface IRes {
+              status: boolean;
+              data: {
+                  current_status: string;
+                  reference: string;
+                  msg: string;
+              };
+          }
+
+          const res = await  axios.post<IRes>(endPoints, payload, {
+              headers: { Authorization: `Bearer ${process.env.SME_PLUG_API_KEY}` }
+          })
+
+
+          this.vendingResponse = {
+              recipientCount: 1,
+              recipients: payload.phone,
+              cost: payload.amount,
+              totalAmount: payload.amount,
+              vendReport: {
+                  [payload.phone]: res.data.data.current_status ? "successful" : "failed",
+              },
+              vendStatus: null,
+              commissionEarned: 0,
+          };
+
+          this.status = Boolean(
+              res.data.status &&
+              this.vendingResponse.vendReport[payload.phone] === "successful"
+          );
+          this.message = !this.status
+              ? res.data.data.msg || "Data vending failed"
+              : res.data.data.msg;
+
+
+          return this
+      }catch (error:any) {
+          console.log(error.response);
+          this.status = false;
+          this.message =
+              error instanceof Error && error.message
+                  ? error.message
+                  : "DATA_PURCHASE_FAILED: unable to process your request.";
+          return this;
+      }
+  }
+
   public async buyAirtime(phoneNumber: string, amount: number) {
     try {
       if (!this.accessToken) {
@@ -1006,7 +1057,6 @@ export class BuyVTU {
         { headers: { Authorization: `Bearer ${process.env.SME_PLUG_API_KEY}` } }
       );
 
-      console.log(res.data);
 
       this.vendingResponse = {
         recipientCount: 1,
